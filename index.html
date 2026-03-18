@@ -75,6 +75,7 @@
   .ext-btn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
   .ext-btn.on-green { background: #16a34a; color: #fff; }
   .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+  .bricks-note { font-size: 10px; color: #475569; font-style: italic; margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -86,8 +87,8 @@
 
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
-  Extensions = +2 bricks in cradle (12kg hung load) &nbsp;·&nbsp;
-  Custom fixtures auto-saved to library
+  <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
+  Extensions = +2 cradle bricks
 </div>
 
 <div class="controls">
@@ -96,14 +97,17 @@
 </div>
 
 <div id="bars-container"></div>
-<div class="footer">Data & fixture library saved in your browser · Library grows as you add custom fixtures</div>
+<div class="footer">Data & fixture library saved in your browser · Bricks mode stores correct hung load automatically</div>
 
 <script>
 const FULL = 12, HALF = 6;
-const EXTENSIONS_WEIGHT = 12; // results in +2 full bricks (24kg) in cradle after ×2 double purchase
+// Extensions: 2 cradle bricks = 24kg cradle ÷ 2 double purchase = 12kg hung load
+const EXTENSIONS_WEIGHT = 12;
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
+// ALL weights stored as hung load on bar (i.e. cradle kg ÷ 2)
+// White Cyc/BP = 6 cradle bricks = 72kg cradle ÷ 2 = 36kg hung load
 const DEFAULT_FIXTURES = [
   {name:"Selecon TW1S", weight:3.5},
   {name:"ETC Source Four 19°", weight:5.0},
@@ -116,7 +120,7 @@ const DEFAULT_FIXTURES = [
   {name:"Selecon Pacific 14-35°", weight:5.8},
   {name:"Robert Juliat Lancelot", weight:28.0},
   {name:"Pulsar ChromaFlood 200", weight:2.4},
-  {name:"White Cyc/BP", weight:72.0},
+  {name:"White Cyc/BP", weight:36.0},
   {name:"Drape (per metre run)", weight:2.5},
   {name:"Tab (per metre run)", weight:1.8},
   {name:"Gauze (per metre run)", weight:0.8},
@@ -136,7 +140,7 @@ function load(key, def) {
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
 let bars = load('tbtl_bars_v3', defaultBars());
-let library = load('tbtl_lib_v2', DEFAULT_FIXTURES);
+let library = load('tbtl_lib_v3', DEFAULT_FIXTURES);
 let expanded = {};
 let inputMode = {};
 
@@ -160,8 +164,16 @@ function hungLoad(bar) {
   return fixtureLoad + extLoad;
 }
 
+// Convert cradle bricks to hung load on bar (÷2 for double purchase)
+// This is the key function — any time user enters "X bricks" meaning cradle bricks,
+// we divide by 2 to get the actual hung load stored
+function cradleBricksToHungLoad(fullBricks, halfBricks) {
+  const cradleKg = (fullBricks * FULL) + (halfBricks * HALF);
+  return cradleKg / 2;
+}
+
 function saveBars() { save('tbtl_bars_v3', bars); }
-function saveLib() { save('tbtl_lib_v2', library); }
+function saveLib() { save('tbtl_lib_v3', library); }
 
 function toggleExtensions(barId) {
   const bar = bars.find(b => b.id === barId);
@@ -178,12 +190,17 @@ function updatePreview(barId) {
   if (!preview) return;
   if (mode === 'kg') {
     const kg = parseFloat(document.getElementById(`fweight_${barId}`)?.value);
-    preview.innerHTML = (!isNaN(kg) && kg > 0) ? `= <strong>${kg.toFixed(1)} kg</strong>` : '';
+    preview.innerHTML = (!isNaN(kg) && kg > 0) ? `= <strong>${kg.toFixed(1)} kg hung</strong>` : '';
   } else {
     const full = parseInt(document.getElementById(`fbfull_${barId}`)?.value) || 0;
     const half = parseInt(document.getElementById(`fbhalf_${barId}`)?.value) || 0;
-    const kg = full * FULL + half * HALF;
-    preview.innerHTML = kg > 0 ? `= <strong>${kg.toFixed(1)} kg</strong>` : '';
+    if (full > 0 || half > 0) {
+      const hungKg = cradleBricksToHungLoad(full, half);
+      const cradleKg = full * FULL + half * HALF;
+      preview.innerHTML = `= <strong>${hungKg.toFixed(1)} kg hung</strong> <span style="color:#475569">(${cradleKg}kg in cradle)</span>`;
+    } else {
+      preview.innerHTML = '';
+    }
   }
 }
 
@@ -193,18 +210,22 @@ function addFixture(barId) {
   const qty = parseInt(document.getElementById(`fqty_${barId}`).value) || 1;
   const mode = getMode(barId);
   let weight;
+
   if (mode === 'kg') {
     weight = parseFloat(document.getElementById(`fweight_${barId}`).value);
   } else {
+    // Bricks mode: user enters CRADLE bricks, we store as hung load (÷2)
     const full = parseInt(document.getElementById(`fbfull_${barId}`).value) || 0;
     const half = parseInt(document.getElementById(`fbhalf_${barId}`).value) || 0;
-    weight = full * FULL + half * HALF;
+    weight = cradleBricksToHungLoad(full, half);
   }
+
   if (!name || isNaN(weight) || weight <= 0) {
     const ni = document.getElementById(`fname_${barId}`);
     if (ni) { ni.style.borderColor = '#ef4444'; setTimeout(() => ni.style.borderColor = '#334155', 1500); }
     return;
   }
+
   bar.fixtures.push({id: Date.now(), name, weight, qty});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight});
@@ -272,7 +293,7 @@ function esc(s) {
 }
 
 function libOptions() {
-  return library.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg)</option>`).join('');
+  return library.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg bar)</option>`).join('');
 }
 
 function switchMode(barId, mode) {
@@ -289,6 +310,10 @@ function buildAddSection(barId) {
        <span style="color:#818cf8;font-size:11px;align-self:center">F</span>
        <input type="number" class="inp-bricks" id="fbhalf_${barId}" placeholder="Half" min="0" oninput="updatePreview(${barId})" style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:7px 8px;font-size:13px;outline:none;width:58px;">
        <span style="color:#a78bfa;font-size:11px;align-self:center">H</span>`;
+
+  const bricksNote = mode === 'bricks'
+    ? `<div class="bricks-note">Enter cradle bricks — hung load stored automatically (÷2 for double purchase)</div>`
+    : '';
 
   return `<div class="add-section" id="add_section_${barId}">
     <div class="add-section-title">Add fixture to bar</div>
@@ -310,6 +335,7 @@ function buildAddSection(barId) {
       <input type="number" class="inp-qty" id="fqty_${barId}" placeholder="Qty" value="1" min="1">
       <button class="btn-add" onclick="addFixture(${barId})">+ Add</button>
     </div>
+    ${bricksNote}
   </div>`;
 }
 
