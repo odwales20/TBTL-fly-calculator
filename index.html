@@ -86,7 +86,7 @@
 
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
-  Extensions = +2 full bricks (24kg) &nbsp;·&nbsp;
+  Extensions = +2 bricks in cradle (12kg hung load) &nbsp;·&nbsp;
   Custom fixtures auto-saved to library
 </div>
 
@@ -100,7 +100,7 @@
 
 <script>
 const FULL = 12, HALF = 6;
-const EXTENSIONS_WEIGHT = 24;
+const EXTENSIONS_WEIGHT = 12; // results in +2 full bricks (24kg) in cradle after ×2 double purchase
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
@@ -362,8 +362,8 @@ function renderBar(bar) {
     <tr style="border-top:1px solid #0f172a">
       <td style="color:#34d399">Extensions (1 pair)</td>
       <td class="c muted">—</td>
-      <td class="r muted">24.0</td>
-      <td class="r" style="color:#34d399;font-weight:700">24.0</td>
+      <td class="r muted">12.0</td>
+      <td class="r" style="color:#34d399;font-weight:700">12.0</td>
       <td></td>
     </tr>
   ` : '';
@@ -404,9 +404,9 @@ function renderBar(bar) {
       <div class="ext-section">
         <div class="ext-info">
           <strong>Extensions</strong>
-          <small>1 pair max · adds 2 full bricks (24 kg) to hung load</small>
+          <small>1 pair max · adds 2 bricks (24kg) to cradle</small>
         </div>
-        ${bar.extensions ? `<span class="ext-badge" style="background:#14532d;color:#22c55e;border:1px solid #22c55e44">+24 kg / +2F bricks</span>` : ''}
+        ${bar.extensions ? `<span class="ext-badge" style="background:#14532d;color:#22c55e;border:1px solid #22c55e44">+2 bricks in cradle</span>` : ''}
         <button class="ext-btn ${bar.extensions ? 'on-green' : 'off'}" onclick="toggleExtensions(${bar.id})">
           ${bar.extensions ? '✓ In Use' : 'Not In Use'}
         </button>
