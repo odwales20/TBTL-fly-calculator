@@ -27,7 +27,7 @@
   input[type=text]:focus, input[type=number]:focus, select:focus { border-color: #3b82f6; }
   .search { flex: 1; }
   .btn-reset-all { background: #1e293b; color: #ef4444; border: 1px solid #ef444433; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-  .bar-wrap { background: #1e293b; border: 1px solid #1e293b; border-radius: 10px; margin-bottom: 6px; overflow: hidden; transition: border-color 0.2s; }
+  .bar-wrap { background: #1e293b; border: 1px solid #1e293b; border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
   .bar-wrap.loaded { border-color: #334155; }
   .bar-header { display: flex; align-items: center; padding: 10px 14px; cursor: pointer; gap: 10px; flex-wrap: wrap; user-select: none; -webkit-user-select: none; }
   .bar-num { background: #0f172a; color: #64748b; font-weight: 700; font-size: 11px; border-radius: 5px; padding: 2px 7px; letter-spacing: 1px; white-space: nowrap; }
@@ -49,28 +49,44 @@
   .breakdown { background: #0f172a; border-radius: 7px; padding: 8px 12px; margin-bottom: 10px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 14px; }
   .breakdown span { color: #64748b; }
   .breakdown strong { font-weight: 700; }
-  .add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
-  .add-row select { min-width: 160px; flex: 0 0 auto; }
-  .add-row .inp-name { flex: 1 1 120px; min-width: 110px; }
-  .add-row .inp-kg { width: 70px; }
-  .add-row .inp-qty { width: 52px; }
+  .add-section { margin-top: 8px; background: #0f172a; border-radius: 8px; padding: 10px 12px; }
+  .add-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 8px; }
+  .add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+  .inp-name { flex: 1 1 120px; min-width: 110px; }
+  .inp-kg { width: 80px; }
+  .inp-bricks { width: 58px; }
+  .inp-qty { width: 52px; }
   .btn-add { background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .qty-inp { width: 48px; text-align: center; padding: 3px 6px; }
   .footer { text-align: center; margin-top: 16px; color: #334155; font-size: 10px; }
   .tare-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 8px; font-size: 12px; color: #475569; }
   select option { background: #1e293b; }
+  .mode-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid #334155; flex-shrink: 0; }
+  .mode-btn { background: #0f172a; color: #64748b; border: none; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .mode-btn.active { background: #3b82f6; color: #fff; }
+  .weight-preview { font-size: 11px; color: #64748b; align-self: center; white-space: nowrap; }
+  .weight-preview strong { color: #fbbf24; }
+  .divider { color: #334155; font-size: 11px; align-self: center; }
+  .ext-section { margin: 10px 0; background: #0f172a; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ext-info { flex: 1; }
+  .ext-info strong { font-size: 13px; color: #e2e8f0; display: block; }
+  .ext-info small { font-size: 11px; color: #475569; }
+  .ext-badge { border-radius: 5px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .ext-btn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
+  .ext-btn.on-green { background: #16a34a; color: #fff; }
+  .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
 </style>
 </head>
 <body>
 
 <h1>🎭 Fly Weight Calculator</h1>
-<p class="subtitle">Theatre by the Lake · Double Purchase · 44 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
+<p class="subtitle">Theatre by the Lake · Double Purchase · 39 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
 
 <div class="summary" id="summary"></div>
 
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
-  Bar tare already balanced when empty &nbsp;·&nbsp;
+  Extensions = +2 full bricks (24kg) &nbsp;·&nbsp;
   Custom fixtures auto-saved to library
 </div>
 
@@ -84,31 +100,33 @@
 
 <script>
 const FULL = 12, HALF = 6;
+const EXTENSIONS_WEIGHT = 24;
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
 const DEFAULT_FIXTURES = [
-  {name:"Selecon TW1S",weight:3.5},
-  {name:"ETC Source Four 19°",weight:5.0},
-  {name:"ETC Source Four 26°",weight:4.9},
-  {name:"ETC Source Four 36°",weight:4.8},
-  {name:"ETC Source Four PAR",weight:4.2},
-  {name:"Generic LED Par",weight:2.0},
-  {name:"Chauvet Rogue R2 Wash",weight:9.5},
-  {name:"Martin MAC Aura",weight:5.5},
-  {name:"Selecon Pacific 14-35°",weight:5.8},
-  {name:"Robert Juliat Lancelot",weight:28.0},
-  {name:"Pulsar ChromaFlood 200",weight:2.4},
-  {name:"Drape (per metre run)",weight:2.5},
-  {name:"Tab (per metre run)",weight:1.8},
-  {name:"Gauze (per metre run)",weight:0.8},
-  {name:"Cable Loom (per 5m)",weight:1.0},
-  {name:"Boom Arm",weight:1.5},
+  {name:"Selecon TW1S", weight:3.5},
+  {name:"ETC Source Four 19°", weight:5.0},
+  {name:"ETC Source Four 26°", weight:4.9},
+  {name:"ETC Source Four 36°", weight:4.8},
+  {name:"ETC Source Four PAR", weight:4.2},
+  {name:"Generic LED Par", weight:2.0},
+  {name:"Chauvet Rogue R2 Wash", weight:9.5},
+  {name:"Martin MAC Aura", weight:5.5},
+  {name:"Selecon Pacific 14-35°", weight:5.8},
+  {name:"Robert Juliat Lancelot", weight:28.0},
+  {name:"Pulsar ChromaFlood 200", weight:2.4},
+  {name:"White Cyc/BP", weight:72.0},
+  {name:"Drape (per metre run)", weight:2.5},
+  {name:"Tab (per metre run)", weight:1.8},
+  {name:"Gauze (per metre run)", weight:0.8},
+  {name:"Cable Loom (per 5m)", weight:1.0},
+  {name:"Boom Arm", weight:1.5},
 ];
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: []
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false
   }));
 }
 
@@ -117,15 +135,16 @@ function load(key, def) {
 }
 function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
-let bars = load('tbtl_bars_v2', defaultBars());
-let library = load('tbtl_lib', DEFAULT_FIXTURES);
+let bars = load('tbtl_bars_v3', defaultBars());
+let library = load('tbtl_lib_v2', DEFAULT_FIXTURES);
 let expanded = {};
+let inputMode = {};
 
-// Make sure any saved data has correct bar IDs (migration guard)
 if (!bars.some(b => b.id === 1) || bars.some(b => EXCLUDED.has(b.id))) {
   bars = defaultBars();
-  save('tbtl_bars_v2', bars);
+  save('tbtl_bars_v3', bars);
 }
+bars = bars.map(b => ({...b, extensions: b.extensions || false}));
 
 function calcBricks(cw) {
   if (cw <= 0) return {full:0, half:0, total:0};
@@ -136,18 +155,56 @@ function calcBricks(cw) {
 }
 
 function hungLoad(bar) {
-  return bar.fixtures.reduce((s,f) => s + f.weight * f.qty, 0);
+  const fixtureLoad = bar.fixtures.reduce((s,f) => s + f.weight * f.qty, 0);
+  const extLoad = bar.extensions ? EXTENSIONS_WEIGHT : 0;
+  return fixtureLoad + extLoad;
 }
 
-function saveBars() { save('tbtl_bars_v2', bars); }
-function saveLib() { save('tbtl_lib', library); }
+function saveBars() { save('tbtl_bars_v3', bars); }
+function saveLib() { save('tbtl_lib_v2', library); }
+
+function toggleExtensions(barId) {
+  const bar = bars.find(b => b.id === barId);
+  bar.extensions = !bar.extensions;
+  saveBars();
+  render();
+}
+
+function getMode(barId) { return inputMode[barId] || 'kg'; }
+
+function updatePreview(barId) {
+  const mode = getMode(barId);
+  const preview = document.getElementById(`preview_${barId}`);
+  if (!preview) return;
+  if (mode === 'kg') {
+    const kg = parseFloat(document.getElementById(`fweight_${barId}`)?.value);
+    preview.innerHTML = (!isNaN(kg) && kg > 0) ? `= <strong>${kg.toFixed(1)} kg</strong>` : '';
+  } else {
+    const full = parseInt(document.getElementById(`fbfull_${barId}`)?.value) || 0;
+    const half = parseInt(document.getElementById(`fbhalf_${barId}`)?.value) || 0;
+    const kg = full * FULL + half * HALF;
+    preview.innerHTML = kg > 0 ? `= <strong>${kg.toFixed(1)} kg</strong>` : '';
+  }
+}
 
 function addFixture(barId) {
   const bar = bars.find(b => b.id === barId);
   const name = document.getElementById(`fname_${barId}`).value.trim();
-  const weight = parseFloat(document.getElementById(`fweight_${barId}`).value);
   const qty = parseInt(document.getElementById(`fqty_${barId}`).value) || 1;
-  if (!name || isNaN(weight) || weight <= 0) return;
+  const mode = getMode(barId);
+  let weight;
+  if (mode === 'kg') {
+    weight = parseFloat(document.getElementById(`fweight_${barId}`).value);
+  } else {
+    const full = parseInt(document.getElementById(`fbfull_${barId}`).value) || 0;
+    const half = parseInt(document.getElementById(`fbhalf_${barId}`).value) || 0;
+    weight = full * FULL + half * HALF;
+  }
+  if (!name || isNaN(weight) || weight <= 0) {
+    const ni = document.getElementById(`fname_${barId}`);
+    if (ni) { ni.style.borderColor = '#ef4444'; setTimeout(() => ni.style.borderColor = '#334155', 1500); }
+    return;
+  }
   bar.fixtures.push({id: Date.now(), name, weight, qty});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight});
@@ -184,8 +241,16 @@ function pickLib(barId) {
   if (!v) return;
   const f = library.find(x => x.name === v);
   if (f) {
-    document.getElementById(`fname_${barId}`).value = f.name;
-    document.getElementById(`fweight_${barId}`).value = f.weight;
+    inputMode[barId] = 'kg';
+    render();
+    setTimeout(() => {
+      const w = document.getElementById(`fweight_${barId}`);
+      if (w) { w.value = f.weight; updatePreview(barId); }
+      const s = document.getElementById(`sel_${barId}`);
+      if (s) s.value = v;
+      const n = document.getElementById(`fname_${barId}`);
+      if (n) n.value = f.name;
+    }, 0);
   }
 }
 
@@ -210,16 +275,56 @@ function libOptions() {
   return library.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg)</option>`).join('');
 }
 
+function switchMode(barId, mode) {
+  inputMode[barId] = mode;
+  const section = document.getElementById(`add_section_${barId}`);
+  if (section) section.outerHTML = buildAddSection(barId);
+}
+
+function buildAddSection(barId) {
+  const mode = getMode(barId);
+  const weightInputs = mode === 'kg'
+    ? `<input type="number" class="inp-kg" id="fweight_${barId}" placeholder="kg" step="0.1" oninput="updatePreview(${barId})">`
+    : `<input type="number" class="inp-bricks" id="fbfull_${barId}" placeholder="Full" min="0" oninput="updatePreview(${barId})" style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:7px 8px;font-size:13px;outline:none;width:58px;">
+       <span style="color:#818cf8;font-size:11px;align-self:center">F</span>
+       <input type="number" class="inp-bricks" id="fbhalf_${barId}" placeholder="Half" min="0" oninput="updatePreview(${barId})" style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:7px 8px;font-size:13px;outline:none;width:58px;">
+       <span style="color:#a78bfa;font-size:11px;align-self:center">H</span>`;
+
+  return `<div class="add-section" id="add_section_${barId}">
+    <div class="add-section-title">Add fixture to bar</div>
+    <div class="add-row" style="margin-bottom:8px">
+      <select id="sel_${barId}" onchange="pickLib(${barId})">
+        <option value="">— Pick from library —</option>
+        ${libOptions()}
+      </select>
+      <span class="divider">or type below</span>
+    </div>
+    <div class="add-row">
+      <input type="text" class="inp-name" id="fname_${barId}" placeholder="Fixture name">
+      <div class="mode-toggle">
+        <button class="mode-btn ${mode==='kg'?'active':''}" onclick="switchMode(${barId},'kg')">by kg</button>
+        <button class="mode-btn ${mode==='bricks'?'active':''}" onclick="switchMode(${barId},'bricks')">by bricks</button>
+      </div>
+      ${weightInputs}
+      <span class="weight-preview" id="preview_${barId}"></span>
+      <input type="number" class="inp-qty" id="fqty_${barId}" placeholder="Qty" value="1" min="1">
+      <button class="btn-add" onclick="addFixture(${barId})">+ Add</button>
+    </div>
+  </div>`;
+}
+
 function renderSummary() {
   const totalHung = bars.reduce((s,b) => s + hungLoad(b), 0);
   const totalCW = totalHung * 2;
   const totalFull = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).full, 0);
   const totalHalf = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).half, 0);
-  const loadedCount = bars.filter(b => b.fixtures.length > 0).length;
+  const loadedCount = bars.filter(b => hungLoad(b) > 0).length;
+  const extCount = bars.filter(b => b.extensions).length;
   const totalBars = bars.length;
 
   document.getElementById('summary').innerHTML = [
     ['Loaded Bars', `${loadedCount}/${totalBars}`, '#22c55e'],
+    ['Bars w/ Extensions', extCount, '#34d399'],
     ['Total Hung Load', `${totalHung.toFixed(1)} kg`, '#f1f5f9'],
     ['Total Counterweight', `${totalCW.toFixed(1)} kg`, '#fbbf24'],
     ['Full Bricks (12kg)', totalFull, '#818cf8'],
@@ -253,7 +358,17 @@ function renderBar(bar) {
     </tr>
   `).join('');
 
-  const totalsRow = bar.fixtures.length > 0 ? `
+  const extRow = bar.extensions ? `
+    <tr style="border-top:1px solid #0f172a">
+      <td style="color:#34d399">Extensions (1 pair)</td>
+      <td class="c muted">—</td>
+      <td class="r muted">24.0</td>
+      <td class="r" style="color:#34d399;font-weight:700">24.0</td>
+      <td></td>
+    </tr>
+  ` : '';
+
+  const totalsRow = loaded ? `
     <tr style="border-top:2px solid #334155">
       <td colspan="3" class="muted" style="font-size:11px">Total hung load</td>
       <td class="r white">${hung.toFixed(1)}</td>
@@ -271,6 +386,11 @@ function renderBar(bar) {
     </div>
   ` : '';
 
+  const summaryItems = [];
+  if (bar.fixtures.length > 0) summaryItems.push(`${bar.fixtures.length} fixture${bar.fixtures.length>1?'s':''}`);
+  if (bar.extensions) summaryItems.push('extensions');
+  const summaryText = summaryItems.length > 0 ? summaryItems.join(' + ') : 'Empty';
+
   const bodyHtml = exp ? `
     <div class="bar-body">
       <div class="tare-row">
@@ -280,26 +400,30 @@ function renderBar(bar) {
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:60px;">
         kg <span style="color:#334155;font-size:11px">(already counterweighted when empty)</span>
       </div>
-      ${bar.fixtures.length > 0 ? `
+
+      <div class="ext-section">
+        <div class="ext-info">
+          <strong>Extensions</strong>
+          <small>1 pair max · adds 2 full bricks (24 kg) to hung load</small>
+        </div>
+        ${bar.extensions ? `<span class="ext-badge" style="background:#14532d;color:#22c55e;border:1px solid #22c55e44">+24 kg / +2F bricks</span>` : ''}
+        <button class="ext-btn ${bar.extensions ? 'on-green' : 'off'}" onclick="toggleExtensions(${bar.id})">
+          ${bar.extensions ? '✓ In Use' : 'Not In Use'}
+        </button>
+      </div>
+
+      ${(bar.fixtures.length > 0 || bar.extensions) ? `
         <table>
           <thead><tr>
-            <th>Fixture</th><th class="c">Qty</th>
+            <th>Item</th><th class="c">Qty</th>
             <th class="r">Unit kg</th><th class="r">Total kg</th><th></th>
           </tr></thead>
-          <tbody>${fixtureRows}${totalsRow}</tbody>
+          <tbody>${fixtureRows}${extRow}${totalsRow}</tbody>
         </table>
       ` : ''}
+
       ${breakdownHtml}
-      <div class="add-row">
-        <select id="sel_${bar.id}" onchange="pickLib(${bar.id})">
-          <option value="">— Library —</option>
-          ${libOptions()}
-        </select>
-        <input type="text" class="inp-name" id="fname_${bar.id}" placeholder="Fixture name">
-        <input type="number" class="inp-kg" id="fweight_${bar.id}" placeholder="kg" step="0.1">
-        <input type="number" class="inp-qty" id="fqty_${bar.id}" placeholder="Qty" value="1" min="1">
-        <button class="btn-add" onclick="addFixture(${bar.id})">+ Add</button>
-      </div>
+      ${buildAddSection(bar.id)}
     </div>
   ` : '';
 
@@ -307,8 +431,9 @@ function renderBar(bar) {
     <div class="bar-wrap ${loaded ? 'loaded' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
         <span class="bar-num">BAR ${bar.id}</span>
-        <span class="bar-summary">${loaded ? `${bar.fixtures.length} item${bar.fixtures.length>1?'s':''}` : 'Empty'}</span>
+        <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
+          ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
           <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
           <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
           <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? `${bricks.full}F ${bricks.half}H` : '—'}</strong></span>
