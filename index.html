@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fly Weights">
+<title>Fly Weight Calculator — TBTL</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #e2e8f0; font-family: -apple-system, 'Segoe UI', sans-serif; padding: 16px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 800; color: #f8fafc; }
+  .subtitle { color: #475569; font-size: 12px; margin: 3px 0 14px; }
+  .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; min-width: 100px; }
+  .card-label { color: #475569; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .card-value { font-weight: 800; font-size: 18px; margin-top: 1px; }
+  .info-bar { background: #1e293b; border: 1px solid #fbbf2422; border-radius: 7px; padding: 7px 12px; font-size: 11px; color: #64748b; margin-bottom: 12px; }
+  .info-bar strong { color: #fbbf24; }
+  .controls { display: flex; gap: 8px; margin-bottom: 10px; }
+  input[type=text], input[type=number], select {
+    background: #0f172a; border: 1px solid #334155; border-radius: 6px;
+    color: #e2e8f0; padding: 7px 10px; font-size: 13px; outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus { border-color: #3b82f6; }
+  .search { flex: 1; }
+  .btn-reset-all { background: #1e293b; color: #ef4444; border: 1px solid #ef444433; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .bar-wrap { background: #1e293b; border: 1px solid #1e293b; border-radius: 10px; margin-bottom: 6px; overflow: hidden; transition: border-color 0.2s; }
+  .bar-wrap.loaded { border-color: #334155; }
+  .bar-header { display: flex; align-items: center; padding: 10px 14px; cursor: pointer; gap: 10px; flex-wrap: wrap; user-select: none; -webkit-user-select: none; }
+  .bar-num { background: #0f172a; color: #64748b; font-weight: 700; font-size: 11px; border-radius: 5px; padding: 2px 7px; letter-spacing: 1px; white-space: nowrap; }
+  .bar-summary { flex: 1; color: #94a3b8; font-size: 13px; }
+  .bar-stats { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .stat { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+  .stat strong { font-weight: 700; }
+  .chevron { color: #475569; font-size: 14px; }
+  .bar-body { padding: 0 14px 14px; border-top: 1px solid #334155; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
+  th { color: #475569; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; text-align: left; padding: 3px 6px; }
+  th.r, td.r { text-align: right; }
+  th.c, td.c { text-align: center; }
+  td { padding: 5px 6px; color: #e2e8f0; border-top: 1px solid #0f172a; }
+  td.muted { color: #64748b; }
+  td.yellow { color: #fbbf24; font-weight: 700; }
+  td.white { color: #f1f5f9; font-weight: 800; }
+  .remove-btn { background: none; color: #ef4444; border: none; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .breakdown { background: #0f172a; border-radius: 7px; padding: 8px 12px; margin-bottom: 10px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 14px; }
+  .breakdown span { color: #64748b; }
+  .breakdown strong { font-weight: 700; }
+  .add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  .add-row select { min-width: 160px; flex: 0 0 auto; }
+  .add-row .inp-name { flex: 1 1 120px; min-width: 110px; }
+  .add-row .inp-kg { width: 70px; }
+  .add-row .inp-qty { width: 52px; }
+  .btn-add { background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .qty-inp { width: 48px; text-align: center; padding: 3px 6px; }
+  .footer { text-align: center; margin-top: 16px; color: #334155; font-size: 10px; }
+  .tare-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 8px; font-size: 12px; color: #475569; }
+  select option { background: #1e293b; }
+</style>
+</head>
+<body>
+
+<h1>🎭 Fly Weight Calculator</h1>
+<p class="subtitle">Theatre by the Lake · Double Purchase · 44 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
+
+<div class="summary" id="summary"></div>
+
+<div class="info-bar">
+  ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
+  Bar tare already balanced when empty &nbsp;·&nbsp;
+  Custom fixtures auto-saved to library
+</div>
+
+<div class="controls">
+  <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
+  <button class="btn-reset-all" onclick="resetAll()">Reset All</button>
+</div>
+
+<div id="bars-container"></div>
+<div class="footer">Data & fixture library saved in your browser · Library grows as you add custom fixtures</div>
+
+<script>
+const FULL = 12, HALF = 6;
+const EXCLUDED = new Set([32,34,36,38,40]);
+const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
+
+const DEFAULT_FIXTURES = [
+  {name:"Selecon TW1S",weight:3.5},
+  {name:"ETC Source Four 19°",weight:5.0},
+  {name:"ETC Source Four 26°",weight:4.9},
+  {name:"ETC Source Four 36°",weight:4.8},
+  {name:"ETC Source Four PAR",weight:4.2},
+  {name:"Generic LED Par",weight:2.0},
+  {name:"Chauvet Rogue R2 Wash",weight:9.5},
+  {name:"Martin MAC Aura",weight:5.5},
+  {name:"Selecon Pacific 14-35°",weight:5.8},
+  {name:"Robert Juliat Lancelot",weight:28.0},
+  {name:"Pulsar ChromaFlood 200",weight:2.4},
+  {name:"Drape (per metre run)",weight:2.5},
+  {name:"Tab (per metre run)",weight:1.8},
+  {name:"Gauze (per metre run)",weight:0.8},
+  {name:"Cable Loom (per 5m)",weight:1.0},
+  {name:"Boom Arm",weight:1.5},
+];
+
+function defaultBars() {
+  return BAR_IDS.map(id => ({
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: []
+  }));
+}
+
+function load(key, def) {
+  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
+}
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+let bars = load('tbtl_bars_v2', defaultBars());
+let library = load('tbtl_lib', DEFAULT_FIXTURES);
+let expanded = {};
+
+// Make sure any saved data has correct bar IDs (migration guard)
+if (!bars.some(b => b.id === 1) || bars.some(b => EXCLUDED.has(b.id))) {
+  bars = defaultBars();
+  save('tbtl_bars_v2', bars);
+}
+
+function calcBricks(cw) {
+  if (cw <= 0) return {full:0, half:0, total:0};
+  const full = Math.floor(cw / FULL);
+  const rem = cw - full * FULL;
+  const half = rem > 0 ? 1 : 0;
+  return {full, half, total: full*FULL + half*HALF};
+}
+
+function hungLoad(bar) {
+  return bar.fixtures.reduce((s,f) => s + f.weight * f.qty, 0);
+}
+
+function saveBars() { save('tbtl_bars_v2', bars); }
+function saveLib() { save('tbtl_lib', library); }
+
+function addFixture(barId) {
+  const bar = bars.find(b => b.id === barId);
+  const name = document.getElementById(`fname_${barId}`).value.trim();
+  const weight = parseFloat(document.getElementById(`fweight_${barId}`).value);
+  const qty = parseInt(document.getElementById(`fqty_${barId}`).value) || 1;
+  if (!name || isNaN(weight) || weight <= 0) return;
+  bar.fixtures.push({id: Date.now(), name, weight, qty});
+  if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+    library.push({name, weight});
+    saveLib();
+  }
+  saveBars();
+  render();
+}
+
+function removeFixture(barId, fixId) {
+  const bar = bars.find(b => b.id === barId);
+  bar.fixtures = bar.fixtures.filter(f => f.id !== fixId);
+  saveBars();
+  render();
+}
+
+function updateQty(barId, fixId, qty) {
+  const bar = bars.find(b => b.id === barId);
+  const fix = bar.fixtures.find(f => f.id === fixId);
+  if (fix) fix.qty = Math.max(1, parseInt(qty) || 1);
+  saveBars();
+  renderSummary();
+}
+
+function updateTare(barId, val) {
+  const bar = bars.find(b => b.id === barId);
+  const w = parseFloat(val);
+  if (!isNaN(w) && w >= 0) { bar.barWeight = w; saveBars(); }
+}
+
+function pickLib(barId) {
+  const sel = document.getElementById(`sel_${barId}`);
+  const v = sel.value;
+  if (!v) return;
+  const f = library.find(x => x.name === v);
+  if (f) {
+    document.getElementById(`fname_${barId}`).value = f.name;
+    document.getElementById(`fweight_${barId}`).value = f.weight;
+  }
+}
+
+function toggleBar(id) {
+  expanded[id] = !expanded[id];
+  render();
+}
+
+function resetAll() {
+  if (!confirm('Reset ALL bars to empty? This cannot be undone.')) return;
+  bars = defaultBars();
+  saveBars();
+  expanded = {};
+  render();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function libOptions() {
+  return library.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg)</option>`).join('');
+}
+
+function renderSummary() {
+  const totalHung = bars.reduce((s,b) => s + hungLoad(b), 0);
+  const totalCW = totalHung * 2;
+  const totalFull = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).full, 0);
+  const totalHalf = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).half, 0);
+  const loadedCount = bars.filter(b => b.fixtures.length > 0).length;
+  const totalBars = bars.length;
+
+  document.getElementById('summary').innerHTML = [
+    ['Loaded Bars', `${loadedCount}/${totalBars}`, '#22c55e'],
+    ['Total Hung Load', `${totalHung.toFixed(1)} kg`, '#f1f5f9'],
+    ['Total Counterweight', `${totalCW.toFixed(1)} kg`, '#fbbf24'],
+    ['Full Bricks (12kg)', totalFull, '#818cf8'],
+    ['Half Bricks (6kg)', totalHalf, '#a78bfa'],
+  ].map(([l,v,c]) => `
+    <div class="card">
+      <div class="card-label">${l}</div>
+      <div class="card-value" style="color:${c}">${v}</div>
+    </div>
+  `).join('');
+}
+
+function renderBar(bar) {
+  const hung = hungLoad(bar);
+  const cw = hung * 2;
+  const bricks = calcBricks(cw);
+  const loaded = hung > 0;
+  const exp = !!expanded[bar.id];
+
+  const fixtureRows = bar.fixtures.map(f => `
+    <tr>
+      <td>${esc(f.name)}</td>
+      <td class="c">
+        <input type="number" class="qty-inp" min="1" value="${f.qty}"
+          onchange="updateQty(${bar.id},${f.id},this.value)"
+          style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:12px;">
+      </td>
+      <td class="r muted">${f.weight.toFixed(1)}</td>
+      <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
+      <td class="r"><button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button></td>
+    </tr>
+  `).join('');
+
+  const totalsRow = bar.fixtures.length > 0 ? `
+    <tr style="border-top:2px solid #334155">
+      <td colspan="3" class="muted" style="font-size:11px">Total hung load</td>
+      <td class="r white">${hung.toFixed(1)}</td>
+      <td></td>
+    </tr>
+  ` : '';
+
+  const breakdownHtml = loaded ? `
+    <div class="breakdown">
+      <span>Counterweight (×2): <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
+      <span>Full bricks 12kg: <strong style="color:#818cf8">${bricks.full}</strong></span>
+      <span>Half bricks 6kg: <strong style="color:#818cf8">${bricks.half}</strong></span>
+      <span>Total in cradle: <strong style="color:#22c55e">${bricks.total} kg</strong></span>
+      ${bricks.total > cw ? `<span style="color:#f59e0b;font-size:11px">(+${(bricks.total-cw).toFixed(1)} kg nearest brick rounding)</span>` : ''}
+    </div>
+  ` : '';
+
+  const bodyHtml = exp ? `
+    <div class="bar-body">
+      <div class="tare-row">
+        Bar tare:
+        <input type="number" value="${bar.barWeight}"
+          onblur="updateTare(${bar.id},this.value)"
+          style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:60px;">
+        kg <span style="color:#334155;font-size:11px">(already counterweighted when empty)</span>
+      </div>
+      ${bar.fixtures.length > 0 ? `
+        <table>
+          <thead><tr>
+            <th>Fixture</th><th class="c">Qty</th>
+            <th class="r">Unit kg</th><th class="r">Total kg</th><th></th>
+          </tr></thead>
+          <tbody>${fixtureRows}${totalsRow}</tbody>
+        </table>
+      ` : ''}
+      ${breakdownHtml}
+      <div class="add-row">
+        <select id="sel_${bar.id}" onchange="pickLib(${bar.id})">
+          <option value="">— Library —</option>
+          ${libOptions()}
+        </select>
+        <input type="text" class="inp-name" id="fname_${bar.id}" placeholder="Fixture name">
+        <input type="number" class="inp-kg" id="fweight_${bar.id}" placeholder="kg" step="0.1">
+        <input type="number" class="inp-qty" id="fqty_${bar.id}" placeholder="Qty" value="1" min="1">
+        <button class="btn-add" onclick="addFixture(${bar.id})">+ Add</button>
+      </div>
+    </div>
+  ` : '';
+
+  return `
+    <div class="bar-wrap ${loaded ? 'loaded' : ''}" id="bar_${bar.id}">
+      <div class="bar-header" onclick="toggleBar(${bar.id})">
+        <span class="bar-num">BAR ${bar.id}</span>
+        <span class="bar-summary">${loaded ? `${bar.fixtures.length} item${bar.fixtures.length>1?'s':''}` : 'Empty'}</span>
+        <div class="bar-stats">
+          <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
+          <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
+          <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? `${bricks.full}F ${bricks.half}H` : '—'}</strong></span>
+        </div>
+        <span class="chevron">${exp ? '▲' : '▼'}</span>
+      </div>
+      ${bodyHtml}
+    </div>
+  `;
+}
+
+function render() {
+  renderSummary();
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = bars.filter(b =>
+    String(b.id).includes(q) || b.name.toLowerCase().includes(q)
+  );
+  document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
+}
+
+render();
+</script>
+</body>
+</html>
