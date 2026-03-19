@@ -869,6 +869,7 @@ function renderBar(bar) {
           onblur="updateBarName(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
       </div>
+      ${bar.id !== 1 ? `
       <div class="ext-section">
         <div class="ext-info">
           <strong>Extensions</strong>
@@ -898,7 +899,8 @@ function renderBar(bar) {
         <button class="ext-btn ${bar.cable ? 'on-blue' : 'off'}" onclick="toggleCable(${bar.id})">
           ${bar.cable ? '✓ In Use' : 'Not In Use'}
         </button>
-      </div>
+      </div>` : ''}
+      ${bar.id !== 1 ? `
       <div class="ext-section">
         <div class="ext-info">
           <strong style="color:#a78bfa">Misc Bricks</strong>
@@ -908,7 +910,7 @@ function renderBar(bar) {
           value="${bar.miscBricks || 0}"
           onchange="updateMiscBricks(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#a78bfa;padding:6px 8px;font-size:13px;font-weight:700;width:70px;text-align:center;">
-      </div>
+      </div>` : ''}
       ${bar.id === 1 ? `
       <div style="background:#1e1b2e;border:1px solid #7c3aed44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#c084fc;font-size:12px;font-weight:700;">
         🔒 BAR LOCKED — Bar 1 has a permanent cinema screen. No items can be added or removed.
