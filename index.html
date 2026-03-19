@@ -130,7 +130,7 @@
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
   <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-  Extensions = +2 cradle bricks &nbsp;·&nbsp; IWB = +8 cradle bricks
+  Extensions = +2 cradle bricks &nbsp;·&nbsp; IWB = +7 cradle bricks &nbsp;·&nbsp; Bricks always round up to nearest 12kg
 </div>
 
 <div class="controls">
@@ -145,7 +145,7 @@
 const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
-const IWB_WEIGHT = 48; // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
+const IWB_WEIGHT = 42; // IWB hung load contribution (42 kg = 84 kg CW = 7 full bricks)
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
@@ -304,11 +304,8 @@ function forceSave() {
 }
 
 function calcBricks(cw) {
-  if (cw <= 0) return {full:0, half:0, total:0};
-  const full = Math.floor(cw / FULL);
-  const rem = cw - full * FULL;
-  const half = rem > 0 ? 1 : 0;
-  return {full, half, total: full*FULL + half*HALF};
+  if (cw <= 0) return {full: 0};
+  return {full: Math.ceil(cw / FULL)};
 }
 
 function hungLoad(bar) {
@@ -616,7 +613,6 @@ function renderSummary() {
   const totalHung = bars.reduce((s,b) => s + hungLoad(b), 0);
   const totalCW = totalHung * 2;
   const totalFull = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).full, 0);
-  const totalHalf = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).half, 0);
   const loadedCount = bars.filter(b => hungLoad(b) > 0).length;
   const extCount = bars.filter(b => b.extensions).length;
   const iwbCount = bars.filter(b => b.iwb).length;
@@ -628,8 +624,7 @@ function renderSummary() {
     ['Bars w/ IWB', iwbCount, '#fb923c'],
     ['Total Hung Load', `${totalHung.toFixed(1)} kg`, '#f1f5f9'],
     ['Total Counterweight', `${totalCW.toFixed(1)} kg`, '#fbbf24'],
-    ['Full Bricks (12kg)', totalFull, '#818cf8'],
-    ['Half Bricks (6kg)', totalHalf, '#a78bfa'],
+    ['Total 12kg Bricks', totalFull, '#818cf8'],
   ].map(([l,v,c]) => `
     <div class="card">
       <div class="card-label">${l}</div>
@@ -673,8 +668,8 @@ function renderBar(bar) {
     <tr style="border-top:1px solid #0f172a">
       <td style="color:#fb923c">IWB</td>
       <td class="c muted">—</td>
-      <td class="r muted">48.0</td>
-      <td class="r" style="color:#fb923c;font-weight:700">48.0</td>
+      <td class="r muted">42.0</td>
+      <td class="r" style="color:#fb923c;font-weight:700">42.0</td>
       <td></td>
     </tr>
   ` : '';
@@ -687,13 +682,13 @@ function renderBar(bar) {
     </tr>
   ` : '';
 
+  const brickCW = bricks.full * FULL;
   const breakdownHtml = loaded ? `
     <div class="breakdown">
       <span>Counterweight (×2): <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
-      <span>Full bricks 12kg: <strong style="color:#818cf8">${bricks.full}</strong></span>
-      <span>Half bricks 6kg: <strong style="color:#818cf8">${bricks.half}</strong></span>
-      <span>Total in cradle: <strong style="color:#22c55e">${bricks.total} kg</strong></span>
-      ${bricks.total > cw ? `<span style="color:#f59e0b;font-size:11px">(+${(bricks.total-cw).toFixed(1)} kg nearest brick rounding)</span>` : ''}
+      <span>12kg Bricks: <strong style="color:#818cf8">${bricks.full}</strong></span>
+      <span>Total in cradle: <strong style="color:#22c55e">${brickCW} kg</strong></span>
+      ${brickCW > cw ? `<span style="color:#f59e0b;font-size:11px">(+${(brickCW-cw).toFixed(1)} kg rounding up to nearest brick)</span>` : ''}
     </div>
   ` : '';
 
@@ -729,9 +724,9 @@ function renderBar(bar) {
       <div class="ext-section">
         <div class="ext-info">
           <strong>IWB</strong>
-          <small>1 max · adds 8 bricks (96kg) to cradle</small>
+          <small>1 max · adds 7 bricks (84kg) to cradle</small>
         </div>
-        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+8 bricks in cradle</span>` : ''}
+        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+7 bricks in cradle</span>` : ''}
         <button class="ext-btn ${bar.iwb ? 'on-orange' : 'off'}" onclick="toggleIWB(${bar.id})">
           ${bar.iwb ? '✓ In Use' : 'Not In Use'}
         </button>
@@ -760,7 +755,7 @@ function renderBar(bar) {
           ${bar.iwb && !exp ? `<span style="color:#fb923c;font-size:11px;font-weight:700">IWB</span>` : ''}
           <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
           <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
-          <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? `${bricks.full}F ${bricks.half}H` : '—'}</strong></span>
+          <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? bricks.full : '—'}</strong></span>
         </div>
         <span class="chevron">${exp ? '▲' : '▼'}</span>
       </div>
