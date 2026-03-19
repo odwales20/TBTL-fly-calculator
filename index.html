@@ -79,6 +79,27 @@
   .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
   .bar-wrap.exclusive { border-color: #f59e0b44; }
   .bricks-note { font-size: 10px; color: #475569; font-style: italic; margin-top: 3px; }
+  /* Page tabs */
+  .page-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid #334155; padding-bottom: 0; }
+  .page-tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; padding: 8px 16px; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; transition: color 0.15s; }
+  .page-tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+  /* Library page */
+  .lib-page { }
+  .lib-add-box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+  .lib-add-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 10px; }
+  .lib-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .lib-table th { color: #475569; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; text-align: left; padding: 6px 8px; border-bottom: 1px solid #334155; }
+  .lib-table td { padding: 7px 8px; border-top: 1px solid #0f172a; vertical-align: middle; }
+  .lib-table tr:hover td { background: #1e293b22; }
+  .lib-cat-pill { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 6px; }
+  .btn-lib-edit { background: #1e293b; color: #60a5fa; border: 1px solid #3b82f644; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-lib-save { background: #3b82f6; color: #fff; border: none; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+  .btn-lib-cancel { background: #1e293b; color: #94a3b8; border: 1px solid #33415544; border-radius: 5px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-lib-del { background: none; color: #ef4444; border: 1px solid #ef444433; border-radius: 5px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .lib-edit-inp { background: #0f172a; border: 1px solid #3b82f6; border-radius: 5px; color: #e2e8f0; padding: 4px 7px; font-size: 12px; outline: none; }
+  /* Active show update button */
+  .btn-update-show { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 6px; padding: 7px 14px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .btn-update-show:hover { background: #166534; }
   .sync-bar { display: flex; align-items: center; gap: 8px; background: #1e293b; border-radius: 7px; padding: 6px 12px; margin-bottom: 10px; font-size: 12px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .sync-dot.online { background: #22c55e; }
@@ -127,20 +148,29 @@
   </div>
 </div>
 
-<div class="summary" id="summary"></div>
-
-<div class="info-bar">
-  ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
-  <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-  Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks always round up
+<div class="page-tabs">
+  <button class="page-tab active" id="tab-bars" onclick="switchPage('bars')">Bars</button>
+  <button class="page-tab" id="tab-library" onclick="switchPage('library')">Library</button>
 </div>
 
-<div class="controls">
-  <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
-  <button class="btn-reset-all" onclick="resetAll()">Reset All</button>
+<div id="page-bars">
+  <div class="summary" id="summary"></div>
+  <div class="info-bar">
+    ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
+    <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
+    Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks always round up
+  </div>
+  <div class="controls">
+    <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
+    <button class="btn-reset-all" onclick="resetAll()">Reset All</button>
+  </div>
+  <div id="bars-container"></div>
 </div>
 
-<div id="bars-container"></div>
+<div id="page-library" style="display:none">
+  <div id="library-container"></div>
+</div>
+
 <div class="footer">Data synced via Firebase · Works across all devices automatically</div>
 
 <script>
@@ -187,6 +217,8 @@ const DEFAULT_FIXTURES = [
   {name:"CS Fres V",              weight:7.5,  category:"Lighting"},
   {name:"ND at 50",               weight:0.1,  category:"Lighting"},
   {name:"Nexo PS10",              weight:14.0, category:"Sound"},
+  {name:"GLP Impression X5",     weight:13.3, category:"Lighting"},
+  {name:"GLP Impression X5 Compact", weight:7.5, category:"Lighting"},
   {name:"White Cyc/BP",           weight:36.0, category:"Drapes", exclusive:true},
   {name:"Drape (per metre run)",  weight:2.5,  category:"Drapes"},
   {name:"Tab (per metre run)",    weight:1.8,  category:"Drapes"},
@@ -481,10 +513,10 @@ async function saveShowsToFirebase() {
   }
 }
 
-async function saveShow(name) {
+async function saveShow(name, skipConfirm = false) {
   if (!name) return;
   const isOverwrite = !!shows[name];
-  if (isOverwrite && !confirm(`A show named "${name}" already exists. Overwrite it?`)) return;
+  if (isOverwrite && !skipConfirm && name !== activeShowName && !confirm(`A show named "${name}" already exists. Overwrite it?`)) return;
   shows[name] = {
     bars: JSON.parse(JSON.stringify(bars)),
     savedAt: new Date().toISOString()
@@ -576,10 +608,21 @@ function renderShows() {
         `;
       }).join('');
 
+  const updateBtn = activeShowName ? `
+    <div class="shows-save-row" style="margin-bottom:6px">
+      <span style="font-size:12px;color:#94a3b8;flex:1">Loaded: <strong style="color:#22c55e">${esc(activeShowName)}</strong></span>
+      <button class="btn-update-show" onclick="saveShow(${JSON.stringify(activeShowName).replace(/"/g,'&quot;')}, true)">
+        ↑ Save to "${esc(activeShowName)}"
+      </button>
+    </div>
+    <div style="border-top:1px solid #33415544;margin:4px 0 6px"></div>
+  ` : '';
+
   container.innerHTML = `
+    ${updateBtn}
     <div class="shows-save-row">
-      <input type="text" id="new-show-name" placeholder="Show name e.g. Sleeping Beauty..." style="flex:1;min-width:140px">
-      <button class="btn-add" onclick="promptSaveShow()">Save Current as Show</button>
+      <input type="text" id="new-show-name" placeholder="Save as new show…" style="flex:1;min-width:140px">
+      <button class="btn-add" onclick="promptSaveShow()">Save as New Show</button>
     </div>
     <div class="shows-list">${listHtml}</div>
   `;
@@ -692,7 +735,6 @@ function renderBar(bar) {
   const exp = !!expanded[bar.id];
 
   const isExclusive = bar.fixtures.some(f => f.exclusive);
-  const CAT_COLOURS = {Lighting:'#818cf8', Sound:'#34d399', Set:'#94a3b8', Drapes:'#f472b6'};
 
   const fixtureRows = bar.fixtures.map(f => {
     const catCol = CAT_COLOURS[f.category] || '#475569';
@@ -844,6 +886,141 @@ function renderBar(bar) {
       </div>
       ${bodyHtml}
     </div>
+  `;
+}
+
+let currentPage = 'bars';
+let editingLibItem = null;
+
+function switchPage(page) {
+  currentPage = page;
+  document.getElementById('page-bars').style.display = page === 'bars' ? 'block' : 'none';
+  document.getElementById('page-library').style.display = page === 'library' ? 'block' : 'none';
+  document.getElementById('tab-bars').className = 'page-tab' + (page === 'bars' ? ' active' : '');
+  document.getElementById('tab-library').className = 'page-tab' + (page === 'library' ? ' active' : '');
+  if (page === 'library') renderLibraryPage();
+  else render();
+}
+
+const CAT_COLOURS = {Lighting:'#818cf8', Sound:'#34d399', Set:'#94a3b8', Drapes:'#f472b6'};
+
+function catPill(cat) {
+  if (!cat) return '<span style="color:#475569">—</span>';
+  const c = CAT_COLOURS[cat] || '#64748b';
+  return `<span class="lib-cat-pill" style="background:${c}22;color:${c}">${esc(cat)}</span>`;
+}
+
+function startLibEdit(name) {
+  editingLibItem = name;
+  renderLibraryPage();
+}
+function cancelLibEdit() {
+  editingLibItem = null;
+  renderLibraryPage();
+}
+function saveLibEdit(oldName) {
+  const newName = document.getElementById('ledit_name').value.trim();
+  const newWeight = parseFloat(document.getElementById('ledit_weight').value);
+  const newCat = document.getElementById('ledit_cat').value;
+  const newExcl = document.getElementById('ledit_excl').checked;
+  if (!newName || isNaN(newWeight) || newWeight <= 0) return;
+  const idx = library.findIndex(f => f.name === oldName);
+  if (idx === -1) return;
+  library[idx] = {name: newName, weight: newWeight, category: newCat, exclusive: newExcl};
+  editingLibItem = null;
+  scheduleSave();
+  renderLibraryPage();
+}
+function deleteLibItem(name) {
+  if (!confirm(`Remove "${name}" from the library? It won't affect bars already using it.`)) return;
+  library = library.filter(f => f.name !== name);
+  scheduleSave();
+  renderLibraryPage();
+}
+function addLibItem() {
+  const name = document.getElementById('lnew_name').value.trim();
+  const weight = parseFloat(document.getElementById('lnew_weight').value);
+  const cat = document.getElementById('lnew_cat').value;
+  const excl = document.getElementById('lnew_excl').checked;
+  if (!name || isNaN(weight) || weight <= 0) {
+    const el = document.getElementById('lnew_name');
+    if (el) { el.style.borderColor='#ef4444'; setTimeout(()=>el.style.borderColor='#334155',1500); }
+    return;
+  }
+  if (library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+    alert(`"${name}" already exists in the library.`);
+    return;
+  }
+  library.push({name, weight, category: cat, exclusive: excl});
+  scheduleSave();
+  document.getElementById('lnew_name').value = '';
+  document.getElementById('lnew_weight').value = '';
+  document.getElementById('lnew_cat').value = '';
+  document.getElementById('lnew_excl').checked = false;
+  renderLibraryPage();
+}
+function renderLibraryPage() {
+  const catOrder = ['Lighting', 'Sound', 'Set', 'Drapes', 'Other'];
+  const sortedLib = [...library].sort((a, b) => {
+    const ci = x => { const i = catOrder.indexOf(x.category||'Other'); return i===-1?catOrder.length:i; };
+    const cd = ci(a) - ci(b);
+    if (cd !== 0) return cd;
+    return a.name.localeCompare(b.name);
+  });
+
+  const catInputs = ['Lighting','Sound','Set','Drapes'].map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const rows = sortedLib.map(f => {
+    if (editingLibItem === f.name) {
+      const catOpts = ['','Lighting','Sound','Set','Drapes'].map(c =>
+        `<option value="${c}" ${(f.category||'')=== c?'selected':''}>${c||'— none —'}</option>`
+      ).join('');
+      return `<tr style="background:#1e293b">
+        <td><input class="lib-edit-inp" id="ledit_name" value="${esc(f.name)}" style="width:100%;min-width:120px"></td>
+        <td><select class="lib-edit-inp" id="ledit_cat" style="width:100px">${catOpts}</select></td>
+        <td class="r"><input class="lib-edit-inp" id="ledit_weight" type="number" step="0.1" value="${f.weight}" style="width:70px"></td>
+        <td style="text-align:center"><input type="checkbox" id="ledit_excl" ${f.exclusive?'checked':''} style="accent-color:#f59e0b;width:16px;height:16px"></td>
+        <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
+          <button class="btn-lib-save" onclick="saveLibEdit('${esc(f.name)}')">Save</button>
+          <button class="btn-lib-cancel" onclick="cancelLibEdit()">Cancel</button>
+        </td>
+      </tr>`;
+    }
+    return `<tr>
+      <td style="font-weight:600">${esc(f.name)}${f.exclusive?` <span style="font-size:10px;color:#f59e0b">⚠ exclusive</span>`:''}</td>
+      <td>${catPill(f.category)}</td>
+      <td class="r" style="color:#fbbf24;font-weight:700">${f.weight} kg</td>
+      <td style="text-align:center;color:${f.exclusive?'#f59e0b':'#334155'}">${f.exclusive?'✓':'—'}</td>
+      <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
+        <button class="btn-lib-edit" onclick="startLibEdit('${esc(f.name)}')">Edit</button>
+        <button class="btn-lib-del" onclick="deleteLibItem('${esc(f.name)}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('library-container').innerHTML = `
+    <div class="lib-add-box">
+      <div class="lib-add-title">Add new item to library</div>
+      <div class="add-row">
+        <input class="inp-name lib-edit-inp" id="lnew_name" placeholder="Name" style="flex:1;min-width:130px">
+        <select class="lib-edit-inp" id="lnew_cat" style="width:110px">
+          <option value="">Category…</option>
+          ${catInputs}
+        </select>
+        <input class="lib-edit-inp" id="lnew_weight" type="number" step="0.1" placeholder="kg" style="width:75px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#f59e0b;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="lnew_excl" style="accent-color:#f59e0b"> Exclusive
+        </label>
+        <button class="btn-add" onclick="addLibItem()">+ Add</button>
+      </div>
+    </div>
+    <table class="lib-table">
+      <thead><tr>
+        <th>Name</th><th>Category</th><th class="r">Weight</th><th style="text-align:center">Excl.</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:#475569;margin-top:8px">${library.length} items in library</div>
   `;
 }
 
