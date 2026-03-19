@@ -199,7 +199,7 @@ function setSyncStatus(status, msg) {
 
 async function firebaseGet(path) {
   const res = await fetch(`${FIREBASE_URL}/${path}.json`);
-  if (!res.ok) throw new Error('Firebase read failed');
+  if (!res.ok) throw new Error(`GET /${path} → HTTP ${res.status}`);
   return await res.json();
 }
 
@@ -209,7 +209,7 @@ async function firebasePut(path, data) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error('Firebase write failed');
+  if (!res.ok) throw new Error(`PUT /${path} → HTTP ${res.status}`);
   return await res.json();
 }
 
@@ -231,7 +231,8 @@ async function loadFromFirebase() {
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
     render();
   } catch(e) {
-    setSyncStatus('offline', 'Firebase offline — using local data');
+    console.error('[Firebase load error]', e);
+    setSyncStatus('offline', `Offline: ${e.message}`);
     render();
   }
   // Load shows separately — failure here must never break the main sync
@@ -241,7 +242,7 @@ async function loadFromFirebase() {
       shows = fbShows;
       saveLocal('tbtl_shows_v1', shows);
     }
-  } catch(e) { /* use local shows */ }
+  } catch(e) { console.warn('[Firebase shows load]', e); }
   renderShows();
 }
 
@@ -256,7 +257,8 @@ async function saveToFirebase() {
     saveLocal('tbtl_lib_v3', library);
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
-    setSyncStatus('offline', 'Save failed — working offline');
+    console.error('[Firebase save error]', e);
+    setSyncStatus('offline', `Save failed: ${e.message}`);
   }
 }
 
