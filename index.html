@@ -301,9 +301,15 @@ function setSyncStatus(status, msg) {
 }
 
 async function firebaseGet(path) {
-  const res = await fetch(`${FIREBASE_URL}/${path}.json`);
-  if (!res.ok) throw new Error(`GET /${path} → HTTP ${res.status}`);
-  return await res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`, { signal: controller.signal });
+    if (!res.ok) throw new Error(`GET /${path} → HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function firebasePut(path, data) {
@@ -1192,6 +1198,9 @@ function render() {
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
 }
 
+// Render immediately from localStorage so the UI is usable even if Firebase is slow/offline
+render();
+renderShows();
 loadFromFirebase();
 
 function printSchedule() {
