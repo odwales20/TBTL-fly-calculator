@@ -158,7 +158,7 @@
   <div class="info-bar">
     ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
     <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-    Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks rounded to nearest
+    Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick &nbsp;·&nbsp; Bricks rounded to nearest
   </div>
   <div class="controls">
     <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
@@ -346,11 +346,13 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
+  const conduitLoad = (bar.fixtures || []).filter(f => f.conduit).length * (FULL / 2);
   const miscLoad = (bar.miscBricks || 0) * FULL / 2; // bricks → CW kg ÷2 = hung kg
   return fixtureLoad
+    + conduitLoad
     + (bar.extensions ? EXTENSIONS_WEIGHT : 0)
     + (bar.iwb ? IWB_WEIGHT : 0)
-    + (bar.iwb && bar.cable ? CABLE_WEIGHT : 0)
+    + (bar.cable ? CABLE_WEIGHT : 0)
     + miscLoad;
 }
 
@@ -368,17 +370,21 @@ function toggleExtensions(barId) {
 function toggleIWB(barId) {
   const bar = bars.find(b => b.id === barId);
   bar.iwb = !bar.iwb;
-  if (!bar.iwb) bar.cable = false; // cable only valid with IWB
   scheduleSave();
   render();
 }
 
 function toggleCable(barId) {
   const bar = bars.find(b => b.id === barId);
-  if (!bar.iwb) return;
   bar.cable = !bar.cable;
   scheduleSave();
   render();
+}
+
+function toggleConduit(barId, fixtureId) {
+  const bar = bars.find(b => b.id === barId);
+  const f = bar.fixtures.find(f => f.id === fixtureId);
+  if (f) { f.conduit = !f.conduit; scheduleSave(); render(); }
 }
 
 function updateBarName(barId, val) {
@@ -434,7 +440,7 @@ function addFixture(barId) {
     alert('This bar is full — the exclusive item takes up the whole bar.');
     return;
   }
-  bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive});
+  bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive, conduit: false});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
   }
@@ -750,9 +756,18 @@ function renderBar(bar) {
     const catCol = CAT_COLOURS[f.category] || '#475569';
     const catBadge = f.category ? `<span style="font-size:10px;color:${catCol};font-weight:700;margin-left:4px">[${f.category}]</span>` : '';
     const excBadge = f.exclusive ? `<span style="font-size:10px;color:#f59e0b;font-weight:700;margin-left:4px">⚠ EXCL</span>` : '';
+    const isDrape = f.category === 'Drapes';
+    const conduitCell = isDrape
+      ? `<td style="text-align:center;white-space:nowrap">
+           <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:${f.conduit?'#a78bfa':'#475569'}">
+             <input type="checkbox" ${f.conduit?'checked':''} onchange="toggleConduit(${bar.id},${f.id})" style="accent-color:#a78bfa;">
+             Conduit
+           </label>
+         </td>`
+      : '<td></td>';
     return `
     <tr>
-      <td>${esc(f.name)}${catBadge}${excBadge}</td>
+      <td>${esc(f.name)}${catBadge}${excBadge}${f.conduit?'<span style="font-size:10px;color:#a78bfa;font-weight:700;margin-left:4px">+CONDUIT</span>':''}</td>
       <td class="c">
         <input type="number" class="qty-inp" min="1" value="${f.qty}"
           onchange="updateQty(${bar.id},${f.id},this.value)"
@@ -760,6 +775,7 @@ function renderBar(bar) {
       </td>
       <td class="r muted">${f.weight.toFixed(1)}</td>
       <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
+      ${conduitCell}
       <td class="r"><button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button></td>
     </tr>`;
   }).join('');
@@ -784,7 +800,7 @@ function renderBar(bar) {
     </tr>
   ` : '';
 
-  const cableRow = (bar.iwb && bar.cable) ? `
+  const cableRow = bar.cable ? `
     <tr>
       <td style="color:#7dd3fc">Cable Allowance</td>
       <td class="c muted">—</td>
@@ -846,17 +862,16 @@ function renderBar(bar) {
           ${bar.iwb ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>
-      ${bar.iwb ? `
-      <div class="ext-section" style="border-left:2px solid #fb923c44;margin-left:12px;padding-left:8px">
+      <div class="ext-section">
         <div class="ext-info">
           <strong style="color:#7dd3fc">Cable Allowance</strong>
-          <small>IWB bars only · +6kg hung (+1 brick)</small>
+          <small>+6kg hung (+1 brick)</small>
         </div>
         ${bar.cable ? `<span class="ext-badge" style="background:#0c2340;color:#7dd3fc;border:1px solid #7dd3fc44">+1 brick in cradle</span>` : ''}
         <button class="ext-btn ${bar.cable ? 'on-blue' : 'off'}" onclick="toggleCable(${bar.id})">
           ${bar.cable ? '✓ In Use' : 'Not In Use'}
         </button>
-      </div>` : ''}
+      </div>
       <div class="ext-section">
         <div class="ext-info">
           <strong style="color:#a78bfa">Misc Bricks</strong>
@@ -871,7 +886,7 @@ function renderBar(bar) {
       <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
         ⚠ BAR FULL — ${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')} takes the full bar. No additional items can be added.
       </div>` : ''}
-      ${(bar.fixtures.length > 0 || bar.extensions || bar.iwb) ? `
+      ${(bar.fixtures.length > 0 || bar.extensions || bar.iwb || bar.cable) ? `
         <table>
           <thead><tr>
             <th>Item</th><th class="c">Qty</th>
@@ -942,8 +957,13 @@ function saveLibEdit(oldName) {
   const idx = library.findIndex(f => f.name === oldName);
   if (idx === -1) return;
   library[idx] = {name: newName, weight: newWeight, category: newCat, exclusive: newExcl};
+  // Propagate changes to all bar fixtures using this item
+  bars.forEach(bar => bar.fixtures.forEach(f => {
+    if (f.name === oldName) { f.name = newName; f.weight = newWeight; f.category = newCat; f.exclusive = newExcl; }
+  }));
   editingLibItem = null;
   scheduleSave();
+  render();
   renderLibraryPage();
 }
 function deleteLibItem(name) {
@@ -970,6 +990,7 @@ function addLibItem() {
   scheduleSave();
   document.getElementById('lnew_name').value = '';
   document.getElementById('lnew_weight').value = '';
+  document.getElementById('lnew_bricks').value = '';
   document.getElementById('lnew_cat').value = '';
   document.getElementById('lnew_excl').checked = false;
   renderLibraryPage();
@@ -993,7 +1014,15 @@ function renderLibraryPage() {
       return `<tr style="background:#1e293b">
         <td><input class="lib-edit-inp" id="ledit_name" value="${esc(f.name)}" style="width:100%;min-width:120px"></td>
         <td><select class="lib-edit-inp" id="ledit_cat" style="width:100px">${catOpts}</select></td>
-        <td class="r"><input class="lib-edit-inp" id="ledit_weight" type="number" step="0.1" value="${f.weight}" style="width:70px"></td>
+        <td class="r">
+          <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;flex-wrap:wrap">
+            <input class="lib-edit-inp" id="ledit_weight" type="number" step="0.1" value="${f.weight}" style="width:60px"
+              oninput="const b=document.getElementById('ledit_bricks');if(b)b.value=(parseFloat(this.value)/6).toFixed(2)"> kg
+            <span style="color:#475569">/</span>
+            <input class="lib-edit-inp" id="ledit_bricks" type="number" step="0.5" value="${(f.weight/6).toFixed(2)}" style="width:55px"
+              oninput="const w=document.getElementById('ledit_weight');if(w)w.value=(parseFloat(this.value)*6).toFixed(1)"> br
+          </div>
+        </td>
         <td style="text-align:center"><input type="checkbox" id="ledit_excl" ${f.exclusive?'checked':''} style="accent-color:#f59e0b;width:16px;height:16px"></td>
         <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
           <button class="btn-lib-save" onclick="saveLibEdit('${esc(f.name)}')">Save</button>
@@ -1022,7 +1051,10 @@ function renderLibraryPage() {
           <option value="">Category…</option>
           ${catInputs}
         </select>
-        <input class="lib-edit-inp" id="lnew_weight" type="number" step="0.1" placeholder="kg" style="width:75px">
+        <input class="lib-edit-inp" id="lnew_weight" type="number" step="0.1" placeholder="kg" style="width:65px"
+          oninput="const b=document.getElementById('lnew_bricks');if(b)b.value=(parseFloat(this.value)/6).toFixed(2)">
+        <input class="lib-edit-inp" id="lnew_bricks" type="number" step="0.5" placeholder="bricks" style="width:65px"
+          oninput="const w=document.getElementById('lnew_weight');if(w)w.value=(parseFloat(this.value)*6).toFixed(1)">
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#f59e0b;cursor:pointer;white-space:nowrap">
           <input type="checkbox" id="lnew_excl" style="accent-color:#f59e0b"> Exclusive
         </label>
