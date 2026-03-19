@@ -76,12 +76,26 @@
   .ext-btn.on-green { background: #16a34a; color: #fff; }
   .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
   .bricks-note { font-size: 10px; color: #475569; font-style: italic; margin-top: 3px; }
+  .sync-bar { display: flex; align-items: center; gap: 8px; background: #1e293b; border-radius: 7px; padding: 6px 12px; margin-bottom: 10px; font-size: 12px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sync-dot.online { background: #22c55e; }
+  .sync-dot.offline { background: #ef4444; }
+  .sync-dot.syncing { background: #fbbf24; animation: pulse 1s infinite; }
+  .sync-text { flex: 1; color: #64748b; }
+  .sync-btn { background: #0f172a; color: #3b82f6; border: 1px solid #3b82f644; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 </style>
 </head>
 <body>
 
 <h1>🎭 Fly Weight Calculator</h1>
 <p class="subtitle">Theatre by the Lake · Double Purchase · 39 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
+
+<div class="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-text" id="sync-text">Connecting to database...</span>
+  <button class="sync-btn" onclick="forceSave()">Save Now</button>
+</div>
 
 <div class="summary" id="summary"></div>
 
@@ -97,17 +111,15 @@
 </div>
 
 <div id="bars-container"></div>
-<div class="footer">Data & fixture library saved in your browser · Bricks mode stores correct hung load automatically</div>
+<div class="footer">Data synced to cloud database · Falls back to local storage if server unreachable</div>
 
 <script>
+const API = 'http://82.39.45.11:3001';
 const FULL = 12, HALF = 6;
-// Extensions: 2 cradle bricks = 24kg cradle ÷ 2 double purchase = 12kg hung load
 const EXTENSIONS_WEIGHT = 12;
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
-// ALL weights stored as hung load on bar (i.e. cradle kg ÷ 2)
-// White Cyc/BP = 6 cradle bricks = 72kg cradle ÷ 2 = 36kg hung load
 const DEFAULT_FIXTURES = [
   {name:"Selecon TW1S", weight:3.5},
   {name:"ETC Source Four 19°", weight:5.0},
@@ -134,21 +146,97 @@ function defaultBars() {
   }));
 }
 
-function load(key, def) {
+// Local storage fallback
+function loadLocal(key, def) {
   try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
 }
-function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
-let bars = load('tbtl_bars_v3', defaultBars());
-let library = load('tbtl_lib_v3', DEFAULT_FIXTURES);
+let bars = loadLocal('tbtl_bars_v3', defaultBars());
+let library = loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES);
 let expanded = {};
 let inputMode = {};
+let serverOnline = false;
+let saveTimeout = null;
 
 if (!bars.some(b => b.id === 1) || bars.some(b => EXCLUDED.has(b.id))) {
   bars = defaultBars();
-  save('tbtl_bars_v3', bars);
 }
 bars = bars.map(b => ({...b, extensions: b.extensions || false}));
+
+// Sync status UI
+function setSyncStatus(status, msg) {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  if (!dot || !text) return;
+  dot.className = `sync-dot ${status}`;
+  text.textContent = msg;
+}
+
+// Load from server
+async function loadFromServer() {
+  try {
+    setSyncStatus('syncing', 'Loading from database...');
+    const [barsRes, libRes] = await Promise.all([
+      fetch(`${API}/data/bars`),
+      fetch(`${API}/data/library`)
+    ]);
+    if (!barsRes.ok || !libRes.ok) throw new Error('Server error');
+    const serverBars = await barsRes.json();
+    const serverLib = await libRes.json();
+    if (serverBars && Array.isArray(serverBars)) {
+      bars = serverBars.map(b => ({...b, extensions: b.extensions || false}));
+      saveLocal('tbtl_bars_v3', bars);
+    }
+    if (serverLib && Array.isArray(serverLib)) {
+      library = serverLib;
+      saveLocal('tbtl_lib_v3', library);
+    }
+    serverOnline = true;
+    setSyncStatus('online', 'Synced with database');
+    render();
+  } catch(e) {
+    serverOnline = false;
+    setSyncStatus('offline', 'Server offline — using local data');
+    render();
+  }
+}
+
+// Save to server (debounced)
+async function saveToServer() {
+  if (!serverOnline) return;
+  try {
+    setSyncStatus('syncing', 'Saving...');
+    await Promise.all([
+      fetch(`${API}/data/bars`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(bars)
+      }),
+      fetch(`${API}/data/library`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(library)
+      })
+    ]);
+    setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    serverOnline = false;
+    setSyncStatus('offline', 'Save failed — server offline');
+  }
+}
+
+function scheduleSave() {
+  saveLocal('tbtl_bars_v3', bars);
+  saveLocal('tbtl_lib_v3', library);
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveToServer, 1500);
+}
+
+function forceSave() {
+  clearTimeout(saveTimeout);
+  saveToServer();
+}
 
 function calcBricks(cw) {
   if (cw <= 0) return {full:0, half:0, total:0};
@@ -164,21 +252,15 @@ function hungLoad(bar) {
   return fixtureLoad + extLoad;
 }
 
-// Convert cradle bricks to hung load on bar (÷2 for double purchase)
-// This is the key function — any time user enters "X bricks" meaning cradle bricks,
-// we divide by 2 to get the actual hung load stored
 function cradleBricksToHungLoad(fullBricks, halfBricks) {
   const cradleKg = (fullBricks * FULL) + (halfBricks * HALF);
   return cradleKg / 2;
 }
 
-function saveBars() { save('tbtl_bars_v3', bars); }
-function saveLib() { save('tbtl_lib_v3', library); }
-
 function toggleExtensions(barId) {
   const bar = bars.find(b => b.id === barId);
   bar.extensions = !bar.extensions;
-  saveBars();
+  scheduleSave();
   render();
 }
 
@@ -197,7 +279,7 @@ function updatePreview(barId) {
     if (full > 0 || half > 0) {
       const hungKg = cradleBricksToHungLoad(full, half);
       const cradleKg = full * FULL + half * HALF;
-      preview.innerHTML = `= <strong>${hungKg.toFixed(1)} kg hung</strong> <span style="color:#475569">(${cradleKg}kg in cradle)</span>`;
+      preview.innerHTML = `= <strong>${hungKg.toFixed(1)} kg hung</strong> <span style="color:#475569">(${cradleKg}kg cradle)</span>`;
     } else {
       preview.innerHTML = '';
     }
@@ -210,35 +292,30 @@ function addFixture(barId) {
   const qty = parseInt(document.getElementById(`fqty_${barId}`).value) || 1;
   const mode = getMode(barId);
   let weight;
-
   if (mode === 'kg') {
     weight = parseFloat(document.getElementById(`fweight_${barId}`).value);
   } else {
-    // Bricks mode: user enters CRADLE bricks, we store as hung load (÷2)
     const full = parseInt(document.getElementById(`fbfull_${barId}`).value) || 0;
     const half = parseInt(document.getElementById(`fbhalf_${barId}`).value) || 0;
     weight = cradleBricksToHungLoad(full, half);
   }
-
   if (!name || isNaN(weight) || weight <= 0) {
     const ni = document.getElementById(`fname_${barId}`);
     if (ni) { ni.style.borderColor = '#ef4444'; setTimeout(() => ni.style.borderColor = '#334155', 1500); }
     return;
   }
-
   bar.fixtures.push({id: Date.now(), name, weight, qty});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight});
-    saveLib();
   }
-  saveBars();
+  scheduleSave();
   render();
 }
 
 function removeFixture(barId, fixId) {
   const bar = bars.find(b => b.id === barId);
   bar.fixtures = bar.fixtures.filter(f => f.id !== fixId);
-  saveBars();
+  scheduleSave();
   render();
 }
 
@@ -246,14 +323,14 @@ function updateQty(barId, fixId, qty) {
   const bar = bars.find(b => b.id === barId);
   const fix = bar.fixtures.find(f => f.id === fixId);
   if (fix) fix.qty = Math.max(1, parseInt(qty) || 1);
-  saveBars();
+  scheduleSave();
   renderSummary();
 }
 
 function updateTare(barId, val) {
   const bar = bars.find(b => b.id === barId);
   const w = parseFloat(val);
-  if (!isNaN(w) && w >= 0) { bar.barWeight = w; saveBars(); }
+  if (!isNaN(w) && w >= 0) { bar.barWeight = w; scheduleSave(); }
 }
 
 function pickLib(barId) {
@@ -283,7 +360,7 @@ function toggleBar(id) {
 function resetAll() {
   if (!confirm('Reset ALL bars to empty? This cannot be undone.')) return;
   bars = defaultBars();
-  saveBars();
+  scheduleSave();
   expanded = {};
   render();
 }
@@ -426,7 +503,6 @@ function renderBar(bar) {
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:60px;">
         kg <span style="color:#334155;font-size:11px">(already counterweighted when empty)</span>
       </div>
-
       <div class="ext-section">
         <div class="ext-info">
           <strong>Extensions</strong>
@@ -437,7 +513,6 @@ function renderBar(bar) {
           ${bar.extensions ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>
-
       ${(bar.fixtures.length > 0 || bar.extensions) ? `
         <table>
           <thead><tr>
@@ -447,7 +522,6 @@ function renderBar(bar) {
           <tbody>${fixtureRows}${extRow}${totalsRow}</tbody>
         </table>
       ` : ''}
-
       ${breakdownHtml}
       ${buildAddSection(bar.id)}
     </div>
@@ -480,7 +554,8 @@ function render() {
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
 }
 
-render();
+// Boot — load from server first, fall back to local
+loadFromServer();
 </script>
 </body>
 </html>
