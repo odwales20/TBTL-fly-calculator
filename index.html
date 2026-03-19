@@ -416,6 +416,7 @@ function updatePreview(barId) {
 }
 
 function addFixture(barId) {
+  if (barId === 1) return; // Bar 1 is locked — cinema screen only
   const bar = bars.find(b => b.id === barId);
   const name = document.getElementById(`fname_${barId}`).value.trim();
   const qty = parseInt(document.getElementById(`fqty_${barId}`).value) || 1;
@@ -791,7 +792,7 @@ function renderBar(bar) {
       <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
       <td class="r" style="color:#818cf8">${cwBricks.toFixed(2)}</td>
       ${conduitCell}
-      <td class="r"><button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button></td>
+      <td class="r">${bar.id !== 1 ? `<button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -908,7 +909,10 @@ function renderBar(bar) {
           onchange="updateMiscBricks(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#a78bfa;padding:6px 8px;font-size:13px;font-weight:700;width:70px;text-align:center;">
       </div>
-      ${isExclusive ? `
+      ${bar.id === 1 ? `
+      <div style="background:#1e1b2e;border:1px solid #7c3aed44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#c084fc;font-size:12px;font-weight:700;">
+        🔒 BAR LOCKED — Bar 1 has a permanent cinema screen. No items can be added or removed.
+      </div>` : isExclusive ? `
       <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
         ⚠ BAR FULL — ${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')} takes the full bar. No additional items can be added.
       </div>` : ''}
@@ -922,14 +926,14 @@ function renderBar(bar) {
         </table>
       ` : ''}
       ${breakdownHtml}
-      ${isExclusive ? '' : buildAddSection(bar.id)}
+      ${(bar.id === 1 || isExclusive) ? '' : buildAddSection(bar.id)}
     </div>
   ` : '';
 
   return `
-    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${isExclusive ? 'exclusive' : ''}" id="bar_${bar.id}">
+    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}</span>
+        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}</span>
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
