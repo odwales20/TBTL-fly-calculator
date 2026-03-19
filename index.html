@@ -216,10 +216,9 @@ async function firebasePut(path, data) {
 async function loadFromFirebase() {
   try {
     setSyncStatus('syncing', 'Loading from Firebase...');
-    const [fbBars, fbLib, fbShows] = await Promise.all([
+    const [fbBars, fbLib] = await Promise.all([
       firebaseGet('bars'),
-      firebaseGet('library'),
-      firebaseGet('shows')
+      firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
       bars = fbBars.map(b => ({...b, extensions: b.extensions || false}));
@@ -229,18 +228,21 @@ async function loadFromFirebase() {
       library = fbLib;
       saveLocal('tbtl_lib_v3', library);
     }
+    setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
+    render();
+  } catch(e) {
+    setSyncStatus('offline', 'Firebase offline — using local data');
+    render();
+  }
+  // Load shows separately — failure here must never break the main sync
+  try {
+    const fbShows = await firebaseGet('shows');
     if (fbShows && typeof fbShows === 'object' && !Array.isArray(fbShows)) {
       shows = fbShows;
       saveLocal('tbtl_shows_v1', shows);
     }
-    setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
-    render();
-    renderShows();
-  } catch(e) {
-    setSyncStatus('offline', 'Firebase offline — using local data');
-    render();
-    renderShows();
-  }
+  } catch(e) { /* use local shows */ }
+  renderShows();
 }
 
 async function saveToFirebase() {
