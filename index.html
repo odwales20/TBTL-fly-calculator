@@ -187,7 +187,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -221,7 +221,7 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -229,12 +229,11 @@ async function loadFromFirebase() {
       saveLocal('tbtl_lib_v3', library);
     }
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
-    render();
   } catch(e) {
     console.error('[Firebase load error]', e);
     setSyncStatus('offline', `Offline: ${e.message}`);
-    render();
   }
+  render();
   // Load shows separately — failure here must never break the main sync
   try {
     const fbShows = await firebaseGet('shows');
