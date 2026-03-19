@@ -503,8 +503,8 @@ function renderShows() {
           <div class="show-item">
             <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
             <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
-            <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name)})">Load</button>
-            <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name)})">Delete</button>
+            <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Load</button>
+            <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Delete</button>
           </div>
         `;
       }).join('');
