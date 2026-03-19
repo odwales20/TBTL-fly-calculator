@@ -120,6 +120,8 @@
   .btn-show-load { background: #1e3a5f; color: #60a5fa; border: 1px solid #3b82f644; border-radius: 5px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   .btn-show-load:hover { background: #1e4a7f; }
   .btn-show-del { background: none; color: #ef4444; border: 1px solid #ef444433; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-override { background: #1c2a1c; color: #4ade80; border: 1px solid #4ade8033; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-override:hover { background: #14532d44; }
   .btn-show-del:hover { background: #ef444411; }
   .shows-empty { color: #475569; font-size: 12px; font-style: italic; margin-top: 8px; padding: 6px 0; }
   .active-show-badge { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 700; white-space: nowrap; }
@@ -131,23 +133,22 @@
   .btn-print { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   #print-section { display: none; }
   @media print {
-    @page { margin: 1.5cm; }
+    @page { size: A4 landscape; margin: 0.8cm; }
     body { background: #fff !important; color: #111 !important; padding: 0; }
     .sync-bar, .shows-panel, .page-tabs, .info-bar, .summary, .controls,
     #page-library, .footer, h1, .subtitle, #bars-container { display: none !important; }
     #page-bars { display: block !important; }
     #print-section { display: block !important; }
-    .print-header { margin-bottom: 16px; }
-    .print-header h2 { font-size: 18px; font-weight: 800; color: #111; margin: 0 0 2px; }
-    .print-header p { font-size: 11px; color: #555; margin: 0; }
-    .print-dnf-alert { border: 2px solid #ef4444; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; color: #b91c1c; font-size: 12px; font-weight: 700; }
-    .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
-    .print-table th { background: #f1f5f9; color: #334155; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; text-align: left; padding: 5px 7px; border: 1px solid #cbd5e1; }
-    .print-table td { padding: 5px 7px; border: 1px solid #e2e8f0; vertical-align: top; color: #111; }
+    .print-header { margin-bottom: 8px; display: flex; align-items: baseline; gap: 12px; }
+    .print-header h2 { font-size: 13px; font-weight: 800; color: #111; margin: 0; }
+    .print-header p { font-size: 9px; color: #555; margin: 0; }
+    .print-dnf-alert { border: 1.5px solid #ef4444; border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; color: #b91c1c; font-size: 9px; font-weight: 700; }
+    .print-table { width: 100%; border-collapse: collapse; font-size: 7.5px; margin-top: 3px; line-height: 1.2; }
+    .print-table th { background: #f1f5f9; color: #334155; text-transform: uppercase; font-size: 6.5px; letter-spacing: 0.6px; text-align: left; padding: 2px 4px; border: 1px solid #cbd5e1; }
+    .print-table td { padding: 1px 4px; border: 1px solid #e2e8f0; vertical-align: middle; color: #111; line-height: 1.2; }
     .print-table tr.dnf-row td { background: #fff1f1; font-weight: 700; }
-    .print-table tr.dnf-row td.dnf-cell { color: #b91c1c; font-size: 10px; font-weight: 800; }
+    .print-table tr.dnf-row td.dnf-cell { color: #b91c1c; font-size: 8px; font-weight: 800; }
     .print-table tr.locked-row td { background: #faf5ff; color: #7c3aed; }
-    .print-table tr.empty-row td { color: #94a3b8; }
     .print-bricks { color: #4338ca; font-weight: 700; }
   }
 </style>
@@ -628,6 +629,11 @@ async function deleteShow(name) {
   renderShows();
 }
 
+async function overrideShow(name) {
+  if (!confirm(`Overwrite "${name}" with the current rig? This cannot be undone.`)) return;
+  await saveShow(name, true);
+}
+
 function promptSaveShow() {
   const nameInput = document.getElementById('new-show-name');
   const name = nameInput.value.trim();
@@ -673,6 +679,7 @@ function renderShows() {
             <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
             <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
             <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Load</button>
+            <button class="btn-show-override" onclick="overrideShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Override</button>
             <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Delete</button>
           </div>
         `;
@@ -1006,7 +1013,7 @@ function renderBar(bar) {
   ` : '';
 
   return `
-    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''}" id="bar_${bar.id}">
+    ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()
       <div class="bar-header" onclick="toggleBar(${bar.id})">
         ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}</span>`; })()}
         <span class="bar-summary">${summaryText}</span>
