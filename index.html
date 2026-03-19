@@ -875,7 +875,7 @@ function renderBar(bar) {
           ${bar.iwb && !exp ? `<span style="color:#fb923c;font-size:11px;font-weight:700">IWB</span>` : ''}
           <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
           <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
-          <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? bricks.full : '—'}</strong></span>
+          <span class="stat">Bricks: <strong style="color:#818cf8">${bricks.full}</strong></span>
         </div>
         <span class="chevron">${exp ? '▲' : '▼'}</span>
       </div>
