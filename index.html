@@ -346,8 +346,10 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
+  const conduitLoad = (bar.fixtures || []).filter(f => f.conduit).length * (FULL / 2);
   const miscLoad = (bar.miscBricks || 0) * FULL / 2; // bricks → CW kg ÷2 = hung kg
   return fixtureLoad
+    + conduitLoad
     + (bar.extensions ? EXTENSIONS_WEIGHT : 0)
     + (bar.iwb ? IWB_WEIGHT : 0)
     + (bar.iwb && bar.cable ? CABLE_WEIGHT : 0)
@@ -379,6 +381,12 @@ function toggleCable(barId) {
   bar.cable = !bar.cable;
   scheduleSave();
   render();
+}
+
+function toggleConduit(barId, fixtureId) {
+  const bar = bars.find(b => b.id === barId);
+  const f = bar.fixtures.find(f => f.id === fixtureId);
+  if (f) { f.conduit = !f.conduit; scheduleSave(); render(); }
 }
 
 function updateBarName(barId, val) {
@@ -434,7 +442,7 @@ function addFixture(barId) {
     alert('This bar is full — the exclusive item takes up the whole bar.');
     return;
   }
-  bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive});
+  bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive, conduit: false});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
   }
@@ -750,9 +758,18 @@ function renderBar(bar) {
     const catCol = CAT_COLOURS[f.category] || '#475569';
     const catBadge = f.category ? `<span style="font-size:10px;color:${catCol};font-weight:700;margin-left:4px">[${f.category}]</span>` : '';
     const excBadge = f.exclusive ? `<span style="font-size:10px;color:#f59e0b;font-weight:700;margin-left:4px">⚠ EXCL</span>` : '';
+    const isDrape = f.category === 'Drapes';
+    const conduitCell = isDrape
+      ? `<td style="text-align:center;white-space:nowrap">
+           <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:${f.conduit?'#a78bfa':'#475569'}">
+             <input type="checkbox" ${f.conduit?'checked':''} onchange="toggleConduit(${bar.id},${f.id})" style="accent-color:#a78bfa;">
+             Conduit
+           </label>
+         </td>`
+      : '<td></td>';
     return `
     <tr>
-      <td>${esc(f.name)}${catBadge}${excBadge}</td>
+      <td>${esc(f.name)}${catBadge}${excBadge}${f.conduit?'<span style="font-size:10px;color:#a78bfa;font-weight:700;margin-left:4px">+CONDUIT</span>':''}</td>
       <td class="c">
         <input type="number" class="qty-inp" min="1" value="${f.qty}"
           onchange="updateQty(${bar.id},${f.id},this.value)"
@@ -760,6 +777,7 @@ function renderBar(bar) {
       </td>
       <td class="r muted">${f.weight.toFixed(1)}</td>
       <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
+      ${conduitCell}
       <td class="r"><button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button></td>
     </tr>`;
   }).join('');
