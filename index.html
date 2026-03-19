@@ -74,6 +74,7 @@
   .ext-badge { border-radius: 5px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .ext-btn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
   .ext-btn.on-green { background: #16a34a; color: #fff; }
+  .ext-btn.on-orange { background: #ea580c; color: #fff; }
   .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
   .bricks-note { font-size: 10px; color: #475569; font-style: italic; margin-top: 3px; }
   .sync-bar { display: flex; align-items: center; gap: 8px; background: #1e293b; border-radius: 7px; padding: 6px 12px; margin-bottom: 10px; font-size: 12px; }
@@ -129,7 +130,7 @@
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
   <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-  Extensions = +2 cradle bricks
+  Extensions = +2 cradle bricks &nbsp;·&nbsp; IWB = +8 cradle bricks
 </div>
 
 <div class="controls">
@@ -144,6 +145,7 @@
 const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
+const IWB_WEIGHT = 48; // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
@@ -191,8 +193,14 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false
   }));
+}
+
+function mergeDefaultsIntoLibrary(lib) {
+  const names = new Set(lib.map(f => f.name.toLowerCase()));
+  const toAdd = DEFAULT_FIXTURES.filter(f => !names.has(f.name.toLowerCase()));
+  return toAdd.length > 0 ? [...lib, ...toAdd] : lib;
 }
 
 function loadLocal(key, def) {
@@ -201,7 +209,7 @@ function loadLocal(key, def) {
 function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
 let bars = loadLocal('tbtl_bars_v3', defaultBars());
-let library = loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES);
+let library = mergeDefaultsIntoLibrary(loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES));
 let shows = loadLocal('tbtl_shows_v1', {});
 let activeShowName = null;
 let showsPanelOpen = false;
@@ -209,7 +217,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -243,11 +251,11 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
-      library = fbLib;
+      library = mergeDefaultsIntoLibrary(fbLib);
       saveLocal('tbtl_lib_v3', library);
     }
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
@@ -305,7 +313,7 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
-  return fixtureLoad + (bar.extensions ? EXTENSIONS_WEIGHT : 0);
+  return fixtureLoad + (bar.extensions ? EXTENSIONS_WEIGHT : 0) + (bar.iwb ? IWB_WEIGHT : 0);
 }
 
 function cradleBricksToHungLoad(fullBricks, halfBricks) {
@@ -317,6 +325,19 @@ function toggleExtensions(barId) {
   bar.extensions = !bar.extensions;
   scheduleSave();
   render();
+}
+
+function toggleIWB(barId) {
+  const bar = bars.find(b => b.id === barId);
+  bar.iwb = !bar.iwb;
+  scheduleSave();
+  render();
+}
+
+function updateBarName(barId, val) {
+  const bar = bars.find(b => b.id === barId);
+  const name = val.trim();
+  if (name) { bar.name = name; scheduleSave(); }
 }
 
 function getMode(barId) { return inputMode[barId] || 'kg'; }
@@ -460,7 +481,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
@@ -598,11 +619,13 @@ function renderSummary() {
   const totalHalf = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).half, 0);
   const loadedCount = bars.filter(b => hungLoad(b) > 0).length;
   const extCount = bars.filter(b => b.extensions).length;
+  const iwbCount = bars.filter(b => b.iwb).length;
   const totalBars = bars.length;
 
   document.getElementById('summary').innerHTML = [
     ['Loaded Bars', `${loadedCount}/${totalBars}`, '#22c55e'],
     ['Bars w/ Extensions', extCount, '#34d399'],
+    ['Bars w/ IWB', iwbCount, '#fb923c'],
     ['Total Hung Load', `${totalHung.toFixed(1)} kg`, '#f1f5f9'],
     ['Total Counterweight', `${totalCW.toFixed(1)} kg`, '#fbbf24'],
     ['Full Bricks (12kg)', totalFull, '#818cf8'],
@@ -646,6 +669,16 @@ function renderBar(bar) {
     </tr>
   ` : '';
 
+  const iwbRow = bar.iwb ? `
+    <tr style="border-top:1px solid #0f172a">
+      <td style="color:#fb923c">IWB</td>
+      <td class="c muted">—</td>
+      <td class="r muted">48.0</td>
+      <td class="r" style="color:#fb923c;font-weight:700">48.0</td>
+      <td></td>
+    </tr>
+  ` : '';
+
   const totalsRow = loaded ? `
     <tr style="border-top:2px solid #334155">
       <td colspan="3" class="muted" style="font-size:11px">Total hung load</td>
@@ -667,12 +700,17 @@ function renderBar(bar) {
   const summaryItems = [];
   if (bar.fixtures.length > 0) summaryItems.push(`${bar.fixtures.length} fixture${bar.fixtures.length>1?'s':''}`);
   if (bar.extensions) summaryItems.push('extensions');
+  if (bar.iwb) summaryItems.push('IWB');
   const summaryText = summaryItems.length > 0 ? summaryItems.join(' + ') : 'Empty';
 
   const bodyHtml = exp ? `
     <div class="bar-body">
       <div class="tare-row">
-        Bar tare:
+        Bar name:
+        <input type="text" value="${esc(bar.name)}"
+          onblur="updateBarName(${bar.id},this.value)"
+          style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
+        &nbsp;&nbsp;Tare:
         <input type="number" value="${bar.barWeight}"
           onblur="updateTare(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:60px;">
@@ -688,13 +726,23 @@ function renderBar(bar) {
           ${bar.extensions ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>
-      ${(bar.fixtures.length > 0 || bar.extensions) ? `
+      <div class="ext-section">
+        <div class="ext-info">
+          <strong>IWB</strong>
+          <small>1 max · adds 8 bricks (96kg) to cradle</small>
+        </div>
+        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+8 bricks in cradle</span>` : ''}
+        <button class="ext-btn ${bar.iwb ? 'on-orange' : 'off'}" onclick="toggleIWB(${bar.id})">
+          ${bar.iwb ? '✓ In Use' : 'Not In Use'}
+        </button>
+      </div>
+      ${(bar.fixtures.length > 0 || bar.extensions || bar.iwb) ? `
         <table>
           <thead><tr>
             <th>Item</th><th class="c">Qty</th>
             <th class="r">Unit kg</th><th class="r">Total kg</th><th></th>
           </tr></thead>
-          <tbody>${fixtureRows}${extRow}${totalsRow}</tbody>
+          <tbody>${fixtureRows}${extRow}${iwbRow}${totalsRow}</tbody>
         </table>
       ` : ''}
       ${breakdownHtml}
@@ -705,10 +753,11 @@ function renderBar(bar) {
   return `
     <div class="bar-wrap ${loaded ? 'loaded' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        <span class="bar-num">BAR ${bar.id}</span>
+        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
+          ${bar.iwb && !exp ? `<span style="color:#fb923c;font-size:11px;font-weight:700">IWB</span>` : ''}
           <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
           <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
           <span class="stat">Bricks: <strong style="color:#818cf8">${loaded ? `${bricks.full}F ${bricks.half}H` : '—'}</strong></span>
