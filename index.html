@@ -178,7 +178,7 @@ const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
 const IWB_WEIGHT = 48;    // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
-const CABLE_WEIGHT = 12;  // cable allowance when IWB fitted
+const CABLE_WEIGHT = 6;   // cable allowance: 6kg hung = 12kg CW = 1 brick in cradle
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
@@ -229,7 +229,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false, miscBricks: 0
   }));
 }
 
@@ -253,7 +253,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -287,7 +287,7 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -346,10 +346,12 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
+  const miscLoad = (bar.miscBricks || 0) * FULL / 2; // bricks → CW kg ÷2 = hung kg
   return fixtureLoad
     + (bar.extensions ? EXTENSIONS_WEIGHT : 0)
     + (bar.iwb ? IWB_WEIGHT : 0)
-    + (bar.iwb && bar.cable ? CABLE_WEIGHT : 0);
+    + (bar.iwb && bar.cable ? CABLE_WEIGHT : 0)
+    + miscLoad;
 }
 
 function cradleBricksToHungLoad(fullBricks, halfBricks) {
@@ -461,6 +463,14 @@ function updateTare(barId, val) {
   if (!isNaN(w) && w >= 0) { bar.barWeight = w; scheduleSave(); }
 }
 
+function updateMiscBricks(barId, val) {
+  const bar = bars.find(b => b.id === barId);
+  const v = parseInt(val, 10);
+  bar.miscBricks = isNaN(v) ? 0 : v;
+  scheduleSave();
+  render();
+}
+
 function pickLib(barId) {
   const sel = document.getElementById(`sel_${barId}`);
   const v = sel.value;
@@ -537,7 +547,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
@@ -840,13 +850,23 @@ function renderBar(bar) {
       <div class="ext-section" style="border-left:2px solid #fb923c44;margin-left:12px;padding-left:8px">
         <div class="ext-info">
           <strong style="color:#7dd3fc">Cable Allowance</strong>
-          <small>IWB bars only · +12kg hung</small>
+          <small>IWB bars only · +6kg hung (+1 brick)</small>
         </div>
         ${bar.cable ? `<span class="ext-badge" style="background:#0c2340;color:#7dd3fc;border:1px solid #7dd3fc44">+1 brick in cradle</span>` : ''}
         <button class="ext-btn ${bar.cable ? 'on-blue' : 'off'}" onclick="toggleCable(${bar.id})">
           ${bar.cable ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>` : ''}
+      <div class="ext-section">
+        <div class="ext-info">
+          <strong style="color:#a78bfa">Misc Bricks</strong>
+          <small>Positive or negative adjustment (whole bricks)</small>
+        </div>
+        <input type="number" step="1"
+          value="${bar.miscBricks || 0}"
+          onchange="updateMiscBricks(${bar.id},this.value)"
+          style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#a78bfa;padding:6px 8px;font-size:13px;font-weight:700;width:70px;text-align:center;">
+      </div>
       ${isExclusive ? `
       <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
         ⚠ BAR FULL — ${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')} takes the full bar. No additional items can be added.
