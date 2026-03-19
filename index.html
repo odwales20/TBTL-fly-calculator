@@ -120,6 +120,8 @@
   .btn-show-load { background: #1e3a5f; color: #60a5fa; border: 1px solid #3b82f644; border-radius: 5px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   .btn-show-load:hover { background: #1e4a7f; }
   .btn-show-del { background: none; color: #ef4444; border: 1px solid #ef444433; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-override { background: #1c2a1c; color: #4ade80; border: 1px solid #4ade8033; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-override:hover { background: #14532d44; }
   .btn-show-del:hover { background: #ef444411; }
   .shows-empty { color: #475569; font-size: 12px; font-style: italic; margin-top: 8px; padding: 6px 0; }
   .active-show-badge { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 700; white-space: nowrap; }
@@ -628,6 +630,11 @@ async function deleteShow(name) {
   renderShows();
 }
 
+async function overrideShow(name) {
+  if (!confirm(`Overwrite "${name}" with the current rig? This cannot be undone.`)) return;
+  await saveShow(name, true);
+}
+
 function promptSaveShow() {
   const nameInput = document.getElementById('new-show-name');
   const name = nameInput.value.trim();
@@ -673,6 +680,7 @@ function renderShows() {
             <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
             <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
             <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Load</button>
+            <button class="btn-show-override" onclick="overrideShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Override</button>
             <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Delete</button>
           </div>
         `;
