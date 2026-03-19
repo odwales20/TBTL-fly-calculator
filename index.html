@@ -397,7 +397,7 @@ function addFixture(barId) {
   }
   // Check if bar is already exclusive
   if (bar.fixtures.some(f => f.exclusive)) {
-    alert('This bar has an exclusive item and cannot have anything else added.');
+    alert('This bar is full — the exclusive item takes up the whole bar.');
     return;
   }
   bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive});
@@ -812,7 +812,7 @@ function renderBar(bar) {
       </div>` : ''}
       ${isExclusive ? `
       <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
-        ⚠ BAR OUT OF USE — exclusive item fitted (${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')})
+        ⚠ BAR FULL — ${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')} takes the full bar. No additional items can be added.
       </div>` : ''}
       ${(bar.fixtures.length > 0 || bar.extensions || bar.iwb) ? `
         <table>
@@ -831,7 +831,7 @@ function renderBar(bar) {
   return `
     <div class="bar-wrap ${loaded ? 'loaded' : ''} ${isExclusive ? 'exclusive' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">OUT OF USE</span>` : ''}</span>
+        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}</span>
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
