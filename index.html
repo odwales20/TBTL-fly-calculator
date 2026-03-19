@@ -75,7 +75,9 @@
   .ext-btn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
   .ext-btn.on-green { background: #16a34a; color: #fff; }
   .ext-btn.on-orange { background: #ea580c; color: #fff; }
+  .ext-btn.on-blue   { background: #0369a1; color: #fff; }
   .ext-btn.off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+  .bar-wrap.exclusive { border-color: #f59e0b44; }
   .bricks-note { font-size: 10px; color: #475569; font-style: italic; margin-top: 3px; }
   .sync-bar { display: flex; align-items: center; gap: 8px; background: #1e293b; border-radius: 7px; padding: 6px 12px; margin-bottom: 10px; font-size: 12px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -130,7 +132,7 @@
 <div class="info-bar">
   ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
   <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-  Extensions = +2 cradle bricks &nbsp;·&nbsp; IWB = +7 cradle bricks &nbsp;·&nbsp; Bricks always round up to nearest 12kg
+  Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks always round up
 </div>
 
 <div class="controls">
@@ -145,55 +147,57 @@
 const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
-const IWB_WEIGHT = 42; // IWB hung load contribution (42 kg = 84 kg CW = 7 full bricks)
+const IWB_WEIGHT = 48;    // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
+const CABLE_WEIGHT = 12;  // cable allowance when IWB fitted
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
 const DEFAULT_FIXTURES = [
-  {name:"Selecon TW1S", weight:3.5},
-  {name:"ETC Source Four 19°", weight:5.0},
-  {name:"ETC Source Four 26°", weight:4.9},
-  {name:"ETC Source Four 36°", weight:4.8},
-  {name:"ETC Source Four PAR", weight:4.0},
-  {name:"Generic LED Par", weight:2.0},
-  {name:"Chauvet Rogue R2 Wash", weight:9.5},
-  {name:"Martin MAC Aura", weight:5.5},
-  {name:"Selecon Pacific 14-35°", weight:5.8},
-  {name:"Robert Juliat Lancelot", weight:28.0},
-  {name:"Pulsar ChromaFlood 200", weight:2.4},
-  {name:"White Cyc/BP", weight:36.0},
-  {name:"Drape (per metre run)", weight:2.5},
-  {name:"Tab (per metre run)", weight:1.8},
-  {name:"Gauze (per metre run)", weight:0.8},
-  {name:"Cable Loom (per 5m)", weight:1.0},
-  {name:"Boom Arm", weight:1.5},
-  {name:"SL 15-32", weight:8.0},
-  {name:"SL 23-50", weight:6.8},
-  {name:"Cantata F", weight:7.0},
-  {name:"Chauvet Batt", weight:4.8},
-  {name:"B-eye", weight:15.0},
-  {name:"Lustr 25-50", weight:15.1},
-  {name:"Lustr 15-30", weight:17.0},
-  {name:"S4 26deg", weight:7.5},
-  {name:"S4 36deg", weight:7.5},
-  {name:"S4 19deg", weight:7.5},
-  {name:"S4 70deg", weight:7.5},
-  {name:"TW1", weight:28.5},
-  {name:"Halcyon Tit", weight:36.0},
-  {name:"Viper NT", weight:10.0},
-  {name:"MVS", weight:10.0},
-  {name:"ColorForce 72", weight:22.0},
-  {name:"LED WW 8B", weight:0.1},
-  {name:"LED WW 16B", weight:0.1},
-  {name:"LED RGBWW 16B", weight:0.1},
-  {name:"Pendant Dimmer", weight:0.1},
-  {name:"CS Fres V", weight:7.5},
-  {name:"ND at 50", weight:0.1},
+  {name:"Selecon TW1S",           weight:3.5,  category:"Lighting"},
+  {name:"ETC Source Four 19°",    weight:5.0,  category:"Lighting"},
+  {name:"ETC Source Four 26°",    weight:4.9,  category:"Lighting"},
+  {name:"ETC Source Four 36°",    weight:4.8,  category:"Lighting"},
+  {name:"ETC Source Four PAR",    weight:4.0,  category:"Lighting"},
+  {name:"Generic LED Par",        weight:2.0,  category:"Lighting"},
+  {name:"Chauvet Rogue R2 Wash",  weight:9.5,  category:"Lighting"},
+  {name:"Martin MAC Aura",        weight:5.5,  category:"Lighting"},
+  {name:"Selecon Pacific 14-35°", weight:5.8,  category:"Lighting"},
+  {name:"Robert Juliat Lancelot", weight:28.0, category:"Lighting"},
+  {name:"Pulsar ChromaFlood 200", weight:2.4,  category:"Lighting"},
+  {name:"SL 15-32",               weight:8.0,  category:"Lighting"},
+  {name:"SL 23-50",               weight:6.8,  category:"Lighting"},
+  {name:"Cantata F",              weight:7.0,  category:"Lighting"},
+  {name:"Chauvet Batt",           weight:4.8,  category:"Lighting"},
+  {name:"B-eye",                  weight:15.0, category:"Lighting"},
+  {name:"Lustr 25-50",            weight:15.1, category:"Lighting"},
+  {name:"Lustr 15-30",            weight:17.0, category:"Lighting"},
+  {name:"S4 26deg",               weight:7.5,  category:"Lighting"},
+  {name:"S4 36deg",               weight:7.5,  category:"Lighting"},
+  {name:"S4 19deg",               weight:7.5,  category:"Lighting"},
+  {name:"S4 70deg",               weight:7.5,  category:"Lighting"},
+  {name:"TW1",                    weight:28.5, category:"Lighting"},
+  {name:"Halcyon Tit",            weight:36.0, category:"Lighting"},
+  {name:"Viper NT",               weight:10.0, category:"Lighting"},
+  {name:"MVS",                    weight:10.0, category:"Lighting"},
+  {name:"ColorForce 72",          weight:22.0, category:"Lighting"},
+  {name:"LED WW 8B",              weight:0.1,  category:"Lighting"},
+  {name:"LED WW 16B",             weight:0.1,  category:"Lighting"},
+  {name:"LED RGBWW 16B",          weight:0.1,  category:"Lighting"},
+  {name:"Pendant Dimmer",         weight:0.1,  category:"Lighting"},
+  {name:"CS Fres V",              weight:7.5,  category:"Lighting"},
+  {name:"ND at 50",               weight:0.1,  category:"Lighting"},
+  {name:"Nexo PS10",              weight:14.0, category:"Sound"},
+  {name:"White Cyc/BP",           weight:36.0, category:"Drapes", exclusive:true},
+  {name:"Drape (per metre run)",  weight:2.5,  category:"Drapes"},
+  {name:"Tab (per metre run)",    weight:1.8,  category:"Drapes"},
+  {name:"Gauze (per metre run)",  weight:0.8,  category:"Drapes"},
+  {name:"Cable Loom (per 5m)",    weight:1.0,  category:"Set"},
+  {name:"Boom Arm",               weight:1.5,  category:"Set"},
 ];
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false
   }));
 }
 
@@ -217,7 +221,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -251,7 +255,7 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -310,7 +314,10 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
-  return fixtureLoad + (bar.extensions ? EXTENSIONS_WEIGHT : 0) + (bar.iwb ? IWB_WEIGHT : 0);
+  return fixtureLoad
+    + (bar.extensions ? EXTENSIONS_WEIGHT : 0)
+    + (bar.iwb ? IWB_WEIGHT : 0)
+    + (bar.iwb && bar.cable ? CABLE_WEIGHT : 0);
 }
 
 function cradleBricksToHungLoad(fullBricks, halfBricks) {
@@ -327,6 +334,15 @@ function toggleExtensions(barId) {
 function toggleIWB(barId) {
   const bar = bars.find(b => b.id === barId);
   bar.iwb = !bar.iwb;
+  if (!bar.iwb) bar.cable = false; // cable only valid with IWB
+  scheduleSave();
+  render();
+}
+
+function toggleCable(barId) {
+  const bar = bars.find(b => b.id === barId);
+  if (!bar.iwb) return;
+  bar.cable = !bar.cable;
   scheduleSave();
   render();
 }
@@ -372,14 +388,21 @@ function addFixture(barId) {
     const half = parseInt(document.getElementById(`fbhalf_${barId}`).value) || 0;
     weight = cradleBricksToHungLoad(full, half);
   }
+  const category = document.getElementById(`fcat_${barId}`)?.value || '';
+  const exclusive = document.getElementById(`fexclusive_${barId}`)?.checked || false;
   if (!name || isNaN(weight) || weight <= 0) {
     const ni = document.getElementById(`fname_${barId}`);
     if (ni) { ni.style.borderColor = '#ef4444'; setTimeout(() => ni.style.borderColor = '#334155', 1500); }
     return;
   }
-  bar.fixtures.push({id: Date.now(), name, weight, qty});
+  // Check if bar is already exclusive
+  if (bar.fixtures.some(f => f.exclusive)) {
+    alert('This bar has an exclusive item and cannot have anything else added.');
+    return;
+  }
+  bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
-    library.push({name, weight});
+    library.push({name, weight, category, exclusive});
   }
   scheduleSave();
   render();
@@ -421,6 +444,10 @@ function pickLib(barId) {
       if (s) s.value = v;
       const n = document.getElementById(`fname_${barId}`);
       if (n) n.value = f.name;
+      const c = document.getElementById(`fcat_${barId}`);
+      if (c && f.category) c.value = f.category;
+      const e = document.getElementById(`fexclusive_${barId}`);
+      if (e) e.checked = f.exclusive || false;
     }, 0);
   }
 }
@@ -478,7 +505,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, fixtures: b.fixtures || []}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || []}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
@@ -563,7 +590,18 @@ function esc(s) {
 }
 
 function libOptions() {
-  return library.map(f => `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg bar)</option>`).join('');
+  const cats = {};
+  library.forEach(f => {
+    const cat = f.category || 'Other';
+    if (!cats[cat]) cats[cat] = [];
+    cats[cat].push(f);
+  });
+  const order = ['Lighting', 'Sound', 'Set', 'Drapes', 'Other'];
+  return order.filter(c => cats[c]).map(cat =>
+    `<optgroup label="${cat}">${cats[cat].map(f =>
+      `<option value="${esc(f.name)}">${esc(f.name)} (${f.weight}kg)${f.exclusive ? ' ⚠ exclusive' : ''}</option>`
+    ).join('')}</optgroup>`
+  ).join('');
 }
 
 function switchMode(barId, mode) {
@@ -596,6 +634,13 @@ function buildAddSection(barId) {
     </div>
     <div class="add-row">
       <input type="text" class="inp-name" id="fname_${barId}" placeholder="Fixture name">
+      <select id="fcat_${barId}" style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#94a3b8;padding:7px 8px;font-size:12px;outline:none;">
+        <option value="">Category…</option>
+        <option value="Lighting">Lighting</option>
+        <option value="Sound">Sound</option>
+        <option value="Set">Set</option>
+        <option value="Drapes">Drapes</option>
+      </select>
       <div class="mode-toggle">
         <button class="mode-btn ${mode==='kg'?'active':''}" onclick="switchMode(${barId},'kg')">by kg</button>
         <button class="mode-btn ${mode==='bricks'?'active':''}" onclick="switchMode(${barId},'bricks')">by bricks</button>
@@ -604,6 +649,12 @@ function buildAddSection(barId) {
       <span class="weight-preview" id="preview_${barId}"></span>
       <input type="number" class="inp-qty" id="fqty_${barId}" placeholder="Qty" value="1" min="1">
       <button class="btn-add" onclick="addFixture(${barId})">+ Add</button>
+    </div>
+    <div class="add-row" style="margin-top:4px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#f59e0b;cursor:pointer;">
+        <input type="checkbox" id="fexclusive_${barId}" style="accent-color:#f59e0b;">
+        Exclusive use — this item takes the full bar (no other items can be added)
+      </label>
     </div>
     ${bricksNote}
   </div>`;
@@ -640,9 +691,16 @@ function renderBar(bar) {
   const loaded = hung > 0;
   const exp = !!expanded[bar.id];
 
-  const fixtureRows = bar.fixtures.map(f => `
+  const isExclusive = bar.fixtures.some(f => f.exclusive);
+  const CAT_COLOURS = {Lighting:'#818cf8', Sound:'#34d399', Set:'#94a3b8', Drapes:'#f472b6'};
+
+  const fixtureRows = bar.fixtures.map(f => {
+    const catCol = CAT_COLOURS[f.category] || '#475569';
+    const catBadge = f.category ? `<span style="font-size:10px;color:${catCol};font-weight:700;margin-left:4px">[${f.category}]</span>` : '';
+    const excBadge = f.exclusive ? `<span style="font-size:10px;color:#f59e0b;font-weight:700;margin-left:4px">⚠ EXCL</span>` : '';
+    return `
     <tr>
-      <td>${esc(f.name)}</td>
+      <td>${esc(f.name)}${catBadge}${excBadge}</td>
       <td class="c">
         <input type="number" class="qty-inp" min="1" value="${f.qty}"
           onchange="updateQty(${bar.id},${f.id},this.value)"
@@ -651,8 +709,8 @@ function renderBar(bar) {
       <td class="r muted">${f.weight.toFixed(1)}</td>
       <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
       <td class="r"><button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 
   const extRow = bar.extensions ? `
     <tr style="border-top:1px solid #0f172a">
@@ -668,8 +726,18 @@ function renderBar(bar) {
     <tr style="border-top:1px solid #0f172a">
       <td style="color:#fb923c">IWB</td>
       <td class="c muted">—</td>
-      <td class="r muted">42.0</td>
-      <td class="r" style="color:#fb923c;font-weight:700">42.0</td>
+      <td class="r muted">${IWB_WEIGHT.toFixed(1)}</td>
+      <td class="r" style="color:#fb923c;font-weight:700">${IWB_WEIGHT.toFixed(1)}</td>
+      <td></td>
+    </tr>
+  ` : '';
+
+  const cableRow = (bar.iwb && bar.cable) ? `
+    <tr>
+      <td style="color:#7dd3fc">Cable Allowance</td>
+      <td class="c muted">—</td>
+      <td class="r muted">${CABLE_WEIGHT.toFixed(1)}</td>
+      <td class="r" style="color:#7dd3fc;font-weight:700">${CABLE_WEIGHT.toFixed(1)}</td>
       <td></td>
     </tr>
   ` : '';
@@ -724,31 +792,46 @@ function renderBar(bar) {
       <div class="ext-section">
         <div class="ext-info">
           <strong>IWB</strong>
-          <small>1 max · adds 7 bricks (84kg) to cradle</small>
+          <small>1 max · adds 8 bricks (96kg) to cradle</small>
         </div>
-        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+7 bricks in cradle</span>` : ''}
+        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+8 bricks in cradle</span>` : ''}
         <button class="ext-btn ${bar.iwb ? 'on-orange' : 'off'}" onclick="toggleIWB(${bar.id})">
           ${bar.iwb ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>
+      ${bar.iwb ? `
+      <div class="ext-section" style="border-left:2px solid #fb923c44;margin-left:12px;padding-left:8px">
+        <div class="ext-info">
+          <strong style="color:#7dd3fc">Cable Allowance</strong>
+          <small>IWB bars only · +12kg hung</small>
+        </div>
+        ${bar.cable ? `<span class="ext-badge" style="background:#0c2340;color:#7dd3fc;border:1px solid #7dd3fc44">+1 brick in cradle</span>` : ''}
+        <button class="ext-btn ${bar.cable ? 'on-blue' : 'off'}" onclick="toggleCable(${bar.id})">
+          ${bar.cable ? '✓ In Use' : 'Not In Use'}
+        </button>
+      </div>` : ''}
+      ${isExclusive ? `
+      <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
+        ⚠ BAR OUT OF USE — exclusive item fitted (${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')})
+      </div>` : ''}
       ${(bar.fixtures.length > 0 || bar.extensions || bar.iwb) ? `
         <table>
           <thead><tr>
             <th>Item</th><th class="c">Qty</th>
             <th class="r">Unit kg</th><th class="r">Total kg</th><th></th>
           </tr></thead>
-          <tbody>${fixtureRows}${extRow}${iwbRow}${totalsRow}</tbody>
+          <tbody>${fixtureRows}${extRow}${iwbRow}${cableRow}${totalsRow}</tbody>
         </table>
       ` : ''}
       ${breakdownHtml}
-      ${buildAddSection(bar.id)}
+      ${isExclusive ? '' : buildAddSection(bar.id)}
     </div>
   ` : '';
 
   return `
-    <div class="bar-wrap ${loaded ? 'loaded' : ''}" id="bar_${bar.id}">
+    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${isExclusive ? 'exclusive' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
+        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">OUT OF USE</span>` : ''}</span>
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
