@@ -158,7 +158,7 @@
   <div class="info-bar">
     ⚖️ <strong>Double purchase:</strong> Counterweight = Hung Load × 2 &nbsp;·&nbsp;
     <strong>Bricks mode:</strong> enter cradle bricks — hung load calculated automatically (÷2) &nbsp;·&nbsp;
-    Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks always round up
+    Extensions = +2 bricks &nbsp;·&nbsp; IWB = +8 bricks &nbsp;·&nbsp; Cable Allowance = +1 brick (IWB only) &nbsp;·&nbsp; Bricks rounded to nearest
   </div>
   <div class="controls">
     <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
@@ -341,7 +341,7 @@ function forceSave() {
 
 function calcBricks(cw) {
   if (cw <= 0) return {full: 0};
-  return {full: Math.ceil(cw / FULL)};
+  return {full: Math.round(cw / FULL)};
 }
 
 function hungLoad(bar) {
@@ -815,11 +815,6 @@ function renderBar(bar) {
         <input type="text" value="${esc(bar.name)}"
           onblur="updateBarName(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
-        &nbsp;&nbsp;Tare:
-        <input type="number" value="${bar.barWeight}"
-          onblur="updateTare(${bar.id},this.value)"
-          style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:60px;">
-        kg <span style="color:#334155;font-size:11px">(already counterweighted when empty)</span>
       </div>
       <div class="ext-section">
         <div class="ext-info">
