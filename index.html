@@ -92,8 +92,8 @@
 <p class="subtitle">Theatre by the Lake · Double Purchase · 39 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
 
 <div class="sync-bar">
-  <div class="sync-dot" id="sync-dot"></div>
-  <span class="sync-text" id="sync-text">Connecting to database...</span>
+  <div class="sync-dot syncing" id="sync-dot"></div>
+  <span class="sync-text" id="sync-text">Connecting to Firebase...</span>
   <button class="sync-btn" onclick="forceSave()">Save Now</button>
 </div>
 
@@ -111,10 +111,10 @@
 </div>
 
 <div id="bars-container"></div>
-<div class="footer">Data synced to cloud database · Falls back to local storage if server unreachable</div>
+<div class="footer">Data synced via Firebase · Works across all devices automatically</div>
 
 <script>
-const API = 'const API = 'https://chips-slightly-alloy-houses.trycloudflare.com';
+const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
 const EXCLUDED = new Set([32,34,36,38,40]);
@@ -146,7 +146,6 @@ function defaultBars() {
   }));
 }
 
-// Local storage fallback
 function loadLocal(key, def) {
   try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
 }
@@ -156,15 +155,10 @@ let bars = loadLocal('tbtl_bars_v3', defaultBars());
 let library = loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES);
 let expanded = {};
 let inputMode = {};
-let serverOnline = false;
 let saveTimeout = null;
 
-if (!bars.some(b => b.id === 1) || bars.some(b => EXCLUDED.has(b.id))) {
-  bars = defaultBars();
-}
 bars = bars.map(b => ({...b, extensions: b.extensions || false}));
 
-// Sync status UI
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
   const text = document.getElementById('sync-text');
@@ -173,56 +167,57 @@ function setSyncStatus(status, msg) {
   text.textContent = msg;
 }
 
-// Load from server
-async function loadFromServer() {
+async function firebaseGet(path) {
+  const res = await fetch(`${FIREBASE_URL}/${path}.json`);
+  if (!res.ok) throw new Error('Firebase read failed');
+  return await res.json();
+}
+
+async function firebasePut(path, data) {
+  const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Firebase write failed');
+  return await res.json();
+}
+
+async function loadFromFirebase() {
   try {
-    setSyncStatus('syncing', 'Loading from database...');
-    const [barsRes, libRes] = await Promise.all([
-      fetch(`${API}/data/bars`),
-      fetch(`${API}/data/library`)
+    setSyncStatus('syncing', 'Loading from Firebase...');
+    const [fbBars, fbLib] = await Promise.all([
+      firebaseGet('bars'),
+      firebaseGet('library')
     ]);
-    if (!barsRes.ok || !libRes.ok) throw new Error('Server error');
-    const serverBars = await barsRes.json();
-    const serverLib = await libRes.json();
-    if (serverBars && Array.isArray(serverBars)) {
-      bars = serverBars.map(b => ({...b, extensions: b.extensions || false}));
+    if (fbBars && Array.isArray(fbBars)) {
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false}));
       saveLocal('tbtl_bars_v3', bars);
     }
-    if (serverLib && Array.isArray(serverLib)) {
-      library = serverLib;
+    if (fbLib && Array.isArray(fbLib)) {
+      library = fbLib;
       saveLocal('tbtl_lib_v3', library);
     }
-    serverOnline = true;
-    setSyncStatus('online', 'Synced with database');
+    setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
     render();
   } catch(e) {
-    serverOnline = false;
-    setSyncStatus('offline', 'Server offline — using local data');
+    setSyncStatus('offline', 'Firebase offline — using local data');
     render();
   }
 }
 
-// Save to server (debounced)
-async function saveToServer() {
-  if (!serverOnline) return;
+async function saveToFirebase() {
   try {
     setSyncStatus('syncing', 'Saving...');
     await Promise.all([
-      fetch(`${API}/data/bars`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(bars)
-      }),
-      fetch(`${API}/data/library`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(library)
-      })
+      firebasePut('bars', bars),
+      firebasePut('library', library)
     ]);
+    saveLocal('tbtl_bars_v3', bars);
+    saveLocal('tbtl_lib_v3', library);
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
-    serverOnline = false;
-    setSyncStatus('offline', 'Save failed — server offline');
+    setSyncStatus('offline', 'Save failed — working offline');
   }
 }
 
@@ -230,12 +225,12 @@ function scheduleSave() {
   saveLocal('tbtl_bars_v3', bars);
   saveLocal('tbtl_lib_v3', library);
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(saveToServer, 1500);
+  saveTimeout = setTimeout(saveToFirebase, 1500);
 }
 
 function forceSave() {
   clearTimeout(saveTimeout);
-  saveToServer();
+  saveToFirebase();
 }
 
 function calcBricks(cw) {
@@ -248,13 +243,11 @@ function calcBricks(cw) {
 
 function hungLoad(bar) {
   const fixtureLoad = bar.fixtures.reduce((s,f) => s + f.weight * f.qty, 0);
-  const extLoad = bar.extensions ? EXTENSIONS_WEIGHT : 0;
-  return fixtureLoad + extLoad;
+  return fixtureLoad + (bar.extensions ? EXTENSIONS_WEIGHT : 0);
 }
 
 function cradleBricksToHungLoad(fullBricks, halfBricks) {
-  const cradleKg = (fullBricks * FULL) + (halfBricks * HALF);
-  return cradleKg / 2;
+  return ((fullBricks * FULL) + (halfBricks * HALF)) / 2;
 }
 
 function toggleExtensions(barId) {
@@ -554,8 +547,7 @@ function render() {
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
 }
 
-// Boot — load from server first, fall back to local
-loadFromServer();
+loadFromFirebase();
 </script>
 </body>
 </html>
