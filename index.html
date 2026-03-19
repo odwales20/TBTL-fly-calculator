@@ -123,6 +123,33 @@
   .btn-show-del:hover { background: #ef444411; }
   .shows-empty { color: #475569; font-size: 12px; font-style: italic; margin-top: 8px; padding: 6px 0; }
   .active-show-badge { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+  /* DNF */
+  .bar-wrap.dnf { border-color: #ef444466 !important; }
+  .dnf-btn-on  { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef444466; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; letter-spacing: 0.5px; }
+  .dnf-btn-off { background: #1e293b; color: #64748b; border: 1px solid #334155; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  /* Print */
+  .btn-print { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  #print-section { display: none; }
+  @media print {
+    @page { margin: 1.5cm; }
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    .sync-bar, .shows-panel, .page-tabs, .info-bar, .summary, .controls,
+    #page-library, .footer, h1, .subtitle, #bars-container { display: none !important; }
+    #page-bars { display: block !important; }
+    #print-section { display: block !important; }
+    .print-header { margin-bottom: 16px; }
+    .print-header h2 { font-size: 18px; font-weight: 800; color: #111; margin: 0 0 2px; }
+    .print-header p { font-size: 11px; color: #555; margin: 0; }
+    .print-dnf-alert { border: 2px solid #ef4444; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; color: #b91c1c; font-size: 12px; font-weight: 700; }
+    .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+    .print-table th { background: #f1f5f9; color: #334155; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; text-align: left; padding: 5px 7px; border: 1px solid #cbd5e1; }
+    .print-table td { padding: 5px 7px; border: 1px solid #e2e8f0; vertical-align: top; color: #111; }
+    .print-table tr.dnf-row td { background: #fff1f1; font-weight: 700; }
+    .print-table tr.dnf-row td.dnf-cell { color: #b91c1c; font-size: 10px; font-weight: 800; }
+    .print-table tr.locked-row td { background: #faf5ff; color: #7c3aed; }
+    .print-table tr.empty-row td { color: #94a3b8; }
+    .print-bricks { color: #4338ca; font-weight: 700; }
+  }
 </style>
 </head>
 <body>
@@ -162,9 +189,11 @@
   </div>
   <div class="controls">
     <input type="text" class="search" id="search" placeholder="Search bars..." oninput="render()">
+    <button class="btn-print" onclick="printSchedule()">🖨 Print Schedule</button>
     <button class="btn-reset-all" onclick="resetAll()">Reset All</button>
   </div>
   <div id="bars-container"></div>
+  <div id="print-section"></div>
 </div>
 
 <div id="page-library" style="display:none">
@@ -229,7 +258,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false, miscBricks: 0
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false, miscBricks: 0, dnf: false
   }));
 }
 
@@ -253,7 +282,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -287,7 +316,7 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -377,6 +406,14 @@ function toggleIWB(barId) {
 function toggleCable(barId) {
   const bar = bars.find(b => b.id === barId);
   bar.cable = !bar.cable;
+  scheduleSave();
+  render();
+}
+
+function toggleDNF(barId) {
+  const bar = bars.find(b => b.id === barId);
+  if (!confirm(bar.dnf ? `Remove DO NOT FLY tag from Bar ${barId}?` : `⛔ Mark Bar ${barId} as DO NOT FLY?\n\nThis is a safety tag — make sure it matches the physical tag on the bar.`)) return;
+  bar.dnf = !bar.dnf;
   scheduleSave();
   render();
 }
@@ -554,7 +591,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
@@ -869,6 +906,7 @@ function renderBar(bar) {
           onblur="updateBarName(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
       </div>
+      ${bar.id !== 1 ? `
       <div class="ext-section">
         <div class="ext-info">
           <strong>Extensions</strong>
@@ -898,7 +936,8 @@ function renderBar(bar) {
         <button class="ext-btn ${bar.cable ? 'on-blue' : 'off'}" onclick="toggleCable(${bar.id})">
           ${bar.cable ? '✓ In Use' : 'Not In Use'}
         </button>
-      </div>
+      </div>` : ''}
+      ${bar.id !== 1 ? `
       <div class="ext-section">
         <div class="ext-info">
           <strong style="color:#a78bfa">Misc Bricks</strong>
@@ -908,6 +947,16 @@ function renderBar(bar) {
           value="${bar.miscBricks || 0}"
           onchange="updateMiscBricks(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#a78bfa;padding:6px 8px;font-size:13px;font-weight:700;width:70px;text-align:center;">
+      </div>` : ''}
+      <div class="ext-section" style="${bar.dnf ? 'border:2px solid #ef444466;background:#1c0a0a;' : ''}">
+        <div class="ext-info">
+          <strong style="color:${bar.dnf ? '#fca5a5' : '#e2e8f0'}">⛔ Do Not Fly Tag</strong>
+          <small>${bar.dnf ? 'This bar is tagged DO NOT FLY — it must not be moved' : 'Mark this bar as Do Not Fly'}</small>
+        </div>
+        ${bar.dnf ? `<span class="ext-badge" style="background:#7f1d1d;color:#fca5a5;border:1px solid #ef444466">⛔ TAGGED</span>` : ''}
+        <button class="${bar.dnf ? 'dnf-btn-on' : 'dnf-btn-off'}" onclick="toggleDNF(${bar.id})">
+          ${bar.dnf ? '⛔ DO NOT FLY' : 'Not Tagged'}
+        </button>
       </div>
       ${bar.id === 1 ? `
       <div style="background:#1e1b2e;border:1px solid #7c3aed44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#c084fc;font-size:12px;font-weight:700;">
@@ -931,9 +980,9 @@ function renderBar(bar) {
   ` : '';
 
   return `
-    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''}" id="bar_${bar.id}">
+    <div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''}" id="bar_${bar.id}">
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}</span>
+        <span class="bar-num">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}</span>
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
@@ -1111,6 +1160,72 @@ function render() {
 }
 
 loadFromFirebase();
+
+function printSchedule() {
+  const showName = activeShowName || 'Untitled Show';
+  const dateStr = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
+  const dnfBars = bars.filter(b => b.dnf);
+
+  const dnfAlert = dnfBars.length > 0
+    ? `<div class="print-dnf-alert">⛔ DO NOT FLY BARS: ${dnfBars.map(b => `Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` (${b.name})` : ''}`).join(', ')}</div>`
+    : '';
+
+  const rows = bars.map(bar => {
+    const hung = hungLoad(bar);
+    const cw = hung * 2;
+    const bricks = calcBricks(cw);
+    const isBar1 = bar.id === 1;
+
+    const catCounts = {};
+    bar.fixtures.forEach(f => { const c = f.category || 'Other'; catCounts[c] = (catCounts[c] || 0) + f.qty; });
+    const parts = [];
+    if (isBar1) parts.push('Cinema Screen (permanent)');
+    if (catCounts['Lighting']) parts.push(`${catCounts['Lighting']} ${catCounts['Lighting']===1?'Fixture':'Fixtures'}`);
+    if (catCounts['Sound'])    parts.push(`${catCounts['Sound']} Sound ${catCounts['Sound']===1?'Item':'Items'}`);
+    if (catCounts['Drapes'])   parts.push(`${catCounts['Drapes']} ${catCounts['Drapes']===1?'Drape':'Drapes'}`);
+    if (catCounts['Set'])      parts.push(`${catCounts['Set']} Set ${catCounts['Set']===1?'Piece':'Pieces'}`);
+    if (catCounts['Other'])    parts.push(`${catCounts['Other']} ${catCounts['Other']===1?'Item':'Items'}`);
+    if (bar.extensions) parts.push('Extensions');
+    if (bar.iwb) parts.push('IWB');
+    if (bar.cable) parts.push('Cable');
+    const contents = parts.join(', ') || '—';
+
+    const statusParts = [];
+    if (isBar1) statusParts.push('🔒 LOCKED');
+    if (bar.dnf) statusParts.push('⛔ DO NOT FLY');
+    const status = statusParts.join(' · ') || '—';
+
+    const rowClass = bar.dnf ? 'dnf-row' : isBar1 ? 'locked-row' : hung === 0 ? 'empty-row' : '';
+    return `<tr class="${rowClass}">
+      <td style="font-weight:700;white-space:nowrap">BAR ${bar.id}</td>
+      <td>${bar.name !== `Bar ${bar.id}` ? bar.name : '—'}</td>
+      <td>${contents}</td>
+      <td style="text-align:right">${hung > 0 ? hung.toFixed(1) : '—'}</td>
+      <td style="text-align:right">${hung > 0 ? cw.toFixed(1) : '—'}</td>
+      <td class="print-bricks" style="text-align:right">${hung > 0 ? bricks.full : '—'}</td>
+      <td class="${bar.dnf ? 'dnf-cell' : ''}">${status}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('print-section').innerHTML = `
+    <div class="print-header">
+      <h2>TBTL Fly Weight Schedule</h2>
+      <p>${showName} &nbsp;·&nbsp; Printed ${dateStr}</p>
+    </div>
+    ${dnfAlert}
+    <table class="print-table">
+      <thead><tr>
+        <th>Bar</th><th>Name</th><th>Contents</th>
+        <th style="text-align:right">Hung (kg)</th>
+        <th style="text-align:right">CW (kg)</th>
+        <th style="text-align:right">Bricks</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  window.print();
+}
 </script>
 </body>
 </html>
