@@ -282,7 +282,7 @@ function calcBricks(cw) {
 }
 
 function hungLoad(bar) {
-  const fixtureLoad = bar.fixtures.reduce((s,f) => s + f.weight * f.qty, 0);
+  const fixtureLoad = (bar.fixtures || []).reduce((s,f) => s + f.weight * f.qty, 0);
   return fixtureLoad + (bar.extensions ? EXTENSIONS_WEIGHT : 0);
 }
 
@@ -438,7 +438,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, fixtures: b.fixtures || []}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
