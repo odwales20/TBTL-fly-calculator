@@ -207,6 +207,13 @@ const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
 const FULL = 12, HALF = 6;
 const EXTENSIONS_WEIGHT = 12;
 const IWB_WEIGHT = 48;    // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
+const IWB_COLOURS = [
+  { id: 'magenta', label: 'Magenta', bg: '#4a044e', border: '#d946ef', text: '#e879f9' },
+  { id: 'brown',   label: 'Brown',   bg: '#431407', border: '#b45309', text: '#f59e0b' },
+  { id: 'yellow',  label: 'Yellow',  bg: '#422006', border: '#ca8a04', text: '#eab308' },
+  { id: 'grey',    label: 'Grey',    bg: '#1e293b', border: '#64748b', text: '#94a3b8' },
+  { id: 'red',     label: 'Red',     bg: '#450a0a', border: '#dc2626', text: '#f87171' },
+];
 const CABLE_WEIGHT = 6;   // cable allowance: 6kg hung = 12kg CW = 1 brick in cradle
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
@@ -258,7 +265,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: false, cable: false, miscBricks: 0, dnf: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false
   }));
 }
 
@@ -282,7 +289,7 @@ let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -316,7 +323,7 @@ async function loadFromFirebase() {
       firebaseGet('library')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -380,7 +387,7 @@ function hungLoad(bar) {
   return fixtureLoad
     + conduitLoad
     + (bar.extensions ? EXTENSIONS_WEIGHT : 0)
-    + (bar.iwb ? IWB_WEIGHT : 0)
+    + (bar.iwb !== null ? IWB_WEIGHT : 0)
     + (bar.cable ? CABLE_WEIGHT : 0)
     + miscLoad;
 }
@@ -396,11 +403,20 @@ function toggleExtensions(barId) {
   render();
 }
 
-function toggleIWB(barId) {
+function selectIWB(barId, colourId) {
   const bar = bars.find(b => b.id === barId);
-  bar.iwb = !bar.iwb;
-  scheduleSave();
-  render();
+  if (bar.iwb === colourId) {
+    bar.iwb = null;
+    scheduleSave(); render(); return;
+  }
+  const owner = bars.find(b => b.id !== barId && b.iwb === colourId);
+  const col = IWB_COLOURS.find(c => c.id === colourId);
+  if (owner) {
+    if (!confirm(`Move ${col.label} IWB from Bar ${owner.id} to Bar ${barId}?`)) return;
+    owner.iwb = null;
+  }
+  bar.iwb = colourId;
+  scheduleSave(); render();
 }
 
 function toggleCable(barId) {
@@ -591,7 +607,7 @@ function loadShow(name) {
   const show = shows[name];
   if (!show) return;
   if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: b.iwb || false, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
   activeShowName = name;
   expanded = {};
   scheduleSave();
@@ -763,13 +779,14 @@ function renderSummary() {
   const totalFull = bars.reduce((s,b) => s + calcBricks(hungLoad(b)*2).full, 0);
   const loadedCount = bars.filter(b => hungLoad(b) > 0).length;
   const extCount = bars.filter(b => b.extensions).length;
-  const iwbCount = bars.filter(b => b.iwb).length;
+  const iwbCount = bars.filter(b => b.iwb !== null).length;
+  const iwbInUse = IWB_COLOURS.filter(c => bars.some(b => b.iwb === c.id)).map(c => c.label);
   const totalBars = bars.length;
 
   document.getElementById('summary').innerHTML = [
     ['Loaded Bars', `${loadedCount}/${totalBars}`, '#22c55e'],
     ['Bars w/ Extensions', extCount, '#34d399'],
-    ['Bars w/ IWB', iwbCount, '#fb923c'],
+    ['Bars w/ IWB', iwbCount > 0 ? `${iwbCount} (${iwbInUse.join(', ')})` : '0', '#fb923c'],
     ['Total Hung Load', `${totalHung.toFixed(1)} kg`, '#f1f5f9'],
     ['Total Counterweight', `${totalCW.toFixed(1)} kg`, '#fbbf24'],
     ['Total 12kg Bricks', totalFull, '#818cf8'],
@@ -844,12 +861,13 @@ function renderBar(bar) {
     </tr>
   ` : '';
 
-  const iwbRow = bar.iwb ? `
+  const iwbCol = bar.iwb ? IWB_COLOURS.find(c => c.id === bar.iwb) : null;
+  const iwbRow = iwbCol ? `
     <tr style="border-top:1px solid #0f172a">
-      <td style="color:#fb923c">IWB</td>
+      <td style="color:${iwbCol.text};font-weight:700">IWB <span style="font-size:10px;background:${iwbCol.bg};border:1px solid ${iwbCol.border}66;border-radius:3px;padding:1px 5px">${iwbCol.label}</span></td>
       <td class="c muted">—</td>
       <td class="r muted">${IWB_WEIGHT.toFixed(1)}</td>
-      <td class="r" style="color:#fb923c;font-weight:700">${IWB_WEIGHT.toFixed(1)}</td>
+      <td class="r" style="color:${iwbCol.text};font-weight:700">${IWB_WEIGHT.toFixed(1)}</td>
       <td class="r" style="color:#818cf8">8.00</td>
       <td></td>
     </tr>
@@ -895,7 +913,7 @@ function renderBar(bar) {
   if (catCounts['Set'])      summaryParts.push(`${catCounts['Set']} Set ${catCounts['Set']===1?'Piece':'Pieces'}`);
   if (catCounts['Other'])    summaryParts.push(`${catCounts['Other']} ${catCounts['Other']===1?'Item':'Items'}`);
   if (bar.extensions) summaryParts.push('Extensions');
-  if (bar.iwb) summaryParts.push('IWB');
+  if (bar.iwb) summaryParts.push(`IWB (${IWB_COLOURS.find(c=>c.id===bar.iwb)?.label || ''})`);
   const summaryText = summaryParts.length > 0 ? summaryParts.join(' · ') : 'Empty';
 
   const bodyHtml = exp ? `
@@ -917,15 +935,23 @@ function renderBar(bar) {
           ${bar.extensions ? '✓ In Use' : 'Not In Use'}
         </button>
       </div>
-      <div class="ext-section">
-        <div class="ext-info">
+      <div class="ext-section" style="flex-wrap:wrap;gap:8px">
+        <div class="ext-info" style="min-width:100%">
           <strong>IWB</strong>
-          <small>1 max · adds 8 bricks (96kg) to cradle</small>
+          <small>1 per bar · 1 per colour · 5 available · adds 8 bricks (96kg) to cradle</small>
         </div>
-        ${bar.iwb ? `<span class="ext-badge" style="background:#431407;color:#fb923c;border:1px solid #fb923c44">+8 bricks in cradle</span>` : ''}
-        <button class="ext-btn ${bar.iwb ? 'on-orange' : 'off'}" onclick="toggleIWB(${bar.id})">
-          ${bar.iwb ? '✓ In Use' : 'Not In Use'}
-        </button>
+        ${IWB_COLOURS.map(col => {
+          const onThisBar = bar.iwb === col.id;
+          const ownerBar = bars.find(b => b.id !== bar.id && b.iwb === col.id);
+          const label = onThisBar ? `✓ ${col.label}` : ownerBar ? `${col.label} → Bar ${ownerBar.id}` : col.label;
+          const btnStyle = onThisBar
+            ? `background:${col.bg};color:${col.text};border:2px solid ${col.border};border-radius:7px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap`
+            : ownerBar
+              ? `background:#0f172a;color:#475569;border:1px solid #1e293b;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;opacity:0.7`
+              : `background:#0f172a;color:${col.text};border:1px solid ${col.border}44;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap`;
+          return `<button style="${btnStyle}" onclick="selectIWB(${bar.id},'${col.id}')">${label}</button>`;
+        }).join('')}
+        ${bar.iwb ? `<span class="ext-badge" style="background:${IWB_COLOURS.find(c=>c.id===bar.iwb).bg};color:${IWB_COLOURS.find(c=>c.id===bar.iwb).text};border:1px solid ${IWB_COLOURS.find(c=>c.id===bar.iwb).border}66">+8 bricks in cradle</span>` : ''}
       </div>
       <div class="ext-section">
         <div class="ext-info">
@@ -965,7 +991,7 @@ function renderBar(bar) {
       <div style="background:#422006;border:1px solid #f59e0b44;border-radius:8px;padding:10px 14px;margin:8px 0;color:#fbbf24;font-size:12px;font-weight:700;">
         ⚠ BAR FULL — ${esc(bar.fixtures.find(f=>f.exclusive)?.name||'')} takes the full bar. No additional items can be added.
       </div>` : ''}
-      ${(bar.id === 1 || bar.fixtures.length > 0 || bar.extensions || bar.iwb || bar.cable) ? `
+      ${(bar.id === 1 || bar.fixtures.length > 0 || bar.extensions || bar.iwb !== null || bar.cable) ? `
         <table>
           <thead><tr>
             <th>Item</th><th class="c">Qty</th>
@@ -986,7 +1012,7 @@ function renderBar(bar) {
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
-          ${bar.iwb && !exp ? `<span style="color:#fb923c;font-size:11px;font-weight:700">IWB</span>` : ''}
+          ${bar.iwb && !exp ? `<span style="color:${IWB_COLOURS.find(c=>c.id===bar.iwb).text};font-size:11px;font-weight:700">IWB</span>` : ''}
           <span class="stat">Hung: <strong style="color:#f1f5f9">${hung.toFixed(1)} kg</strong></span>
           <span class="stat">CW: <strong style="color:#fbbf24">${cw.toFixed(1)} kg</strong></span>
           <span class="stat">Bricks: <strong style="color:#818cf8">${bricks.full}</strong></span>
@@ -1186,7 +1212,7 @@ function printSchedule() {
     if (catCounts['Set'])      parts.push(`${catCounts['Set']} Set ${catCounts['Set']===1?'Piece':'Pieces'}`);
     if (catCounts['Other'])    parts.push(`${catCounts['Other']} ${catCounts['Other']===1?'Item':'Items'}`);
     if (bar.extensions) parts.push('Extensions');
-    if (bar.iwb) parts.push('IWB');
+    if (bar.iwb) parts.push(`IWB (${IWB_COLOURS.find(c=>c.id===bar.iwb)?.label || bar.iwb})`);
     if (bar.cable) parts.push('Cable');
     const contents = parts.join(', ') || '—';
 
