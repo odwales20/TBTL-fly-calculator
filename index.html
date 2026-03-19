@@ -84,6 +84,21 @@
   .sync-text { flex: 1; color: #64748b; }
   .sync-btn { background: #0f172a; color: #3b82f6; border: 1px solid #3b82f644; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .shows-panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+  .shows-panel-header { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .shows-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+  .shows-count { font-size: 11px; color: #475569; }
+  .shows-save-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .shows-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .show-item { display: flex; align-items: center; gap: 8px; background: #0f172a; border-radius: 6px; padding: 7px 10px; flex-wrap: wrap; }
+  .show-item-name { flex: 1; font-size: 13px; color: #e2e8f0; font-weight: 600; min-width: 100px; }
+  .show-item-meta { font-size: 11px; color: #475569; white-space: nowrap; }
+  .btn-show-load { background: #1e3a5f; color: #60a5fa; border: 1px solid #3b82f644; border-radius: 5px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-load:hover { background: #1e4a7f; }
+  .btn-show-del { background: none; color: #ef4444; border: 1px solid #ef444433; border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-show-del:hover { background: #ef444411; }
+  .shows-empty { color: #475569; font-size: 12px; font-style: italic; margin-top: 8px; padding: 6px 0; }
+  .active-show-badge { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 700; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -95,6 +110,18 @@
   <div class="sync-dot syncing" id="sync-dot"></div>
   <span class="sync-text" id="sync-text">Connecting to Firebase...</span>
   <button class="sync-btn" onclick="forceSave()">Save Now</button>
+</div>
+
+<div class="shows-panel" id="shows-panel">
+  <div class="shows-panel-header" onclick="toggleShowsPanel()">
+    <span class="shows-title">📁 Shows</span>
+    <span class="shows-count" id="shows-count"></span>
+    <span id="active-show-display"></span>
+    <span class="chevron" id="shows-chevron">▼</span>
+  </div>
+  <div id="shows-body" style="display:none">
+    <div id="shows-container"></div>
+  </div>
 </div>
 
 <div class="summary" id="summary"></div>
@@ -153,6 +180,9 @@ function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(va
 
 let bars = loadLocal('tbtl_bars_v3', defaultBars());
 let library = loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES);
+let shows = loadLocal('tbtl_shows_v1', {});
+let activeShowName = null;
+let showsPanelOpen = false;
 let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
@@ -186,9 +216,10 @@ async function firebasePut(path, data) {
 async function loadFromFirebase() {
   try {
     setSyncStatus('syncing', 'Loading from Firebase...');
-    const [fbBars, fbLib] = await Promise.all([
+    const [fbBars, fbLib, fbShows] = await Promise.all([
       firebaseGet('bars'),
-      firebaseGet('library')
+      firebaseGet('library'),
+      firebaseGet('shows')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
       bars = fbBars.map(b => ({...b, extensions: b.extensions || false}));
@@ -198,11 +229,17 @@ async function loadFromFirebase() {
       library = fbLib;
       saveLocal('tbtl_lib_v3', library);
     }
+    if (fbShows && typeof fbShows === 'object' && !Array.isArray(fbShows)) {
+      shows = fbShows;
+      saveLocal('tbtl_shows_v1', shows);
+    }
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
     render();
+    renderShows();
   } catch(e) {
     setSyncStatus('offline', 'Firebase offline — using local data');
     render();
+    renderShows();
   }
 }
 
@@ -353,9 +390,129 @@ function toggleBar(id) {
 function resetAll() {
   if (!confirm('Reset ALL bars to empty? This cannot be undone.')) return;
   bars = defaultBars();
+  activeShowName = null;
   scheduleSave();
   expanded = {};
   render();
+  renderShows();
+}
+
+function toggleShowsPanel() {
+  showsPanelOpen = !showsPanelOpen;
+  document.getElementById('shows-body').style.display = showsPanelOpen ? 'block' : 'none';
+  document.getElementById('shows-chevron').textContent = showsPanelOpen ? '▲' : '▼';
+}
+
+async function saveShowsToFirebase() {
+  try {
+    await firebasePut('shows', shows);
+  } catch(e) {
+    // offline — already saved locally
+  }
+}
+
+async function saveShow(name) {
+  if (!name) return;
+  const isOverwrite = !!shows[name];
+  if (isOverwrite && !confirm(`A show named "${name}" already exists. Overwrite it?`)) return;
+  shows[name] = {
+    bars: JSON.parse(JSON.stringify(bars)),
+    savedAt: new Date().toISOString()
+  };
+  saveLocal('tbtl_shows_v1', shows);
+  activeShowName = name;
+  try {
+    setSyncStatus('syncing', 'Saving show...');
+    await firebasePut('shows', shows);
+    setSyncStatus('online', `Show "${name}" saved · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    setSyncStatus('offline', `Show saved locally (Firebase offline)`);
+  }
+  renderShows();
+}
+
+function loadShow(name) {
+  const show = shows[name];
+  if (!show) return;
+  if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false}));
+  activeShowName = name;
+  expanded = {};
+  scheduleSave();
+  render();
+  renderShows();
+}
+
+async function deleteShow(name) {
+  if (!confirm(`Delete show "${name}"? This cannot be undone.`)) return;
+  delete shows[name];
+  if (activeShowName === name) activeShowName = null;
+  saveLocal('tbtl_shows_v1', shows);
+  try {
+    await firebasePut('shows', shows);
+  } catch(e) {
+    // offline
+  }
+  renderShows();
+}
+
+function promptSaveShow() {
+  const nameInput = document.getElementById('new-show-name');
+  const name = nameInput.value.trim();
+  if (!name) {
+    nameInput.style.borderColor = '#ef4444';
+    setTimeout(() => nameInput.style.borderColor = '#334155', 1500);
+    return;
+  }
+  saveShow(name).then(() => { nameInput.value = ''; });
+}
+
+function renderShows() {
+  const container = document.getElementById('shows-container');
+  if (!container) return;
+
+  const showNames = Object.keys(shows).sort((a, b) => {
+    const ta = shows[a].savedAt || '';
+    const tb = shows[b].savedAt || '';
+    return tb.localeCompare(ta); // newest first
+  });
+
+  // Update header count
+  const countEl = document.getElementById('shows-count');
+  if (countEl) countEl.textContent = showNames.length > 0 ? `${showNames.length} saved` : '';
+
+  // Update active show badge
+  const activeEl = document.getElementById('active-show-display');
+  if (activeEl) {
+    activeEl.innerHTML = activeShowName
+      ? `<span class="active-show-badge">Loaded: ${esc(activeShowName)}</span>`
+      : '';
+  }
+
+  const listHtml = showNames.length === 0
+    ? '<div class="shows-empty">No shows saved yet — save the current rig to get started</div>'
+    : showNames.map(name => {
+        const show = shows[name];
+        const savedAt = show.savedAt ? new Date(show.savedAt).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+        const loadedCount = show.bars ? show.bars.filter(b => (b.fixtures||[]).reduce((s,f) => s + f.weight*f.qty, 0) + (b.extensions ? 12 : 0) > 0).length : 0;
+        const isActive = activeShowName === name;
+        return `
+          <div class="show-item">
+            <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
+            <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
+            <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name)})">Load</button>
+            <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name)})">Delete</button>
+          </div>
+        `;
+      }).join('');
+
+  container.innerHTML = `
+    <div class="shows-save-row">
+      <input type="text" id="new-show-name" placeholder="Show name e.g. Sleeping Beauty..." style="flex:1;min-width:140px">
+      <button class="btn-add" onclick="promptSaveShow()">Save Current as Show</button>
+    </div>
+    <div class="shows-list">${listHtml}</div>
+  `;
 }
 
 function esc(s) {
