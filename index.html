@@ -733,7 +733,11 @@ function scheduleSave() {
 
 function forceSave() {
   clearTimeout(saveTimeout);
-  saveToFirebase();
+  if (activeShowName) {
+    saveShow(activeShowName, true);
+  } else {
+    saveToFirebase();
+  }
 }
 
 function calcBricks(cw) {
