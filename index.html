@@ -1444,9 +1444,16 @@ function removeCustomDead(barId, deadId) {
   renderShowPage();
 }
 
+function nextCueNumber() {
+  const nums = (showConfig.cues || [])
+    .filter(c => !c.isPreshow && c.number && /^\d+(\.\d+)?$/.test(c.number.trim()))
+    .map(c => parseFloat(c.number.trim()));
+  return nums.length > 0 ? String(Math.floor(Math.max(...nums)) + 1) : '1';
+}
+
 function addCue() {
   if (!showConfig.cues) showConfig.cues = [];
-  showConfig.cues.push({ id: String(Date.now()), number: '', name: '', isFollow: false, overrideMax: false, bars: [] });
+  showConfig.cues.push({ id: String(Date.now()), number: nextCueNumber(), name: '', isFollow: false, overrideMax: false, bars: [] });
   saveShowConfig();
   renderShowPage();
 }
@@ -1455,8 +1462,8 @@ function insertCue(afterRegIdx, isNonFly = false) {
   if (!showConfig.cues) showConfig.cues = [];
   const regularCues = showConfig.cues.filter(c => !c.isPreshow);
   const newCue = isNonFly
-    ? { id: String(Date.now()), number: '', name: '', isNonFly: true, isFollow: false, notes: '', bars: [] }
-    : { id: String(Date.now()), number: '', name: '', isNonFly: false, isFollow: false, overrideMax: false, bars: [] };
+    ? { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: true, isFollow: false, notes: '', bars: [] }
+    : { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: false, isFollow: false, overrideMax: false, bars: [] };
   if (afterRegIdx < 0 || regularCues.length === 0) {
     const preshowIdx = showConfig.cues.findIndex(c => c.isPreshow);
     showConfig.cues.splice(preshowIdx < 0 ? 0 : preshowIdx + 1, 0, newCue);
@@ -1792,8 +1799,8 @@ function renderShowPage() {
         const heavyBadge = isHeavy ? `<span style="background:#78350f;color:#fcd34d;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:800">⚠ HEAVY ${bricks}b</span>` : '';
         const fpBadge = cb.flyperson && !oneFP ? `<span style="background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700">${esc(cb.flyperson)}</span>` : '';
         return `<div style="display:flex;align-items:center;gap:8px;padding:5px 14px;border-top:1px solid #0f172a;flex-wrap:wrap">
-          <span style="color:#475569;font-size:11px;min-width:40px;flex-shrink:0">Bar ${cb.barId}</span>
-          <span style="color:#94a3b8;font-size:11px;min-width:50px;flex:1">${barName}</span>
+          <span style="color:#cbd5e1;font-size:12px;font-weight:700;min-width:46px;flex-shrink:0">Bar ${cb.barId}</span>
+          <span style="color:#e2e8f0;font-size:12px;font-weight:600;min-width:50px;flex:1">${barName}</span>
           <span style="${ds};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(label)}</span>
           <span style="background:#0f172a;color:#fbbf24;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(cb.speed)}</span>
           ${bar1Warn}${heavyBadge}${fpBadge}
