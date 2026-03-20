@@ -444,9 +444,16 @@ function recomputeLiveFlyTags() {
 }
 
 // Called on load and show switch to migrate old data: name-empty → notInUse, and liveFly from cues.
+// A bar is auto-flagged not-in-use if:
+//   • its name is empty/whitespace, OR
+//   • its name is still the default "Bar X" and it has no equipment at all
 function applyAutoFlags() {
   bars.forEach(bar => {
-    if (!bar.name || !bar.name.trim()) bar.notInUse = true;
+    const defaultName = `Bar ${bar.id}`;
+    const nameIsEmpty = !bar.name || !bar.name.trim();
+    const nameIsDefault = bar.name === defaultName;
+    const hasEquipment = (bar.fixtures || []).length > 0 || bar.extensions || bar.iwb !== null || bar.cable || (bar.miscBricks || 0) !== 0;
+    if (nameIsEmpty || (nameIsDefault && !hasEquipment)) bar.notInUse = true;
   });
   recomputeLiveFlyTags();
 }
