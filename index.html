@@ -179,6 +179,7 @@
 <div class="page-tabs">
   <button class="page-tab active" id="tab-bars" onclick="switchPage('bars')">Bars</button>
   <button class="page-tab" id="tab-library" onclick="switchPage('library')">Library</button>
+  <button class="page-tab" id="tab-inventory" onclick="switchPage('inventory')">Inventory</button>
 </div>
 
 <div id="page-bars">
@@ -199,6 +200,10 @@
 
 <div id="page-library" style="display:none">
   <div id="library-container"></div>
+</div>
+
+<div id="page-inventory" style="display:none">
+  <div id="inventory-container"></div>
 </div>
 
 <div class="footer">Data synced via Firebase · Works across all devices automatically</div>
@@ -1044,10 +1049,77 @@ function switchPage(page) {
   currentPage = page;
   document.getElementById('page-bars').style.display = page === 'bars' ? 'block' : 'none';
   document.getElementById('page-library').style.display = page === 'library' ? 'block' : 'none';
+  document.getElementById('page-inventory').style.display = page === 'inventory' ? 'block' : 'none';
   document.getElementById('tab-bars').className = 'page-tab' + (page === 'bars' ? ' active' : '');
   document.getElementById('tab-library').className = 'page-tab' + (page === 'library' ? ' active' : '');
+  document.getElementById('tab-inventory').className = 'page-tab' + (page === 'inventory' ? ' active' : '');
   if (page === 'library') renderLibraryPage();
+  else if (page === 'inventory') renderInventoryPage();
   else render();
+}
+
+function renderInventoryPage() {
+  // Build a map: fixture name → { weight, category, totalQty, totalHungKg, bars: [barId, ...] }
+  const map = {};
+
+  bars.forEach(bar => {
+    (bar.fixtures || []).forEach(f => {
+      if (!map[f.name]) {
+        map[f.name] = { weight: f.weight, category: f.category || 'Other', totalQty: 0, totalHungKg: 0, barIds: [] };
+      }
+      map[f.name].totalQty += f.qty;
+      map[f.name].totalHungKg += f.weight * f.qty;
+      map[f.name].barIds.push({ id: bar.id, qty: f.qty });
+    });
+  });
+
+  const catOrder = ['Lighting', 'Sound', 'Set', 'Drapes', 'Other'];
+  const entries = Object.entries(map).sort((a, b) => {
+    const ci = x => { const i = catOrder.indexOf(x); return i === -1 ? catOrder.length : i; };
+    const cd = ci(a[1].category) - ci(b[1].category);
+    return cd !== 0 ? cd : b[1].totalQty - a[1].totalQty;
+  });
+
+  if (entries.length === 0) {
+    document.getElementById('inventory-container').innerHTML = `
+      <div style="color:#475569;font-size:13px;margin-top:20px;text-align:center">
+        No fixtures added to any bar yet.
+      </div>`;
+    return;
+  }
+
+  // Totals
+  const grandQty = entries.reduce((s, [, v]) => s + v.totalQty, 0);
+  const grandKg  = entries.reduce((s, [, v]) => s + v.totalHungKg, 0);
+
+  const rows = entries.map(([name, v]) => {
+    const c = CAT_COLOURS[v.category] || '#64748b';
+    const barList = v.barIds.map(b => `Bar ${b.id}${b.qty > 1 ? ` ×${b.qty}` : ''}`).join(', ');
+    return `<tr>
+      <td style="font-weight:600">${esc(name)}</td>
+      <td><span class="lib-cat-pill" style="background:${c}22;color:${c}">${esc(v.category)}</span></td>
+      <td class="r" style="color:#94a3b8">${v.weight} kg</td>
+      <td class="r" style="color:#f1f5f9;font-weight:700;font-size:14px">${v.totalQty}</td>
+      <td class="r" style="color:#fbbf24;font-weight:700">${v.totalHungKg.toFixed(1)} kg</td>
+      <td style="color:#475569;font-size:11px">${barList}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('inventory-container').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="card"><div class="card-label">Fixture Types</div><div class="card-value" style="color:#60a5fa">${entries.length}</div></div>
+      <div class="card"><div class="card-label">Total Units</div><div class="card-value" style="color:#f1f5f9">${grandQty}</div></div>
+      <div class="card"><div class="card-label">Total Weight</div><div class="card-value" style="color:#fbbf24">${grandKg.toFixed(1)} kg</div></div>
+    </div>
+    <table class="lib-table">
+      <thead><tr>
+        <th>Fixture</th><th>Category</th><th class="r">Unit kg</th>
+        <th class="r">Total Units</th><th class="r">Total Weight</th><th>Bars</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:#475569;margin-top:8px">${entries.length} fixture type${entries.length !== 1 ? 's' : ''} across all bars</div>
+  `;
 }
 
 const CAT_COLOURS = {Lighting:'#818cf8', Sound:'#34d399', Set:'#94a3b8', Drapes:'#f472b6'};
