@@ -367,7 +367,7 @@ async function loadFromFirebase() {
       firebaseGet('positions')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
@@ -1376,7 +1376,7 @@ function barTotalCwBricks(bar) {
 
 // ── Preshow generation ──────────────────────────────────────
 function regeneratePreshowSilent() {
-  const loaded = bars.filter(b => !b.notInUse && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  const loaded = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
   if (!showConfig.cues) showConfig.cues = [];
   const existingIdx = showConfig.cues.findIndex(c => c.isPreshow);
   const existingPreshow = existingIdx >= 0 ? showConfig.cues[existingIdx] : null;
@@ -1601,6 +1601,13 @@ function confirmAddBarToCue(cueIdx) {
   const cue = showConfig.cues[cueIdx];
   if (!cue) return;
 
+  // DNF block — cannot add to any cue
+  const barObj = bars.find(b => b.id === barId);
+  if (barObj?.dnf) {
+    alert(`⛔ Bar ${barId} has a DO NOT FLY tag.\n\nThis bar cannot be added to any cue. Remove the physical tag and clear the DNF flag on the Bars page first.`);
+    return;
+  }
+
   // Bar 1 cinema screen warning
   if (barId === 1) {
     if (!confirm(`⚠ WARNING: Bar 1 is the CINEMA SCREEN.\n\nMoving it incorrectly can crush equipment below.\n\nAre you absolutely sure you want to add it to this cue?`)) return;
@@ -1774,9 +1781,10 @@ function renderShowPage() {
       </div>`;
 
   // Regular cue cards
-  const activeBarOptions = activeBars.map(b =>
-    `<option value="${b.id}">Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''}</option>`
-  ).join('');
+  const activeBarOptions = activeBars
+    .filter(b => !b.dnf && !b.notInUse)
+    .map(b => `<option value="${b.id}">Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''}</option>`)
+    .join('');
 
   const oneFP = showConfig.maxFlymen === 1;
 
