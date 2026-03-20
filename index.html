@@ -133,6 +133,32 @@
   /* Show tab */
   .show-section { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
   .show-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 10px; font-weight: 700; }
+  /* User bar & edit toggle */
+  .user-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; }
+  .user-bar-label { font-size: 12px; color: #475569; font-weight: 600; white-space: nowrap; }
+  .user-select { background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 5px 10px; font-size: 13px; font-weight: 700; outline: none; }
+  .edit-toggle-btn { border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; border: 2px solid; margin-left: auto; }
+  .edit-toggle-btn.edit { background: #14532d; color: #22c55e; border-color: #22c55e44; }
+  .edit-toggle-btn.view { background: #7f1d1d; color: #fca5a5; border-color: #ef444444; }
+  .view-mode-banner { display: none; background: #450a0a; border: 1px solid #ef444444; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #fca5a5; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .view-mode-banner.active { display: block; }
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #00000099; z-index: 1000; overflow-y: auto; }
+  .modal-box { background: #1e293b; border: 1px solid #334155; border-radius: 10px; max-width: 500px; margin: 40px auto; padding: 20px; }
+  .modal-title { font-size: 16px; font-weight: 800; color: #f1f5f9; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px; margin-left: auto; line-height: 1; padding: 2px 4px; }
+  .modal-section { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #334155; padding-top: 12px; }
+  .bar-keep-list { max-height: 220px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 8px 10px; }
+  /* History page */
+  .history-entry { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid #0f172a; }
+  .history-user { font-size: 11px; color: #60a5fa; font-weight: 700; min-width: 80px; flex-shrink: 0; }
+  .history-action { font-size: 12px; color: #e2e8f0; flex: 1; }
+  .history-time { font-size: 10px; color: #475569; white-space: nowrap; }
+  /* Manage users */
+  .user-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #334155; flex-wrap: wrap; }
+  .user-row-name { flex: 1; font-size: 13px; color: #e2e8f0; font-weight: 600; min-width: 100px; }
+  .perm-label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #94a3b8; cursor: pointer; white-space: nowrap; }
   /* Print */
   .btn-print { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   #print-section { display: none; }
@@ -166,8 +192,25 @@
 </head>
 <body>
 
-<h1>🎭 Fly Weight Calculator</h1>
-<p class="subtitle">Theatre by the Lake · Double Purchase · 39 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:4px">
+  <svg width="160" height="44" viewBox="0 0 320 88" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;opacity:0.92">
+    <text x="160" y="36" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="38" font-weight="700" letter-spacing="6" fill="white">THEATRE</text>
+    <text x="160" y="72" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="24" font-weight="400" letter-spacing="8" fill="white">BY THE LAKE</text>
+  </svg>
+  <div>
+    <h1 style="margin:0">🎭 Fly Weight Calculator</h1>
+    <p class="subtitle" style="margin:2px 0 0">Double Purchase · 39 Bars (excl. 32,34,36,38,40) · 12kg Full / 6kg Half Bricks</p>
+  </div>
+</div>
+
+<div class="user-bar" id="user-bar">
+  <span class="user-bar-label">Working as:</span>
+  <select class="user-select" id="user-selector" onchange="setCurrentUser(this.value)">
+    <option value="">— Select user —</option>
+  </select>
+  <button class="edit-toggle-btn edit" id="edit-toggle-btn" onclick="toggleEditMode()">✏ EDIT MODE</button>
+</div>
+<div class="view-mode-banner" id="view-mode-banner">👁 VIEW ONLY — All editing is disabled. Click EDIT MODE to re-enable.</div>
 
 <div class="sync-bar">
   <div class="sync-dot syncing" id="sync-dot"></div>
@@ -192,6 +235,7 @@
   <button class="page-tab" id="tab-library" onclick="switchPage('library')">Library</button>
   <button class="page-tab" id="tab-inventory" onclick="switchPage('inventory')">Inventory</button>
   <button class="page-tab" id="tab-show" onclick="switchPage('show')">Show</button>
+  <button class="page-tab" id="tab-history" onclick="switchPage('history')">History</button>
 </div>
 
 <div id="page-bars">
@@ -220,6 +264,47 @@
 
 <div id="page-show" style="display:none">
   <div id="show-container"></div>
+</div>
+
+<div id="page-history" style="display:none">
+  <div id="history-container"></div>
+</div>
+
+<!-- New Show Modal -->
+<div class="modal-overlay" id="new-show-modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>➕ New Show</span>
+      <button class="modal-close" onclick="closeNewShowModal()">✕</button>
+    </div>
+    <div class="modal-section">Show Name</div>
+    <input type="text" id="new-show-modal-name" placeholder="Enter show name…"
+      style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:8px 12px;font-size:14px;font-weight:700;outline:none;width:100%;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')confirmNewShow()">
+    <div class="modal-section">Bars</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#e2e8f0;cursor:pointer">
+        <input type="radio" name="bar-reset-mode" value="reset" style="accent-color:#ef4444">
+        <span>Reset all bars to default (clean slate)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#e2e8f0;cursor:pointer">
+        <input type="radio" name="bar-reset-mode" value="keep" checked style="accent-color:#3b82f6">
+        <span>Keep selected bars from current rig</span>
+      </label>
+    </div>
+    <div class="bar-keep-list" id="new-show-bar-list"></div>
+    <div class="modal-actions">
+      <button onclick="closeNewShowModal()"
+        style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+      <button onclick="confirmNewShow()" class="btn-add" style="padding:7px 18px;font-size:13px">Create Show</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Users Modal -->
+<div class="modal-overlay" id="manage-users-modal" onclick="if(event.target===this)closeManageUsersModal()">
+  <div class="modal-box" id="manage-users-modal-inner">
+  </div>
 </div>
 
 <div class="footer">Data synced via Firebase · Works across all devices automatically</div>
@@ -297,7 +382,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: id === 1
   }));
 }
 
@@ -314,12 +399,24 @@ function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(va
 
 const DEFAULT_POSITIONS = ['Duty Stage', 'Duty Tech', 'ASM', 'CSM', 'DSM'];
 
+const DEFAULT_USERS = [
+  { name: 'Daymon', canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Louis',  canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Oliver', canEdit: true, isAdmin: true,  canViewHistory: true  },
+  { name: 'Robert', canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Symon',  canEdit: true, isAdmin: false, canViewHistory: false },
+];
+
 let bars = loadLocal('tbtl_bars_v3', defaultBars());
 let library = mergeDefaultsIntoLibrary(loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES));
 let shows = loadLocal('tbtl_shows_v1', {});
 let flypositions = loadLocal('tbtl_positions_v1', DEFAULT_POSITIONS);
 let showConfig = loadLocal('tbtl_showconfig_v1', { maxFlymen: 1, customDeads: {}, cues: [] });
 let activeShowName = loadLocal('tbtl_last_show_v1', null);
+let users = loadLocal('tbtl_users_v1', DEFAULT_USERS);
+let currentUser = loadLocal('tbtl_current_user_v1', null);
+let editMode = true;
+let historyLog = loadLocal('tbtl_history_v1', []);
 let showsPanelOpen = false;
 let expanded = {};
 let inputMode = {};
@@ -327,6 +424,173 @@ let saveTimeout = null;
 let addingBarToCue = null;
 
 bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
+
+// ── User / permission helpers ─────────────────────────────────
+function getCurrentUser() {
+  if (!currentUser) return null;
+  return users.find(u => u.name === currentUser) || null;
+}
+function isAdminUser() { const u = getCurrentUser(); return u && u.isAdmin; }
+function canViewHistoryAccess() { const u = getCurrentUser(); return u && u.canViewHistory; }
+
+function requireEdit() {
+  if (!editMode) return false; // silent — banner explains view mode
+  const u = getCurrentUser();
+  if (u && !u.canEdit) { alert(`${currentUser} does not have edit permissions.`); return false; }
+  return true;
+}
+
+function logHistory(action) {
+  if (!currentUser) return;
+  historyLog.unshift({ user: currentUser, action, timestamp: new Date().toISOString() });
+  if (historyLog.length > 200) historyLog = historyLog.slice(0, 200);
+  saveLocal('tbtl_history_v1', historyLog);
+}
+
+function setCurrentUser(name) {
+  currentUser = name || null;
+  saveLocal('tbtl_current_user_v1', currentUser);
+  renderUserBar();
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  renderUserBar();
+  const banner = document.getElementById('view-mode-banner');
+  if (banner) banner.className = 'view-mode-banner' + (editMode ? '' : ' active');
+}
+
+function renderUserBar() {
+  const bar = document.getElementById('user-bar');
+  if (!bar) return;
+  const u = getCurrentUser();
+  const userOpts = ['<option value="">— Select user —</option>',
+    ...users.map(usr => `<option value="${esc(usr.name)}" ${currentUser === usr.name ? 'selected' : ''}>${esc(usr.name)}</option>`)
+  ].join('');
+  const editClass = editMode ? 'edit' : 'view';
+  const editLabel = editMode ? '✏ EDIT MODE' : '👁 VIEW ONLY';
+  bar.innerHTML = `
+    <span class="user-bar-label">Working as:</span>
+    <select class="user-select" id="user-selector" onchange="setCurrentUser(this.value)">${userOpts}</select>
+    ${u && u.isAdmin ? `<button onclick="openManageUsersModal()"
+      style="background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f644;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600">⚙ Manage Users</button>` : ''}
+    <button class="edit-toggle-btn ${editClass}" id="edit-toggle-btn" onclick="toggleEditMode()">${editLabel}</button>
+  `;
+}
+
+// ── User management ───────────────────────────────────────────
+function openManageUsersModal() {
+  if (!isAdminUser()) return;
+  const modal = document.getElementById('manage-users-modal');
+  const inner = document.getElementById('manage-users-modal-inner');
+  if (!modal || !inner) return;
+  const rows = users.map((u, i) => {
+    const protect = u.isAdmin; // Oliver is protected
+    return `<div class="user-row">
+      <span class="user-row-name">${esc(u.name)}${u.isAdmin ? ' <span style="font-size:10px;color:#f59e0b;font-weight:700">★ Admin</span>' : ''}</span>
+      <label class="perm-label">
+        <input type="checkbox" ${u.canEdit ? 'checked' : ''} ${protect ? 'disabled' : ''}
+          onchange="setUserPerm(${i},'canEdit',this.checked)" style="accent-color:#3b82f6">
+        Can Edit
+      </label>
+      <label class="perm-label">
+        <input type="checkbox" ${u.canViewHistory ? 'checked' : ''} ${protect ? 'disabled' : ''}
+          onchange="setUserPerm(${i},'canViewHistory',this.checked)" style="accent-color:#a855f7">
+        History
+      </label>
+      ${!protect ? `<button onclick="removeUser(${i})"
+        style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Remove</button>` : ''}
+    </div>`;
+  }).join('');
+  inner.innerHTML = `
+    <div class="modal-title">⚙ Manage Users <button class="modal-close" onclick="closeManageUsersModal()">✕</button></div>
+    <div style="font-size:11px;color:#475569;margin-bottom:8px">Permissions apply when that user is selected. Admin can always access everything.</div>
+    ${rows}
+    <div class="modal-section">Add new user</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="new-user-name" placeholder="Name…"
+        style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:6px 10px;font-size:13px;outline:none;flex:1"
+        onkeydown="if(event.key==='Enter')addUser()">
+      <button onclick="addUser()" class="btn-add" style="padding:6px 12px;font-size:12px">+ Add</button>
+    </div>
+  `;
+  modal.style.display = 'block';
+}
+function closeManageUsersModal() {
+  const m = document.getElementById('manage-users-modal');
+  if (m) m.style.display = 'none';
+}
+function setUserPerm(idx, perm, val) {
+  if (!isAdminUser()) return;
+  users[idx][perm] = val;
+  saveLocal('tbtl_users_v1', users);
+  openManageUsersModal();
+}
+function addUser() {
+  if (!isAdminUser()) return;
+  const inp = document.getElementById('new-user-name');
+  const name = (inp ? inp.value : '').trim();
+  if (!name) return;
+  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) { alert('A user with that name already exists.'); return; }
+  users.push({ name, canEdit: true, isAdmin: false, canViewHistory: false });
+  users.sort((a, b) => a.name.localeCompare(b.name));
+  saveLocal('tbtl_users_v1', users);
+  logHistory(`Added user "${name}"`);
+  openManageUsersModal();
+  renderUserBar();
+}
+function removeUser(idx) {
+  if (!isAdminUser()) return;
+  const u = users[idx];
+  if (u.isAdmin) { alert('Cannot remove the admin user.'); return; }
+  if (!confirm(`Remove user "${u.name}"?`)) return;
+  if (currentUser === u.name) { currentUser = null; saveLocal('tbtl_current_user_v1', null); }
+  users.splice(idx, 1);
+  saveLocal('tbtl_users_v1', users);
+  openManageUsersModal();
+  renderUserBar();
+}
+
+// ── History page ─────────────────────────────────────────────
+function renderHistoryPage() {
+  const container = document.getElementById('history-container');
+  if (!container) return;
+  if (!canViewHistoryAccess()) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#475569">
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <div style="font-size:14px">History access is restricted to admin users.</div>
+    </div>`;
+    return;
+  }
+  if (historyLog.length === 0) {
+    container.innerHTML = '<div style="color:#475569;font-size:13px;margin-top:20px;text-align:center">No history recorded yet.</div>';
+    return;
+  }
+  const rows = historyLog.map(entry => {
+    const dt = new Date(entry.timestamp).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-entry">
+      <span class="history-user">${esc(entry.user)}</span>
+      <span class="history-action">${esc(entry.action)}</span>
+      <span class="history-time">${dt}</span>
+    </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <h2 style="font-size:16px;font-weight:800;color:#f1f5f9;flex:1">History</h2>
+      <button onclick="clearHistory()"
+        style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">Clear History</button>
+    </div>
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden">${rows}</div>
+    <div style="font-size:11px;color:#475569;margin-top:8px">${historyLog.length} entr${historyLog.length !== 1 ? 'ies' : 'y'}</div>
+  `;
+}
+function clearHistory() {
+  if (!isAdminUser()) return;
+  if (!confirm('Clear all history? This cannot be undone.')) return;
+  historyLog = [];
+  saveLocal('tbtl_history_v1', historyLog);
+  renderHistoryPage();
+}
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -418,6 +682,15 @@ function scheduleSave() {
   saveLocal('tbtl_bars_v3', bars);
   saveLocal('tbtl_lib_v3', library);
   saveLocal('tbtl_showconfig_v1', showConfig);
+  // Auto-save to active show
+  if (activeShowName) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+  }
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(saveToFirebase, 1500);
 }
@@ -449,9 +722,11 @@ function cradleBricksToHungLoad(fullBricks, halfBricks) {
 }
 
 function toggleNotInUse(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (!bar) return;
   bar.notInUse = !bar.notInUse;
+  logHistory(`${bar.notInUse ? 'Marked' : 'Unmarked'} Bar ${barId} as not in use`);
   scheduleSave();
   render();
 }
@@ -462,17 +737,21 @@ function clearNotInUse(bar) {
 }
 
 function toggleExtensions(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (!bar.extensions) clearNotInUse(bar); // turning ON clears not-in-use
   bar.extensions = !bar.extensions;
+  logHistory(`${bar.extensions ? 'Added' : 'Removed'} extensions on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function selectIWB(barId, colourId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (bar.iwb === colourId) {
     bar.iwb = null;
+    logHistory(`Removed IWB from Bar ${barId}`);
     scheduleSave(); render(); return;
   }
   const owner = bars.find(b => b.id !== barId && b.iwb === colourId);
@@ -483,32 +762,39 @@ function selectIWB(barId, colourId) {
   }
   clearNotInUse(bar);
   bar.iwb = colourId;
+  logHistory(`Assigned ${IWB_COLOURS.find(c=>c.id===colourId)?.label||colourId} IWB to Bar ${barId}`);
   scheduleSave(); render();
 }
 
 function toggleCable(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (!bar.cable) clearNotInUse(bar); // turning ON clears not-in-use
   bar.cable = !bar.cable;
+  logHistory(`${bar.cable ? 'Added' : 'Removed'} cable allowance on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function toggleDNF(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (!confirm(bar.dnf ? `Remove DO NOT FLY tag from Bar ${barId}?` : `⛔ Mark Bar ${barId} as DO NOT FLY?\n\nThis is a safety tag — make sure it matches the physical tag on the bar.`)) return;
   bar.dnf = !bar.dnf;
+  logHistory(`${bar.dnf ? 'Added' : 'Removed'} DO NOT FLY tag on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function toggleConduit(barId, fixtureId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const f = bar.fixtures.find(f => f.id === fixtureId);
   if (f) { f.conduit = !f.conduit; scheduleSave(); render(); }
 }
 
 function updateBarName(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const name = val.trim();
   if (name) { bar.name = name; scheduleSave(); }
@@ -537,6 +823,7 @@ function updatePreview(barId) {
 }
 
 function addFixture(barId) {
+  if (!requireEdit()) return;
   if (barId === 1) return; // Bar 1 is locked — cinema screen only
   const bar = bars.find(b => b.id === barId);
   const name = document.getElementById(`fname_${barId}`).value.trim();
@@ -567,18 +854,23 @@ function addFixture(barId) {
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
   }
+  logHistory(`Added ${qty > 1 ? `${qty}× ` : ''}${name} to Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function removeFixture(barId, fixId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
+  const fix = bar.fixtures.find(f => f.id === fixId);
+  if (fix) logHistory(`Removed ${fix.name} from Bar ${barId}`);
   bar.fixtures = bar.fixtures.filter(f => f.id !== fixId);
   scheduleSave();
   render();
 }
 
 function updateQty(barId, fixId, qty) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const fix = bar.fixtures.find(f => f.id === fixId);
   if (fix) fix.qty = Math.max(1, parseInt(qty) || 1);
@@ -587,22 +879,26 @@ function updateQty(barId, fixId, qty) {
 }
 
 function setBarPreshowDead(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (bar) { bar.preshowDead = val; scheduleSave(); render(); }
 }
 
 function updateBarNote(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (bar) { bar.note = val; scheduleSave(); }
 }
 
 function updateTare(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const w = parseFloat(val);
   if (!isNaN(w) && w >= 0) { bar.barWeight = w; scheduleSave(); }
 }
 
 function updateMiscBricks(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const v = parseInt(val, 10);
   bar.miscBricks = isNaN(v) ? 0 : v;
@@ -639,9 +935,11 @@ function toggleBar(id) {
 }
 
 function resetAll() {
+  if (!requireEdit()) return;
   if (!confirm('Reset ALL bars to empty? This cannot be undone.')) return;
   bars = defaultBars();
   activeShowName = null;
+  logHistory('Reset all bars to default');
   scheduleSave();
   expanded = {};
   render();
@@ -687,13 +985,24 @@ async function saveShow(name, skipConfirm = false) {
 function loadShow(name) {
   const show = shows[name];
   if (!show) return;
-  if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null}));
+  // Auto-save current show before switching
+  if (activeShowName && activeShowName !== name) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+    firebasePut('shows', shows).catch(() => {});
+  }
+  if (!confirm(`Switch to "${name}"?${activeShowName && activeShowName !== name ? `\n\nYour current show "${activeShowName}" has been auto-saved.` : ''}`)) return;
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
   showConfig = show.showConfig ? { maxFlymen: 1, customDeads: {}, cues: [], ...show.showConfig } : { maxFlymen: 1, customDeads: {}, cues: [] };
   saveLocal('tbtl_showconfig_v1', showConfig);
   saveLocal('tbtl_last_show_v1', name);
   activeShowName = name;
   expanded = {};
+  logHistory(`Loaded show "${name}"`);
   scheduleSave();
   render();
   renderShows();
@@ -726,6 +1035,91 @@ function promptSaveShow() {
     return;
   }
   saveShow(name).then(() => { nameInput.value = ''; });
+}
+
+// ── New Show modal ────────────────────────────────────────────
+function openNewShowModal() {
+  if (!requireEdit()) return;
+  // Auto-save current show first
+  if (activeShowName) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+    firebasePut('shows', shows).catch(() => {});
+  }
+  const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  const barCheckboxes = loadedBars.length > 0
+    ? loadedBars.map(b => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#e2e8f0;padding:3px 0;cursor:pointer">
+        <input type="checkbox" id="keep_bar_${b.id}" checked style="accent-color:#3b82f6">
+        Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''} <span style="color:#475569;font-size:10px">(${(b.fixtures||[]).length} fix${b.extensions?' +ext':''}${b.iwb?' +IWB':''})</span>
+      </label>`).join('')
+    : '<span style="color:#475569;font-size:12px;font-style:italic">No loaded bars in current rig</span>';
+  const modal = document.getElementById('new-show-modal');
+  document.getElementById('new-show-bar-list').innerHTML = barCheckboxes;
+  document.getElementById('new-show-modal-name').value = '';
+  const radios = document.querySelectorAll('input[name="bar-reset-mode"]');
+  radios.forEach(r => { r.checked = (r.value === 'keep'); });
+  if (modal) modal.style.display = 'block';
+  setTimeout(() => { const inp = document.getElementById('new-show-modal-name'); if (inp) inp.focus(); }, 50);
+}
+
+function closeNewShowModal() {
+  const m = document.getElementById('new-show-modal');
+  if (m) m.style.display = 'none';
+}
+
+async function confirmNewShow() {
+  if (!requireEdit()) return;
+  const inp = document.getElementById('new-show-modal-name');
+  const name = inp ? inp.value.trim() : '';
+  if (!name) {
+    if (inp) { inp.style.borderColor = '#ef4444'; setTimeout(() => inp.style.borderColor = '#334155', 1500); }
+    return;
+  }
+  const modeEl = document.querySelector('input[name="bar-reset-mode"]:checked');
+  const resetMode = modeEl ? modeEl.value : 'keep';
+  let newBars;
+  if (resetMode === 'reset') {
+    newBars = defaultBars();
+  } else {
+    const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+    const keepIds = new Set(loadedBars.filter(b => {
+      const cb = document.getElementById(`keep_bar_${b.id}`);
+      return cb && cb.checked;
+    }).map(b => b.id));
+    const defaults = defaultBars();
+    newBars = defaults.map(db => {
+      const existing = bars.find(b => b.id === db.id);
+      return keepIds.has(db.id) && existing ? { ...existing } : db;
+    });
+  }
+  bars = newBars;
+  showConfig = { maxFlymen: 1, customDeads: {}, cues: [] };
+  activeShowName = name;
+  saveLocal('tbtl_last_show_v1', name);
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  shows[name] = {
+    bars: JSON.parse(JSON.stringify(bars)),
+    showConfig: JSON.parse(JSON.stringify(showConfig)),
+    savedAt: new Date().toISOString()
+  };
+  saveLocal('tbtl_shows_v1', shows);
+  logHistory(`Created new show "${name}"`);
+  try {
+    setSyncStatus('syncing', 'Creating show...');
+    await firebasePut('shows', shows);
+    setSyncStatus('online', `Show "${name}" created · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    setSyncStatus('offline', `Show saved locally (Firebase offline)`);
+  }
+  closeNewShowModal();
+  expanded = {};
+  scheduleSave();
+  render();
+  renderShows();
 }
 
 function renderShows() {
@@ -781,8 +1175,7 @@ function renderShows() {
   container.innerHTML = `
     ${updateBtn}
     <div class="shows-save-row">
-      <input type="text" id="new-show-name" placeholder="Save as new show…" style="flex:1;min-width:140px">
-      <button class="btn-add" onclick="promptSaveShow()">Save as New Show</button>
+      <button class="btn-add" onclick="openNewShowModal()" style="padding:7px 18px;font-size:13px">➕ New Show</button>
     </div>
     <div class="shows-list">${listHtml}</div>
   `;
@@ -1156,13 +1549,16 @@ function switchPage(page) {
   document.getElementById('page-library').style.display = page === 'library' ? 'block' : 'none';
   document.getElementById('page-inventory').style.display = page === 'inventory' ? 'block' : 'none';
   document.getElementById('page-show').style.display = page === 'show' ? 'block' : 'none';
+  document.getElementById('page-history').style.display = page === 'history' ? 'block' : 'none';
   document.getElementById('tab-bars').className = 'page-tab' + (page === 'bars' ? ' active' : '');
   document.getElementById('tab-library').className = 'page-tab' + (page === 'library' ? ' active' : '');
   document.getElementById('tab-inventory').className = 'page-tab' + (page === 'inventory' ? ' active' : '');
   document.getElementById('tab-show').className = 'page-tab' + (page === 'show' ? ' active' : '');
+  document.getElementById('tab-history').className = 'page-tab' + (page === 'history' ? ' active' : '');
   if (page === 'library') renderLibraryPage();
   else if (page === 'inventory') renderInventoryPage();
   else if (page === 'show') renderShowPage();
+  else if (page === 'history') renderHistoryPage();
   else render();
 }
 
@@ -1444,25 +1840,30 @@ function saveShowConfig() {
 }
 
 function setMaxFlymen(val) {
+  if (!requireEdit()) return;
   showConfig.maxFlymen = Math.max(1, parseInt(val) || 1);
   saveShowConfig();
 }
 
 function addCustomDead(barId, bandColor) {
+  if (!requireEdit()) return;
   if (!showConfig.customDeads[barId]) showConfig.customDeads[barId] = [];
   if (showConfig.customDeads[barId].some(d => d.bandColor === bandColor)) return;
   const col = BAND_COLORS.find(c => c.id === bandColor) || { label: bandColor };
   showConfig.customDeads[barId].push({ id: `${barId}_${bandColor}_${Date.now()}`, bandColor, name: col.label });
+  logHistory(`Added ${col.label} dead to Bar ${barId}`);
   saveShowConfig();
   renderShowPage();
 }
 
 function renameCustomDead(barId, deadId, name) {
+  if (!requireEdit()) return;
   const d = (showConfig.customDeads[barId] || []).find(x => x.id === deadId);
   if (d) { d.name = name.trim() || d.name; saveShowConfig(); renderShowPage(); }
 }
 
 function removeCustomDead(barId, deadId) {
+  if (!requireEdit()) return;
   if (!showConfig.customDeads[barId]) return;
   showConfig.customDeads[barId] = showConfig.customDeads[barId].filter(d => d.id !== deadId);
   showConfig.cues.forEach(cue => {
@@ -1480,13 +1881,17 @@ function nextCueNumber() {
 }
 
 function addCue() {
+  if (!requireEdit()) return;
   if (!showConfig.cues) showConfig.cues = [];
-  showConfig.cues.push({ id: String(Date.now()), number: nextCueNumber(), name: '', isFollow: false, overrideMax: false, bars: [] });
+  const num = nextCueNumber();
+  showConfig.cues.push({ id: String(Date.now()), number: num, name: '', isFollow: false, overrideMax: false, bars: [] });
+  logHistory(`Added cue ${num}`);
   saveShowConfig();
   renderShowPage();
 }
 
 function insertCue(afterRegIdx, isNonFly = false) {
+  if (!requireEdit()) return;
   if (!showConfig.cues) showConfig.cues = [];
   const regularCues = showConfig.cues.filter(c => !c.isPreshow);
   const newCue = isNonFly
@@ -1540,7 +1945,10 @@ function findCueNameThatSet(barId, cueIdx) {
 }
 
 function deleteCue(idx) {
+  if (!requireEdit()) return;
+  const cue = showConfig.cues[idx];
   if (!confirm('Remove this cue?')) return;
+  if (cue) logHistory(`Deleted cue ${cue.number || cue.name || idx}`);
   showConfig.cues.splice(idx, 1);
   addingBarToCue = null;
   saveShowConfig();
@@ -1548,6 +1956,7 @@ function deleteCue(idx) {
 }
 
 function moveCue(idx, dir) {
+  if (!requireEdit()) return;
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= showConfig.cues.length) return;
   [showConfig.cues[idx], showConfig.cues[newIdx]] = [showConfig.cues[newIdx], showConfig.cues[idx]];
@@ -1556,6 +1965,7 @@ function moveCue(idx, dir) {
 }
 
 function toggleCueFollow(idx) {
+  if (!requireEdit()) return;
   const cue = showConfig.cues[idx];
   if (!cue) return;
   cue.isFollow = !cue.isFollow;
@@ -1589,6 +1999,7 @@ function updateCueBarDeadOptions(cueIdx) {
 }
 
 function confirmAddBarToCue(cueIdx) {
+  if (!requireEdit()) return;
   const barSel  = document.getElementById(`cue_bar_sel_${cueIdx}`);
   const deadSel = document.getElementById(`cue_dead_sel_${cueIdx}`);
   const speedSel = document.getElementById(`cue_speed_sel_${cueIdx}`);
@@ -1632,12 +2043,14 @@ function confirmAddBarToCue(cueIdx) {
   // Auto-assign Duty Stage when only 1 flyperson
   const autoFP = showConfig.maxFlymen === 1 ? (flypositions[0] || 'Duty Stage') : flyperson;
   cue.bars.push({ barId, deadId, speed, flyperson: autoFP });
+  logHistory(`Added Bar ${barId} to cue ${cue.number || cue.name || '—'}`);
   addingBarToCue = null;
   saveShowConfig();
   renderShowPage();
 }
 
 function removeBarFromCue(cueIdx, barIdx) {
+  if (!requireEdit()) return;
   const cue = showConfig.cues[cueIdx];
   if (!cue) return;
   cue.bars.splice(barIdx, 1);
@@ -1647,6 +2060,7 @@ function removeBarFromCue(cueIdx, barIdx) {
 
 // ── Position library ─────────────────────────────────────────
 function addPosition(name) {
+  if (!requireEdit()) return;
   const n = name.trim();
   if (!n || flypositions.includes(n)) return;
   flypositions.push(n);
@@ -1656,6 +2070,7 @@ function addPosition(name) {
 }
 
 function removePosition(idx) {
+  if (!requireEdit()) return;
   if (DEFAULT_POSITIONS.includes(flypositions[idx])) {
     if (!confirm(`Remove default position "${flypositions[idx]}"?`)) return;
   }
@@ -1939,6 +2354,9 @@ function render() {
 // Auto-generate preshow from current bar state, then render
 regeneratePreshowSilent();
 saveLocal('tbtl_showconfig_v1', showConfig);
+renderUserBar();
+const _viewBanner = document.getElementById('view-mode-banner');
+if (_viewBanner) _viewBanner.className = 'view-mode-banner' + (editMode ? '' : ' active');
 render();
 renderShows();
 loadFromFirebase();
@@ -1959,14 +2377,17 @@ function printCueSheet() {
         : cue.number
           ? `<strong>Cue ${cue.number}</strong>${cue.name ? ` — ${cue.name}` : ''}`
           : `<em>${cue.name || 'uncalled'}</em>`;
+    const typeCell = cue.isPreshow ? '<strong style="color:#92400e">Preshow</strong>'
+      : cue.isNonFly ? '<span style="color:#6d28d9;font-weight:700">Non-Fly</span>'
+      : '<span style="color:#1e40af;font-weight:700">Fly</span>';
     if (!cue.bars || cue.bars.length === 0) {
-      return `<tr class="cue-sheet-row"><td class="${cue.isFollow ? 'cue-follow' : cue.number ? '' : 'cue-uncalled'}">${cueCell}</td><td colspan="4">—</td></tr>`;
+      return `<tr class="cue-sheet-row"><td>${typeCell}</td><td class="${cue.isFollow ? 'cue-follow' : cue.number ? '' : 'cue-uncalled'}">${cueCell}</td><td colspan="5">—</td></tr>`;
     }
     if (cue.isNonFly) {
       return `<tr class="cue-sheet-row cue-nonfly">
+        <td>${typeCell}</td>
         <td>${cueCell}</td>
-        <td colspan="4" style="font-style:italic;color:#6d28d9">${esc(cue.notes||'—')}</td>
-        <td></td>
+        <td colspan="5" style="font-style:italic;color:#6d28d9">${esc(cue.notes||'—')}</td>
       </tr>`;
     }
     return cue.bars.map((cb, bi) => {
@@ -1977,6 +2398,7 @@ function printCueSheet() {
       const isHeavy = bricks >= 30;
       const rowClass = cue.isPreshow ? 'cue-preshow' : cue.isFollow ? 'cue-follow' : isUncalled ? 'cue-uncalled' : '';
       return `<tr class="cue-sheet-row ${rowClass}">
+        <td>${bi === 0 ? typeCell : ''}</td>
         <td>${bi === 0 ? cueCell : ''}</td>
         <td>Bar ${cb.barId}${cb.barId === 1 ? ' ⚠' : ''}</td>
         <td>${esc(barName)}</td>
@@ -1995,6 +2417,7 @@ function printCueSheet() {
     </div>
     <table class="print-table print-cue-table">
       <thead><tr>
+        <th style="width:55px">Type</th>
         <th style="width:180px">Cue</th>
         <th style="width:45px">Bar</th>
         <th style="width:90px">Name</th>
