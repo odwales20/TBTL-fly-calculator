@@ -61,18 +61,18 @@
   .footer { text-align: center; margin-top: 16px; color: #334155; font-size: 10px; }
   .tare-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 8px; font-size: 12px; color: #475569; }
   select option { background: #1e293b; }
-  .mode-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid #334155; flex-shrink: 0; }
-  .mode-btn { background: #0f172a; color: #64748b; border: none; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .mode-toggle { display: flex; border-radius: 5px; overflow: hidden; border: 1px solid #334155; flex-shrink: 0; }
+  .mode-btn { background: #0f172a; color: #64748b; border: none; padding: 3px 9px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   .mode-btn.active { background: #3b82f6; color: #fff; }
   .weight-preview { font-size: 11px; color: #64748b; align-self: center; white-space: nowrap; }
   .weight-preview strong { color: #fbbf24; }
   .divider { color: #334155; font-size: 11px; align-self: center; }
-  .ext-section { margin: 10px 0; background: #0f172a; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ext-section { margin: 4px 0; background: #0f172a; border-radius: 6px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 34px; }
   .ext-info { flex: 1; }
-  .ext-info strong { font-size: 13px; color: #e2e8f0; display: block; }
-  .ext-info small { font-size: 11px; color: #475569; }
-  .ext-badge { border-radius: 5px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-  .ext-btn { border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
+  .ext-info strong { font-size: 12px; color: #e2e8f0; display: inline; margin-right: 6px; }
+  .ext-info small { font-size: 10px; color: #475569; }
+  .ext-badge { border-radius: 4px; padding: 1px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+  .ext-btn { border: none; border-radius: 6px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; transition: background 0.15s; }
   .ext-btn.on-green { background: #16a34a; color: #fff; }
   .ext-btn.on-orange { background: #ea580c; color: #fff; }
   .ext-btn.on-blue   { background: #0369a1; color: #fff; }
@@ -141,8 +141,38 @@
   .btn-names-cancel { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
   /* DNF */
   .bar-wrap.dnf { border-color: #ef444466 !important; }
+  .bar-wrap.not-in-use { opacity: 0.55; border-color: #78716c55 !important; }
   .dnf-btn-on  { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef444466; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; letter-spacing: 0.5px; }
   .dnf-btn-off { background: #1e293b; color: #64748b; border: 1px solid #334155; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  /* Show tab */
+  .show-section { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .show-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 10px; font-weight: 700; }
+  /* User bar & edit toggle */
+  .user-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; }
+  .user-bar-label { font-size: 12px; color: #475569; font-weight: 600; white-space: nowrap; }
+  .user-select { background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 5px 10px; font-size: 13px; font-weight: 700; outline: none; }
+  .edit-toggle-btn { border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; border: 2px solid; margin-left: auto; }
+  .edit-toggle-btn.edit { background: #14532d; color: #22c55e; border-color: #22c55e44; }
+  .edit-toggle-btn.view { background: #7f1d1d; color: #fca5a5; border-color: #ef444444; }
+  .view-mode-banner { display: none; background: #450a0a; border: 1px solid #ef444444; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #fca5a5; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .view-mode-banner.active { display: block; }
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #00000099; z-index: 1000; overflow-y: auto; }
+  .modal-box { background: #1e293b; border: 1px solid #334155; border-radius: 10px; max-width: 500px; margin: 40px auto; padding: 20px; }
+  .modal-title { font-size: 16px; font-weight: 800; color: #f1f5f9; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px; margin-left: auto; line-height: 1; padding: 2px 4px; }
+  .modal-section { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #334155; padding-top: 12px; }
+  .bar-keep-list { max-height: 220px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 8px 10px; }
+  /* History page */
+  .history-entry { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid #0f172a; }
+  .history-user { font-size: 11px; color: #60a5fa; font-weight: 700; min-width: 80px; flex-shrink: 0; }
+  .history-action { font-size: 12px; color: #e2e8f0; flex: 1; }
+  .history-time { font-size: 10px; color: #475569; white-space: nowrap; }
+  /* Manage users */
+  .user-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #334155; flex-wrap: wrap; }
+  .user-row-name { flex: 1; font-size: 13px; color: #e2e8f0; font-weight: 600; min-width: 100px; }
+  .perm-label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #94a3b8; cursor: pointer; white-space: nowrap; }
   /* Print */
   .btn-print { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   #print-section { display: none; }
@@ -150,7 +180,7 @@
     @page { size: A4 landscape; margin: 0.8cm; }
     body { background: #fff !important; color: #111 !important; padding: 0; }
     .sync-bar, .shows-panel, .page-tabs, .info-bar, .summary, .controls,
-    #page-library, .footer, h1, .subtitle, #bars-container { display: none !important; }
+    #page-library, #page-inventory, #page-show, .footer, h1, .subtitle, #bars-container { display: none !important; }
     #page-bars { display: block !important; }
     #print-section { display: block !important; }
     .print-header { margin-bottom: 8px; display: flex; align-items: baseline; gap: 12px; }
@@ -164,6 +194,13 @@
     .print-table tr.dnf-row td.dnf-cell { color: #b91c1c; font-size: 8px; font-weight: 800; }
     .print-table tr.locked-row td { background: #faf5ff; color: #7c3aed; }
     .print-bricks { color: #4338ca; font-weight: 700; }
+    /* Cue sheet */
+    .print-cue-table { font-size: 8.5px; }
+    .print-cue-table tr.cue-preshow td { background: #fffbeb; }
+    .print-cue-table tr.cue-follow td { background: #f5f3ff; }
+    .print-cue-table tr.cue-uncalled td { color: #555; font-style: italic; background: #f8fafc; }
+    .print-cue-table tr.cue-nonfly td { background: #faf5ff; color: #6d28d9; }
+    .print-cue-table td:first-child { font-size: 8px; }
   }
 </style>
 </head>
@@ -196,6 +233,9 @@
 <div class="page-tabs">
   <button class="page-tab active" id="tab-bars" onclick="switchPage('bars')">Bars</button>
   <button class="page-tab" id="tab-library" onclick="switchPage('library')">Library</button>
+  <button class="page-tab" id="tab-inventory" onclick="switchPage('inventory')">Inventory</button>
+  <button class="page-tab" id="tab-show" onclick="switchPage('show')">Show</button>
+  <button class="page-tab" id="tab-history" onclick="switchPage('history')">History</button>
 </div>
 
 <div id="page-bars">
@@ -218,6 +258,55 @@
   <div id="library-container"></div>
 </div>
 
+<div id="page-inventory" style="display:none">
+  <div id="inventory-container"></div>
+</div>
+
+<div id="page-show" style="display:none">
+  <div id="show-container"></div>
+</div>
+
+<div id="page-history" style="display:none">
+  <div id="history-container"></div>
+</div>
+
+<!-- New Show Modal -->
+<div class="modal-overlay" id="new-show-modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>➕ New Show</span>
+      <button class="modal-close" onclick="closeNewShowModal()">✕</button>
+    </div>
+    <div class="modal-section">Show Name</div>
+    <input type="text" id="new-show-modal-name" placeholder="Enter show name…"
+      style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:8px 12px;font-size:14px;font-weight:700;outline:none;width:100%;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')confirmNewShow()">
+    <div class="modal-section">Bars</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#e2e8f0;cursor:pointer">
+        <input type="radio" name="bar-reset-mode" value="reset" style="accent-color:#ef4444">
+        <span>Reset all bars to default (clean slate)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#e2e8f0;cursor:pointer">
+        <input type="radio" name="bar-reset-mode" value="keep" checked style="accent-color:#3b82f6">
+        <span>Keep selected bars from current rig</span>
+      </label>
+    </div>
+    <div class="bar-keep-list" id="new-show-bar-list"></div>
+    <div class="modal-actions">
+      <button onclick="closeNewShowModal()"
+        style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+      <button onclick="confirmNewShow()" class="btn-add" style="padding:7px 18px;font-size:13px">Create Show</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Users Modal -->
+<div class="modal-overlay" id="manage-users-modal" onclick="if(event.target===this)closeManageUsersModal()">
+  <div class="modal-box" id="manage-users-modal-inner">
+  </div>
+</div>
+
 <div class="footer">Data synced via Firebase · Works across all devices automatically</div>
 
 <script>
@@ -233,6 +322,16 @@ const IWB_COLOURS = [
   { id: 'red',     label: 'Red',     bg: '#450a0a', border: '#dc2626', text: '#f87171' },
 ];
 const CABLE_WEIGHT = 6;   // cable allowance: 6kg hung = 12kg CW = 1 brick in cradle
+const BAND_COLORS = [
+  { id: 'green',  label: 'Green',  hex: '#22c55e' },
+  { id: 'blue',   label: 'Blue',   hex: '#3b82f6' },
+  { id: 'orange', label: 'Orange', hex: '#f97316' },
+  { id: 'yellow', label: 'Yellow', hex: '#eab308' },
+  { id: 'purple', label: 'Purple', hex: '#a855f7' },
+  { id: 'pink',   label: 'Pink',   hex: '#ec4899' },
+  { id: 'teal',   label: 'Teal',   hex: '#14b8a6' },
+  { id: 'white',  label: 'White',  hex: '#e2e8f0' },
+];
 const EXCLUDED = new Set([32,34,36,38,40]);
 const BAR_IDS = Array.from({length:44}, (_,i) => i+1).filter(n => !EXCLUDED.has(n));
 
@@ -283,7 +382,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: id === 1
   }));
 }
 
@@ -298,16 +397,200 @@ function loadLocal(key, def) {
 }
 function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
+const DEFAULT_POSITIONS = ['Duty Stage', 'Duty Tech', 'ASM', 'CSM', 'DSM'];
+
+const DEFAULT_USERS = [
+  { name: 'Daymon', canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Louis',  canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Oliver', canEdit: true, isAdmin: true,  canViewHistory: true  },
+  { name: 'Robert', canEdit: true, isAdmin: false, canViewHistory: false },
+  { name: 'Symon',  canEdit: true, isAdmin: false, canViewHistory: false },
+];
+
 let bars = loadLocal('tbtl_bars_v3', defaultBars());
 let library = mergeDefaultsIntoLibrary(loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES));
 let shows = loadLocal('tbtl_shows_v1', {});
-let activeShowName = null;
+let flypositions = loadLocal('tbtl_positions_v1', DEFAULT_POSITIONS);
+let showConfig = loadLocal('tbtl_showconfig_v1', { maxFlymen: 1, customDeads: {}, cues: [] });
+let activeShowName = loadLocal('tbtl_last_show_v1', null);
+let users = loadLocal('tbtl_users_v1', DEFAULT_USERS);
+let currentUser = loadLocal('tbtl_current_user_v1', null);
+let editMode = true;
+let historyLog = loadLocal('tbtl_history_v1', []);
 let showsPanelOpen = false;
 let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
+let addingBarToCue = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
+
+// ── User / permission helpers ─────────────────────────────────
+function getCurrentUser() {
+  if (!currentUser) return null;
+  return users.find(u => u.name === currentUser) || null;
+}
+function isAdminUser() { const u = getCurrentUser(); return u && u.isAdmin; }
+function canViewHistoryAccess() { const u = getCurrentUser(); return u && u.canViewHistory; }
+
+function requireEdit() {
+  if (!editMode) return false; // silent — banner explains view mode
+  const u = getCurrentUser();
+  if (u && !u.canEdit) { alert(`${currentUser} does not have edit permissions.`); return false; }
+  return true;
+}
+
+function logHistory(action) {
+  if (!currentUser) return;
+  historyLog.unshift({ user: currentUser, action, timestamp: new Date().toISOString() });
+  if (historyLog.length > 200) historyLog = historyLog.slice(0, 200);
+  saveLocal('tbtl_history_v1', historyLog);
+}
+
+function setCurrentUser(name) {
+  currentUser = name || null;
+  saveLocal('tbtl_current_user_v1', currentUser);
+  renderUserBar();
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  renderUserBar();
+  const banner = document.getElementById('view-mode-banner');
+  if (banner) banner.className = 'view-mode-banner' + (editMode ? '' : ' active');
+}
+
+function renderUserBar() {
+  const bar = document.getElementById('user-bar');
+  if (!bar) return;
+  const u = getCurrentUser();
+  const userOpts = ['<option value="">— Select user —</option>',
+    ...users.map(usr => `<option value="${esc(usr.name)}" ${currentUser === usr.name ? 'selected' : ''}>${esc(usr.name)}</option>`)
+  ].join('');
+  const editClass = editMode ? 'edit' : 'view';
+  const editLabel = editMode ? '✏ EDIT MODE' : '👁 VIEW ONLY';
+  bar.innerHTML = `
+    <span class="user-bar-label">Working as:</span>
+    <select class="user-select" id="user-selector" onchange="setCurrentUser(this.value)">${userOpts}</select>
+    ${u && u.isAdmin ? `<button onclick="openManageUsersModal()"
+      style="background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f644;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600">⚙ Manage Users</button>` : ''}
+    <button class="edit-toggle-btn ${editClass}" id="edit-toggle-btn" onclick="toggleEditMode()">${editLabel}</button>
+  `;
+}
+
+// ── User management ───────────────────────────────────────────
+function openManageUsersModal() {
+  if (!isAdminUser()) return;
+  const modal = document.getElementById('manage-users-modal');
+  const inner = document.getElementById('manage-users-modal-inner');
+  if (!modal || !inner) return;
+  const rows = users.map((u, i) => {
+    const protect = u.isAdmin; // Oliver is protected
+    return `<div class="user-row">
+      <span class="user-row-name">${esc(u.name)}${u.isAdmin ? ' <span style="font-size:10px;color:#f59e0b;font-weight:700">★ Admin</span>' : ''}</span>
+      <label class="perm-label">
+        <input type="checkbox" ${u.canEdit ? 'checked' : ''} ${protect ? 'disabled' : ''}
+          onchange="setUserPerm(${i},'canEdit',this.checked)" style="accent-color:#3b82f6">
+        Can Edit
+      </label>
+      <label class="perm-label">
+        <input type="checkbox" ${u.canViewHistory ? 'checked' : ''} ${protect ? 'disabled' : ''}
+          onchange="setUserPerm(${i},'canViewHistory',this.checked)" style="accent-color:#a855f7">
+        History
+      </label>
+      ${!protect ? `<button onclick="removeUser(${i})"
+        style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Remove</button>` : ''}
+    </div>`;
+  }).join('');
+  inner.innerHTML = `
+    <div class="modal-title">⚙ Manage Users <button class="modal-close" onclick="closeManageUsersModal()">✕</button></div>
+    <div style="font-size:11px;color:#475569;margin-bottom:8px">Permissions apply when that user is selected. Admin can always access everything.</div>
+    ${rows}
+    <div class="modal-section">Add new user</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="new-user-name" placeholder="Name…"
+        style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:6px 10px;font-size:13px;outline:none;flex:1"
+        onkeydown="if(event.key==='Enter')addUser()">
+      <button onclick="addUser()" class="btn-add" style="padding:6px 12px;font-size:12px">+ Add</button>
+    </div>
+  `;
+  modal.style.display = 'block';
+}
+function closeManageUsersModal() {
+  const m = document.getElementById('manage-users-modal');
+  if (m) m.style.display = 'none';
+}
+function setUserPerm(idx, perm, val) {
+  if (!isAdminUser()) return;
+  users[idx][perm] = val;
+  saveLocal('tbtl_users_v1', users);
+  openManageUsersModal();
+}
+function addUser() {
+  if (!isAdminUser()) return;
+  const inp = document.getElementById('new-user-name');
+  const name = (inp ? inp.value : '').trim();
+  if (!name) return;
+  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) { alert('A user with that name already exists.'); return; }
+  users.push({ name, canEdit: true, isAdmin: false, canViewHistory: false });
+  users.sort((a, b) => a.name.localeCompare(b.name));
+  saveLocal('tbtl_users_v1', users);
+  logHistory(`Added user "${name}"`);
+  openManageUsersModal();
+  renderUserBar();
+}
+function removeUser(idx) {
+  if (!isAdminUser()) return;
+  const u = users[idx];
+  if (u.isAdmin) { alert('Cannot remove the admin user.'); return; }
+  if (!confirm(`Remove user "${u.name}"?`)) return;
+  if (currentUser === u.name) { currentUser = null; saveLocal('tbtl_current_user_v1', null); }
+  users.splice(idx, 1);
+  saveLocal('tbtl_users_v1', users);
+  openManageUsersModal();
+  renderUserBar();
+}
+
+// ── History page ─────────────────────────────────────────────
+function renderHistoryPage() {
+  const container = document.getElementById('history-container');
+  if (!container) return;
+  if (!canViewHistoryAccess()) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#475569">
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <div style="font-size:14px">History access is restricted to admin users.</div>
+    </div>`;
+    return;
+  }
+  if (historyLog.length === 0) {
+    container.innerHTML = '<div style="color:#475569;font-size:13px;margin-top:20px;text-align:center">No history recorded yet.</div>';
+    return;
+  }
+  const rows = historyLog.map(entry => {
+    const dt = new Date(entry.timestamp).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-entry">
+      <span class="history-user">${esc(entry.user)}</span>
+      <span class="history-action">${esc(entry.action)}</span>
+      <span class="history-time">${dt}</span>
+    </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <h2 style="font-size:16px;font-weight:800;color:#f1f5f9;flex:1">History</h2>
+      <button onclick="clearHistory()"
+        style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">Clear History</button>
+    </div>
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden">${rows}</div>
+    <div style="font-size:11px;color:#475569;margin-top:8px">${historyLog.length} entr${historyLog.length !== 1 ? 'ies' : 'y'}</div>
+  `;
+}
+function clearHistory() {
+  if (!isAdminUser()) return;
+  if (!confirm('Clear all history? This cannot be undone.')) return;
+  historyLog = [];
+  saveLocal('tbtl_history_v1', historyLog);
+  renderHistoryPage();
+}
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -342,17 +625,22 @@ async function firebasePut(path, data) {
 async function loadFromFirebase() {
   try {
     setSyncStatus('syncing', 'Loading from Firebase...');
-    const [fbBars, fbLib] = await Promise.all([
+    const [fbBars, fbLib, fbPos] = await Promise.all([
       firebaseGet('bars'),
-      firebaseGet('library')
+      firebaseGet('library'),
+      firebaseGet('positions')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
       saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
       library = mergeDefaultsIntoLibrary(fbLib);
       saveLocal('tbtl_lib_v3', library);
+    }
+    if (fbPos && Array.isArray(fbPos) && fbPos.length > 0) {
+      flypositions = fbPos;
+      saveLocal('tbtl_positions_v1', flypositions);
     }
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
@@ -376,10 +664,12 @@ async function saveToFirebase() {
     setSyncStatus('syncing', 'Saving...');
     await Promise.all([
       firebasePut('bars', bars),
-      firebasePut('library', library)
+      firebasePut('library', library),
+      firebasePut('positions', flypositions)
     ]);
     saveLocal('tbtl_bars_v3', bars);
     saveLocal('tbtl_lib_v3', library);
+    saveLocal('tbtl_positions_v1', flypositions);
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
     console.error('[Firebase save error]', e);
@@ -388,8 +678,19 @@ async function saveToFirebase() {
 }
 
 function scheduleSave() {
+  regeneratePreshowSilent();
   saveLocal('tbtl_bars_v3', bars);
   saveLocal('tbtl_lib_v3', library);
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  // Auto-save to active show
+  if (activeShowName) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+  }
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(saveToFirebase, 1500);
 }
@@ -420,17 +721,37 @@ function cradleBricksToHungLoad(fullBricks, halfBricks) {
   return ((fullBricks * FULL) + (halfBricks * HALF)) / 2;
 }
 
-function toggleExtensions(barId) {
+function toggleNotInUse(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
+  if (!bar) return;
+  bar.notInUse = !bar.notInUse;
+  logHistory(`${bar.notInUse ? 'Marked' : 'Unmarked'} Bar ${barId} as not in use`);
+  scheduleSave();
+  render();
+}
+
+// Called silently whenever something is added to a bar — clears notInUse so user must re-apply
+function clearNotInUse(bar) {
+  if (bar && bar.notInUse) { bar.notInUse = false; }
+}
+
+function toggleExtensions(barId) {
+  if (!requireEdit()) return;
+  const bar = bars.find(b => b.id === barId);
+  if (!bar.extensions) clearNotInUse(bar); // turning ON clears not-in-use
   bar.extensions = !bar.extensions;
+  logHistory(`${bar.extensions ? 'Added' : 'Removed'} extensions on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function selectIWB(barId, colourId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (bar.iwb === colourId) {
     bar.iwb = null;
+    logHistory(`Removed IWB from Bar ${barId}`);
     scheduleSave(); render(); return;
   }
   const owner = bars.find(b => b.id !== barId && b.iwb === colourId);
@@ -439,32 +760,41 @@ function selectIWB(barId, colourId) {
     if (!confirm(`Move ${col.label} IWB from Bar ${owner.id} to Bar ${barId}?`)) return;
     owner.iwb = null;
   }
+  clearNotInUse(bar);
   bar.iwb = colourId;
+  logHistory(`Assigned ${IWB_COLOURS.find(c=>c.id===colourId)?.label||colourId} IWB to Bar ${barId}`);
   scheduleSave(); render();
 }
 
 function toggleCable(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
+  if (!bar.cable) clearNotInUse(bar); // turning ON clears not-in-use
   bar.cable = !bar.cable;
+  logHistory(`${bar.cable ? 'Added' : 'Removed'} cable allowance on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function toggleDNF(barId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   if (!confirm(bar.dnf ? `Remove DO NOT FLY tag from Bar ${barId}?` : `⛔ Mark Bar ${barId} as DO NOT FLY?\n\nThis is a safety tag — make sure it matches the physical tag on the bar.`)) return;
   bar.dnf = !bar.dnf;
+  logHistory(`${bar.dnf ? 'Added' : 'Removed'} DO NOT FLY tag on Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function toggleConduit(barId, fixtureId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const f = bar.fixtures.find(f => f.id === fixtureId);
   if (f) { f.conduit = !f.conduit; scheduleSave(); render(); }
 }
 
 function updateBarName(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const name = val.trim();
   if (name) { bar.name = name; scheduleSave(); }
@@ -493,6 +823,7 @@ function updatePreview(barId) {
 }
 
 function addFixture(barId) {
+  if (!requireEdit()) return;
   if (barId === 1) return; // Bar 1 is locked — cinema screen only
   const bar = bars.find(b => b.id === barId);
   const name = document.getElementById(`fname_${barId}`).value.trim();
@@ -518,22 +849,28 @@ function addFixture(barId) {
     alert('This bar is full — the exclusive item takes up the whole bar.');
     return;
   }
+  clearNotInUse(bar);
   bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive, conduit: false});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
   }
+  logHistory(`Added ${qty > 1 ? `${qty}× ` : ''}${name} to Bar ${barId}`);
   scheduleSave();
   render();
 }
 
 function removeFixture(barId, fixId) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
+  const fix = bar.fixtures.find(f => f.id === fixId);
+  if (fix) logHistory(`Removed ${fix.name} from Bar ${barId}`);
   bar.fixtures = bar.fixtures.filter(f => f.id !== fixId);
   scheduleSave();
   render();
 }
 
 function updateQty(barId, fixId, qty) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const fix = bar.fixtures.find(f => f.id === fixId);
   if (fix) fix.qty = Math.max(1, parseInt(qty) || 1);
@@ -541,13 +878,27 @@ function updateQty(barId, fixId, qty) {
   renderSummary();
 }
 
+function setBarPreshowDead(barId, val) {
+  if (!requireEdit()) return;
+  const bar = bars.find(b => b.id === barId);
+  if (bar) { bar.preshowDead = val; scheduleSave(); render(); }
+}
+
+function updateBarNote(barId, val) {
+  if (!requireEdit()) return;
+  const bar = bars.find(b => b.id === barId);
+  if (bar) { bar.note = val; scheduleSave(); }
+}
+
 function updateTare(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const w = parseFloat(val);
   if (!isNaN(w) && w >= 0) { bar.barWeight = w; scheduleSave(); }
 }
 
 function updateMiscBricks(barId, val) {
+  if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const v = parseInt(val, 10);
   bar.miscBricks = isNaN(v) ? 0 : v;
@@ -584,9 +935,11 @@ function toggleBar(id) {
 }
 
 function resetAll() {
+  if (!requireEdit()) return;
   if (!confirm('Reset ALL bars to empty? This cannot be undone.')) return;
   bars = defaultBars();
   activeShowName = null;
+  logHistory('Reset all bars to default');
   scheduleSave();
   expanded = {};
   render();
@@ -613,9 +966,11 @@ async function saveShow(name, skipConfirm = false) {
   if (isOverwrite && !skipConfirm && name !== activeShowName && !confirm(`A show named "${name}" already exists. Overwrite it?`)) return;
   shows[name] = {
     bars: JSON.parse(JSON.stringify(bars)),
+    showConfig: JSON.parse(JSON.stringify(showConfig)),
     savedAt: new Date().toISOString()
   };
   saveLocal('tbtl_shows_v1', shows);
+  saveLocal('tbtl_last_show_v1', name);
   activeShowName = name;
   try {
     setSyncStatus('syncing', 'Saving show...');
@@ -630,10 +985,24 @@ async function saveShow(name, skipConfirm = false) {
 function loadShow(name) {
   const show = shows[name];
   if (!show) return;
-  if (!confirm(`Load show "${name}"?\nThis replaces your current bar data.`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false}));
+  // Auto-save current show before switching
+  if (activeShowName && activeShowName !== name) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+    firebasePut('shows', shows).catch(() => {});
+  }
+  if (!confirm(`Switch to "${name}"?${activeShowName && activeShowName !== name ? `\n\nYour current show "${activeShowName}" has been auto-saved.` : ''}`)) return;
+  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
+  showConfig = show.showConfig ? { maxFlymen: 1, customDeads: {}, cues: [], ...show.showConfig } : { maxFlymen: 1, customDeads: {}, cues: [] };
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  saveLocal('tbtl_last_show_v1', name);
   activeShowName = name;
   expanded = {};
+  logHistory(`Loaded show "${name}"`);
   scheduleSave();
   render();
   renderShows();
@@ -666,6 +1035,91 @@ function promptSaveShow() {
     return;
   }
   saveShow(name).then(() => { nameInput.value = ''; });
+}
+
+// ── New Show modal ────────────────────────────────────────────
+function openNewShowModal() {
+  if (!requireEdit()) return;
+  // Auto-save current show first
+  if (activeShowName) {
+    shows[activeShowName] = {
+      bars: JSON.parse(JSON.stringify(bars)),
+      showConfig: JSON.parse(JSON.stringify(showConfig)),
+      savedAt: new Date().toISOString()
+    };
+    saveLocal('tbtl_shows_v1', shows);
+    firebasePut('shows', shows).catch(() => {});
+  }
+  const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  const barCheckboxes = loadedBars.length > 0
+    ? loadedBars.map(b => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#e2e8f0;padding:3px 0;cursor:pointer">
+        <input type="checkbox" id="keep_bar_${b.id}" checked style="accent-color:#3b82f6">
+        Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''} <span style="color:#475569;font-size:10px">(${(b.fixtures||[]).length} fix${b.extensions?' +ext':''}${b.iwb?' +IWB':''})</span>
+      </label>`).join('')
+    : '<span style="color:#475569;font-size:12px;font-style:italic">No loaded bars in current rig</span>';
+  const modal = document.getElementById('new-show-modal');
+  document.getElementById('new-show-bar-list').innerHTML = barCheckboxes;
+  document.getElementById('new-show-modal-name').value = '';
+  const radios = document.querySelectorAll('input[name="bar-reset-mode"]');
+  radios.forEach(r => { r.checked = (r.value === 'keep'); });
+  if (modal) modal.style.display = 'block';
+  setTimeout(() => { const inp = document.getElementById('new-show-modal-name'); if (inp) inp.focus(); }, 50);
+}
+
+function closeNewShowModal() {
+  const m = document.getElementById('new-show-modal');
+  if (m) m.style.display = 'none';
+}
+
+async function confirmNewShow() {
+  if (!requireEdit()) return;
+  const inp = document.getElementById('new-show-modal-name');
+  const name = inp ? inp.value.trim() : '';
+  if (!name) {
+    if (inp) { inp.style.borderColor = '#ef4444'; setTimeout(() => inp.style.borderColor = '#334155', 1500); }
+    return;
+  }
+  const modeEl = document.querySelector('input[name="bar-reset-mode"]:checked');
+  const resetMode = modeEl ? modeEl.value : 'keep';
+  let newBars;
+  if (resetMode === 'reset') {
+    newBars = defaultBars();
+  } else {
+    const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+    const keepIds = new Set(loadedBars.filter(b => {
+      const cb = document.getElementById(`keep_bar_${b.id}`);
+      return cb && cb.checked;
+    }).map(b => b.id));
+    const defaults = defaultBars();
+    newBars = defaults.map(db => {
+      const existing = bars.find(b => b.id === db.id);
+      return keepIds.has(db.id) && existing ? { ...existing } : db;
+    });
+  }
+  bars = newBars;
+  showConfig = { maxFlymen: 1, customDeads: {}, cues: [] };
+  activeShowName = name;
+  saveLocal('tbtl_last_show_v1', name);
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  shows[name] = {
+    bars: JSON.parse(JSON.stringify(bars)),
+    showConfig: JSON.parse(JSON.stringify(showConfig)),
+    savedAt: new Date().toISOString()
+  };
+  saveLocal('tbtl_shows_v1', shows);
+  logHistory(`Created new show "${name}"`);
+  try {
+    setSyncStatus('syncing', 'Creating show...');
+    await firebasePut('shows', shows);
+    setSyncStatus('online', `Show "${name}" created · ${new Date().toLocaleTimeString()}`);
+  } catch(e) {
+    setSyncStatus('offline', `Show saved locally (Firebase offline)`);
+  }
+  closeNewShowModal();
+  expanded = {};
+  scheduleSave();
+  render();
+  renderShows();
 }
 
 function renderShows() {
@@ -722,8 +1176,7 @@ function renderShows() {
   container.innerHTML = `
     ${updateBtn}
     <div class="shows-save-row">
-      <input type="text" id="new-show-name" placeholder="Save as new show…" style="flex:1;min-width:140px">
-      <button class="btn-add" onclick="promptSaveShow()">Save as New Show</button>
+      <button class="btn-add" onclick="openNewShowModal()" style="padding:7px 18px;font-size:13px">➕ New Show</button>
     </div>
     <div class="shows-list">${listHtml}</div>
   `;
@@ -945,7 +1398,8 @@ function renderBar(bar) {
   if (catCounts['Other'])    summaryParts.push(`${catCounts['Other']} ${catCounts['Other']===1?'Item':'Items'}`);
   if (bar.extensions) summaryParts.push('Extensions');
   if (bar.iwb) summaryParts.push(`IWB (${IWB_COLOURS.find(c=>c.id===bar.iwb)?.label || ''})`);
-  const summaryText = summaryParts.length > 0 ? summaryParts.join(' · ') : 'Empty';
+  const noteIndicator = bar.note ? ' <span style="font-size:10px;color:#60a5fa" title="Has notes">📝</span>' : '';
+  const summaryText = (summaryParts.length > 0 ? summaryParts.join(' · ') : 'Empty') + noteIndicator;
 
   const bodyHtml = exp ? `
     <div class="bar-body">
@@ -954,6 +1408,11 @@ function renderBar(bar) {
         <input type="text" value="${esc(bar.name)}"
           onblur="updateBarName(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
+      </div>
+      <div class="tare-row" style="align-items:flex-start">
+        <span style="font-size:12px;color:#475569;white-space:nowrap;padding-top:5px;min-width:42px">Notes:</span>
+        <textarea rows="2" onblur="updateBarNote(${bar.id},this.value)" placeholder="Add a note for this bar…"
+          style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#94a3b8;padding:6px 8px;font-size:12px;resize:vertical;flex:1;font-family:inherit;outline:none;width:100%">${esc(bar.note || '')}</textarea>
       </div>
       ${bar.id !== 1 ? `
       <div class="ext-section">
@@ -1005,6 +1464,33 @@ function renderBar(bar) {
           onchange="updateMiscBricks(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#a78bfa;padding:6px 8px;font-size:13px;font-weight:700;width:70px;text-align:center;">
       </div>` : ''}
+      ${bar.id !== 1 ? (() => {
+        const hasLS = (bar.fixtures||[]).some(f => f.category === 'Lighting' || f.category === 'Sound');
+        const autoLabel = hasLS ? 'In dead (Lighting/Sound)' : 'Out dead';
+        const sel = bar.preshowDead;
+        return `<div class="ext-section">
+        <div class="ext-info">
+          <strong style="color:#fbbf24">Preshow Position</strong>
+          <small>Where this bar starts — overrides auto-detection</small>
+        </div>
+        <span style="font-size:11px;color:#475569;margin-right:4px">Auto: ${autoLabel}</span>
+        <div class="mode-toggle">
+          <button class="mode-btn ${!sel ? 'active' : ''}" onclick="setBarPreshowDead(${bar.id},null)">Auto</button>
+          <button class="mode-btn ${sel==='in' ? 'active' : ''}" onclick="setBarPreshowDead(${bar.id},'in')">In dead</button>
+          <button class="mode-btn ${sel==='out' ? 'active' : ''}" onclick="setBarPreshowDead(${bar.id},'out')">Out dead</button>
+        </div>
+      </div>`;
+      })() : ''}
+      <div class="ext-section" style="${bar.notInUse ? 'border:2px solid #78716c55;background:#1c1917;' : ''}">
+        <div class="ext-info">
+          <strong style="color:${bar.notInUse ? '#d6d3d1' : '#e2e8f0'}">Bar not in use for show</strong>
+          <small>${bar.notInUse ? 'Excluded from preshow — adding equipment will clear this' : 'Mark as no dead / not being used this show'}</small>
+        </div>
+        ${bar.notInUse ? `<span class="ext-badge" style="background:#44403c;color:#d6d3d1;border:1px solid #78716c66">NOT IN USE</span>` : ''}
+        <button class="${bar.notInUse ? 'dnf-btn-on' : 'dnf-btn-off'}" style="${bar.notInUse ? 'background:#44403c;border-color:#78716c;color:#d6d3d1;' : ''}" onclick="toggleNotInUse(${bar.id})">
+          ${bar.notInUse ? 'Not in Use' : 'In Use'}
+        </button>
+      </div>
       <div class="ext-section" style="${bar.dnf ? 'border:2px solid #ef444466;background:#1c0a0a;' : ''}">
         <div class="ext-info">
           <strong style="color:${bar.dnf ? '#fca5a5' : '#e2e8f0'}">⛔ Do Not Fly Tag</strong>
@@ -1037,9 +1523,9 @@ function renderBar(bar) {
   ` : '';
 
   return `
-    ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()}
+    ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''} ${bar.notInUse ? 'not-in-use' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()}
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}</span>`; })()}
+        ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}${bar.notInUse ? ` <span style="color:#d6d3d1;font-size:10px;font-weight:800;background:#44403c;padding:1px 5px;border-radius:3px">NOT IN USE</span>` : ''}</span>`; })()}
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
@@ -1062,10 +1548,83 @@ function switchPage(page) {
   currentPage = page;
   document.getElementById('page-bars').style.display = page === 'bars' ? 'block' : 'none';
   document.getElementById('page-library').style.display = page === 'library' ? 'block' : 'none';
+  document.getElementById('page-inventory').style.display = page === 'inventory' ? 'block' : 'none';
+  document.getElementById('page-show').style.display = page === 'show' ? 'block' : 'none';
+  document.getElementById('page-history').style.display = page === 'history' ? 'block' : 'none';
   document.getElementById('tab-bars').className = 'page-tab' + (page === 'bars' ? ' active' : '');
   document.getElementById('tab-library').className = 'page-tab' + (page === 'library' ? ' active' : '');
+  document.getElementById('tab-inventory').className = 'page-tab' + (page === 'inventory' ? ' active' : '');
+  document.getElementById('tab-show').className = 'page-tab' + (page === 'show' ? ' active' : '');
+  document.getElementById('tab-history').className = 'page-tab' + (page === 'history' ? ' active' : '');
   if (page === 'library') renderLibraryPage();
+  else if (page === 'inventory') renderInventoryPage();
+  else if (page === 'show') renderShowPage();
+  else if (page === 'history') renderHistoryPage();
   else render();
+}
+
+function renderInventoryPage() {
+  // Build a map: fixture name → { weight, category, totalQty, totalHungKg, bars: [barId, ...] }
+  const map = {};
+
+  bars.forEach(bar => {
+    (bar.fixtures || []).forEach(f => {
+      if (!map[f.name]) {
+        map[f.name] = { weight: f.weight, category: f.category || 'Other', totalQty: 0, totalHungKg: 0, barIds: [] };
+      }
+      map[f.name].totalQty += f.qty;
+      map[f.name].totalHungKg += f.weight * f.qty;
+      map[f.name].barIds.push({ id: bar.id, qty: f.qty });
+    });
+  });
+
+  const catOrder = ['Lighting', 'Sound', 'Set', 'Drapes', 'Other'];
+  const entries = Object.entries(map).sort((a, b) => {
+    const ci = x => { const i = catOrder.indexOf(x); return i === -1 ? catOrder.length : i; };
+    const cd = ci(a[1].category) - ci(b[1].category);
+    return cd !== 0 ? cd : b[1].totalQty - a[1].totalQty;
+  });
+
+  if (entries.length === 0) {
+    document.getElementById('inventory-container').innerHTML = `
+      <div style="color:#475569;font-size:13px;margin-top:20px;text-align:center">
+        No fixtures added to any bar yet.
+      </div>`;
+    return;
+  }
+
+  // Totals
+  const grandQty = entries.reduce((s, [, v]) => s + v.totalQty, 0);
+  const grandKg  = entries.reduce((s, [, v]) => s + v.totalHungKg, 0);
+
+  const rows = entries.map(([name, v]) => {
+    const c = CAT_COLOURS[v.category] || '#64748b';
+    const barList = v.barIds.map(b => `Bar ${b.id}${b.qty > 1 ? ` ×${b.qty}` : ''}`).join(', ');
+    return `<tr>
+      <td style="font-weight:600">${esc(name)}</td>
+      <td><span class="lib-cat-pill" style="background:${c}22;color:${c}">${esc(v.category)}</span></td>
+      <td class="r" style="color:#94a3b8">${v.weight} kg</td>
+      <td class="r" style="color:#f1f5f9;font-weight:700;font-size:14px">${v.totalQty}</td>
+      <td class="r" style="color:#fbbf24;font-weight:700">${v.totalHungKg.toFixed(1)} kg</td>
+      <td style="color:#475569;font-size:11px">${barList}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('inventory-container').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="card"><div class="card-label">Fixture Types</div><div class="card-value" style="color:#60a5fa">${entries.length}</div></div>
+      <div class="card"><div class="card-label">Total Units</div><div class="card-value" style="color:#f1f5f9">${grandQty}</div></div>
+      <div class="card"><div class="card-label">Total Weight</div><div class="card-value" style="color:#fbbf24">${grandKg.toFixed(1)} kg</div></div>
+    </div>
+    <table class="lib-table">
+      <thead><tr>
+        <th>Fixture</th><th>Category</th><th class="r">Unit kg</th>
+        <th class="r">Total Units</th><th class="r">Total Weight</th><th>Bars</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:#475569;margin-top:8px">${entries.length} fixture type${entries.length !== 1 ? 's' : ''} across all bars</div>
+  `;
 }
 
 const CAT_COLOURS = {Lighting:'#818cf8', Sound:'#34d399', Set:'#94a3b8', Drapes:'#f472b6'};
@@ -1207,6 +1766,583 @@ function renderLibraryPage() {
   `;
 }
 
+// ── Weight helpers ────────────────────────────────────────────
+function barTotalCwBricks(bar) {
+  return Math.round((hungLoad(bar) + (bar.barWeight || 0)) * 2 / FULL);
+}
+
+// ── Preshow generation ──────────────────────────────────────
+function regeneratePreshowSilent() {
+  const loaded = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  if (!showConfig.cues) showConfig.cues = [];
+  const existingIdx = showConfig.cues.findIndex(c => c.isPreshow);
+  const existingPreshow = existingIdx >= 0 ? showConfig.cues[existingIdx] : null;
+  const dutyStage = flypositions[0] || 'Duty Stage';
+
+  const preshowBars = loaded.map(bar => {
+    let deadId;
+    if (bar.preshowDead === 'in') { deadId = 'in'; }
+    else if (bar.preshowDead === 'out') { deadId = 'out'; }
+    else {
+      const hasLS = (bar.fixtures||[]).some(f => f.category === 'Lighting' || f.category === 'Sound');
+      deadId = hasLS ? 'in' : 'out';
+    }
+    const existing = existingPreshow?.bars.find(cb => cb.barId === bar.id);
+    return { barId: bar.id, deadId, speed: existing?.speed || 'Medium', flyperson: dutyStage };
+  });
+
+  const preshowCue = { id: 'preshow', isPreshow: true, number: '', name: 'Preshow', isFollow: false, overrideMax: false, bars: preshowBars };
+  if (existingIdx >= 0) showConfig.cues[existingIdx] = preshowCue;
+  else showConfig.cues.unshift(preshowCue);
+}
+
+function generatePreshowCue() {
+  regeneratePreshowSilent();
+  saveShowConfig();
+  renderShowPage();
+}
+
+function updatePreshowSpeed(barId, speed) {
+  const preshow = showConfig.cues.find(c => c.isPreshow);
+  if (!preshow) return;
+  const a = preshow.bars.find(cb => cb.barId === barId);
+  if (a) { a.speed = speed; saveShowConfig(); }
+}
+
+function updatePreshowFlyperson(barId, fp) {
+  const preshow = showConfig.cues.find(c => c.isPreshow);
+  if (!preshow) return;
+  const a = preshow.bars.find(cb => cb.barId === barId);
+  if (a) { a.flyperson = fp; saveShowConfig(); }
+}
+
+// ── Dead helpers ────────────────────────────────────────────
+function getDeadLabel(barId, deadId) {
+  if (deadId === 'out') return 'Out';
+  if (deadId === 'in') return 'In';
+  const customs = showConfig.customDeads[barId] || [];
+  const dead = customs.find(d => d.id === deadId);
+  if (!dead) return '—';
+  return dead.name || (BAND_COLORS.find(c => c.id === dead.bandColor) || { label: dead.bandColor }).label;
+}
+
+function getDeadStyle(barId, deadId) {
+  if (deadId === 'out') return 'background:#7f1d1d;color:#fee2e2;border:2px solid #111';
+  if (deadId === 'in') return 'background:#f1f5f9;color:#111;border:2px solid #ef4444';
+  const customs = showConfig.customDeads[barId] || [];
+  const dead = customs.find(d => d.id === deadId);
+  const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+  return `background:#f1f5f9;color:#111;border:2px solid ${hex}`;
+}
+
+// ── Show config mutations ────────────────────────────────────
+function saveShowConfig() {
+  saveLocal('tbtl_showconfig_v1', showConfig);
+}
+
+function setMaxFlymen(val) {
+  if (!requireEdit()) return;
+  showConfig.maxFlymen = Math.max(1, parseInt(val) || 1);
+  saveShowConfig();
+}
+
+function addCustomDead(barId, bandColor) {
+  if (!requireEdit()) return;
+  if (!showConfig.customDeads[barId]) showConfig.customDeads[barId] = [];
+  if (showConfig.customDeads[barId].some(d => d.bandColor === bandColor)) return;
+  const col = BAND_COLORS.find(c => c.id === bandColor) || { label: bandColor };
+  showConfig.customDeads[barId].push({ id: `${barId}_${bandColor}_${Date.now()}`, bandColor, name: col.label });
+  logHistory(`Added ${col.label} dead to Bar ${barId}`);
+  saveShowConfig();
+  renderShowPage();
+}
+
+function renameCustomDead(barId, deadId, name) {
+  if (!requireEdit()) return;
+  const d = (showConfig.customDeads[barId] || []).find(x => x.id === deadId);
+  if (d) { d.name = name.trim() || d.name; saveShowConfig(); renderShowPage(); }
+}
+
+function removeCustomDead(barId, deadId) {
+  if (!requireEdit()) return;
+  if (!showConfig.customDeads[barId]) return;
+  showConfig.customDeads[barId] = showConfig.customDeads[barId].filter(d => d.id !== deadId);
+  showConfig.cues.forEach(cue => {
+    cue.bars = cue.bars.filter(cb => !(cb.barId === barId && cb.deadId === deadId));
+  });
+  saveShowConfig();
+  renderShowPage();
+}
+
+function nextCueNumber() {
+  const nums = (showConfig.cues || [])
+    .filter(c => !c.isPreshow && c.number && /^\d+(\.\d+)?$/.test(c.number.trim()))
+    .map(c => parseFloat(c.number.trim()));
+  return nums.length > 0 ? String(Math.floor(Math.max(...nums)) + 1) : '1';
+}
+
+function addCue() {
+  if (!requireEdit()) return;
+  if (!showConfig.cues) showConfig.cues = [];
+  const num = nextCueNumber();
+  showConfig.cues.push({ id: String(Date.now()), number: num, name: '', isFollow: false, overrideMax: false, bars: [] });
+  logHistory(`Added cue ${num}`);
+  saveShowConfig();
+  renderShowPage();
+}
+
+function insertCue(afterRegIdx, isNonFly = false) {
+  if (!requireEdit()) return;
+  if (!showConfig.cues) showConfig.cues = [];
+  const regularCues = showConfig.cues.filter(c => !c.isPreshow);
+  const newCue = isNonFly
+    ? { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: true, isFollow: false, notes: '', bars: [] }
+    : { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: false, isFollow: false, overrideMax: false, bars: [] };
+  if (afterRegIdx < 0 || regularCues.length === 0) {
+    const preshowIdx = showConfig.cues.findIndex(c => c.isPreshow);
+    showConfig.cues.splice(preshowIdx < 0 ? 0 : preshowIdx + 1, 0, newCue);
+  } else {
+    const afterCue = regularCues[afterRegIdx];
+    const actualIdx = showConfig.cues.indexOf(afterCue);
+    showConfig.cues.splice(actualIdx + 1, 0, newCue);
+  }
+  saveShowConfig();
+  renderShowPage();
+}
+
+function toggleCueOverrideMax(idx) {
+  const cue = showConfig.cues[idx];
+  if (!cue) return;
+  cue.overrideMax = !cue.overrideMax;
+  saveShowConfig();
+  renderShowPage();
+}
+
+function updateBarFlyperson(cueIdx, barIdx, fp) {
+  const cue = showConfig.cues[cueIdx];
+  if (!cue || !cue.bars[barIdx]) return;
+  cue.bars[barIdx].flyperson = fp;
+  saveShowConfig();
+}
+
+// ── Conflict detection ───────────────────────────────────────
+function getBarStateBeforeCue(barId, cueIdx) {
+  let lastDead = null;
+  for (let i = 0; i < cueIdx && i < (showConfig.cues||[]).length; i++) {
+    const a = (showConfig.cues[i].bars||[]).find(cb => cb.barId === barId);
+    if (a) lastDead = a.deadId;
+  }
+  return lastDead;
+}
+
+function findCueNameThatSet(barId, cueIdx) {
+  for (let i = cueIdx - 1; i >= 0; i--) {
+    if ((showConfig.cues[i].bars||[]).some(cb => cb.barId === barId)) {
+      const c = showConfig.cues[i];
+      return c.isPreshow ? 'Preshow' : c.number ? `Cue ${c.number}` : c.name || 'an earlier cue';
+    }
+  }
+  return null;
+}
+
+function deleteCue(idx) {
+  if (!requireEdit()) return;
+  const cue = showConfig.cues[idx];
+  if (!confirm('Remove this cue?')) return;
+  if (cue) logHistory(`Deleted cue ${cue.number || cue.name || idx}`);
+  showConfig.cues.splice(idx, 1);
+  addingBarToCue = null;
+  saveShowConfig();
+  renderShowPage();
+}
+
+function moveCue(idx, dir) {
+  if (!requireEdit()) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= showConfig.cues.length) return;
+  [showConfig.cues[idx], showConfig.cues[newIdx]] = [showConfig.cues[newIdx], showConfig.cues[idx]];
+  saveShowConfig();
+  renderShowPage();
+}
+
+function toggleCueFollow(idx) {
+  if (!requireEdit()) return;
+  const cue = showConfig.cues[idx];
+  if (!cue) return;
+  cue.isFollow = !cue.isFollow;
+  saveShowConfig();
+  renderShowPage();
+}
+
+function toggleAddBarToCue(idx) {
+  addingBarToCue = addingBarToCue === idx ? null : idx;
+  renderShowPage();
+}
+
+function updateCueBarDeadOptions(cueIdx) {
+  const barSel = document.getElementById(`cue_bar_sel_${cueIdx}`);
+  const deadSel = document.getElementById(`cue_dead_sel_${cueIdx}`);
+  if (!barSel || !deadSel) return;
+  const barId = parseInt(barSel.value);
+  if (!barId) { deadSel.innerHTML = '<option value="">— select bar first —</option>'; return; }
+  const currentDead = getBarStateBeforeCue(barId, cueIdx);
+  const mark = id => currentDead === id ? ' ← already here' : '';
+  const customs = showConfig.customDeads[barId] || [];
+  deadSel.innerHTML = [
+    '<option value="">— Dead —</option>',
+    `<option value="out">Red black band (Out)${mark('out')}</option>`,
+    `<option value="in">White red band (In)${mark('in')}</option>`,
+    ...customs.map(d => {
+      const col = BAND_COLORS.find(c => c.id === d.bandColor) || { label: d.bandColor };
+      return `<option value="${d.id}">${col.label} on white${mark(d.id)}</option>`;
+    })
+  ].join('');
+}
+
+function confirmAddBarToCue(cueIdx) {
+  if (!requireEdit()) return;
+  const barSel  = document.getElementById(`cue_bar_sel_${cueIdx}`);
+  const deadSel = document.getElementById(`cue_dead_sel_${cueIdx}`);
+  const speedSel = document.getElementById(`cue_speed_sel_${cueIdx}`);
+  const fpSel   = document.getElementById(`cue_fp_sel_${cueIdx}`);
+  const barId  = parseInt(barSel?.value);
+  const deadId = deadSel?.value;
+  const speed  = speedSel?.value;
+  const flyperson = fpSel?.value || '';
+  if (!barId || !deadId || !speed) return;
+  const cue = showConfig.cues[cueIdx];
+  if (!cue) return;
+
+  // DNF block — cannot add to any cue
+  const barObj = bars.find(b => b.id === barId);
+  if (barObj?.dnf) {
+    alert(`⛔ Bar ${barId} has a DO NOT FLY tag.\n\nThis bar cannot be added to any cue. Remove the physical tag and clear the DNF flag on the Bars page first.`);
+    return;
+  }
+
+  // Bar 1 cinema screen warning
+  if (barId === 1) {
+    if (!confirm(`⚠ WARNING: Bar 1 is the CINEMA SCREEN.\n\nMoving it incorrectly can crush equipment below.\n\nAre you absolutely sure you want to add it to this cue?`)) return;
+  }
+
+  // Conflict: bar already at this dead
+  const currentDead = getBarStateBeforeCue(barId, cueIdx);
+  if (currentDead !== null && currentDead === deadId) {
+    const src = findCueNameThatSet(barId, cueIdx);
+    const label = getDeadLabel(barId, deadId);
+    alert(`Bar ${barId} is already at "${label}" from ${src || 'a previous cue'} — no move needed.`);
+    return;
+  }
+
+  // Max flypersons check (unless overridden)
+  const limit = cue.overrideMax ? Infinity : showConfig.maxFlymen;
+  if (cue.bars.length >= limit) {
+    alert(`Max flypersons (${showConfig.maxFlymen}) reached for this cue. Enable "Override max" on the cue to add more.`);
+    return;
+  }
+
+  // Auto-assign Duty Stage when only 1 flyperson
+  const autoFP = showConfig.maxFlymen === 1 ? (flypositions[0] || 'Duty Stage') : flyperson;
+  cue.bars.push({ barId, deadId, speed, flyperson: autoFP });
+  logHistory(`Added Bar ${barId} to cue ${cue.number || cue.name || '—'}`);
+  addingBarToCue = null;
+  saveShowConfig();
+  renderShowPage();
+}
+
+function removeBarFromCue(cueIdx, barIdx) {
+  if (!requireEdit()) return;
+  const cue = showConfig.cues[cueIdx];
+  if (!cue) return;
+  cue.bars.splice(barIdx, 1);
+  saveShowConfig();
+  renderShowPage();
+}
+
+// ── Position library ─────────────────────────────────────────
+function addPosition(name) {
+  if (!requireEdit()) return;
+  const n = name.trim();
+  if (!n || flypositions.includes(n)) return;
+  flypositions.push(n);
+  saveLocal('tbtl_positions_v1', flypositions);
+  firebasePut('positions', flypositions).catch(() => {});
+  renderShowPage();
+}
+
+function removePosition(idx) {
+  if (!requireEdit()) return;
+  if (DEFAULT_POSITIONS.includes(flypositions[idx])) {
+    if (!confirm(`Remove default position "${flypositions[idx]}"?`)) return;
+  }
+  flypositions.splice(idx, 1);
+  saveLocal('tbtl_positions_v1', flypositions);
+  firebasePut('positions', flypositions).catch(() => {});
+  renderShowPage();
+}
+
+// ── Show page renderer ───────────────────────────────────────
+function fpOptions(selected) {
+  const opts = ['<option value="">— Who —</option>'];
+  flypositions.forEach(p => {
+    opts.push(`<option value="${esc(p)}" ${selected === p ? 'selected' : ''}>${esc(p)}</option>`);
+  });
+  return opts.join('');
+}
+
+function renderShowPage() {
+  const container = document.getElementById('show-container');
+  if (!container) return;
+
+  const activeBars = bars.filter(b => b.id === 1 || (b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null);
+  const cues = showConfig.cues || [];
+  const preshow = cues.find(c => c.isPreshow);
+  const regularCues = cues.filter(c => !c.isPreshow);
+
+  // Settings
+  const positionPills = flypositions.map((p, i) =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f644;border-radius:5px;padding:3px 8px;font-size:12px;font-weight:600;margin:2px">
+      ${esc(p)}
+      <button onclick="removePosition(${i})" style="background:none;border:none;color:#475569;cursor:pointer;font-size:13px;padding:0;line-height:1">&times;</button>
+    </span>`
+  ).join('');
+
+  const settingsHtml = `
+    <div class="show-section">
+      <div class="show-section-title">Settings</div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;flex-wrap:wrap;margin-bottom:12px">
+        <label style="white-space:nowrap">Max flypersons per cue:</label>
+        <input type="number" min="1" max="20" value="${showConfig.maxFlymen}"
+          onchange="setMaxFlymen(this.value)"
+          style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:14px;font-weight:700;width:70px;text-align:center">
+        <span style="color:#475569;font-size:11px">Can be overridden per cue</span>
+      </div>
+      <div style="border-top:1px solid #334155;padding-top:10px">
+        <div class="show-section-title" style="margin-bottom:6px">Flyperson Positions <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0">— shared across all shows</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">${positionPills}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="new-position-inp" placeholder="Add position…"
+            style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:6px 10px;font-size:12px;outline:none;flex:1;min-width:140px"
+            onkeydown="if(event.key==='Enter'){addPosition(this.value);this.value=''}">
+          <button onclick="addPosition(document.getElementById('new-position-inp').value);document.getElementById('new-position-inp').value=''"
+            class="btn-add" style="padding:5px 12px;font-size:12px">+ Add</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Bar Deads
+  const deadsBody = activeBars.length === 0
+    ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars loaded — add fixtures to bars first</div>'
+    : activeBars.map(bar => {
+        const customs = showConfig.customDeads[bar.id] || [];
+        const customBadges = customs.map(d => {
+          const col = BAND_COLORS.find(c => c.id === d.bandColor) || { hex: '#888', label: '?' };
+          return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:#111;border:2px solid ${col.hex};border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;margin-right:4px">
+            <span style="width:10px;height:10px;border-radius:50%;background:${col.hex};flex-shrink:0;display:inline-block"></span>
+            <input value="${esc(d.name||col.label)}" onblur="renameCustomDead(${bar.id},'${d.id}',this.value)"
+              style="background:transparent;border:none;border-bottom:1px dashed #94a3b8;color:#111;font-size:11px;font-weight:700;width:80px;outline:none;padding:0">
+            <button onclick="removeCustomDead(${bar.id},'${d.id}')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;padding:0;line-height:1">&times;</button>
+          </span>`;
+        }).join('');
+        const usedColors = customs.map(d => d.bandColor);
+        const colorButtons = BAND_COLORS.filter(c => !usedColors.includes(c.id)).map(c =>
+          `<button onclick="addCustomDead(${bar.id},'${c.id}')" title="Add ${c.label} dead"
+            style="width:16px;height:16px;border-radius:50%;background:${c.hex};border:2px solid ${c.hex}88;cursor:pointer;flex-shrink:0;padding:0"></button>`
+        ).join('');
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #0f172a;flex-wrap:wrap">
+          <span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:110px;flex-shrink:0">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
+          <span style="background:#7f1d1d;color:#fee2e2;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Out</span>
+          <span style="background:#f1f5f9;color:#111;border:2px solid #ef4444;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">In</span>
+          ${customBadges}
+          ${colorButtons ? `<span style="color:#475569;font-size:10px">+</span>${colorButtons}` : ''}
+        </div>`;
+      }).join('');
+
+  // Preshow card (compact)
+  const preshowCard = preshow && preshow.bars.length > 0
+    ? (() => {
+        const barCells = (preshow.bars || []).map(cb => {
+          const bar = bars.find(b => b.id === cb.barId);
+          const label = getDeadLabel(cb.barId, cb.deadId);
+          const ds = getDeadStyle(cb.barId, cb.deadId);
+          const overrideNote = bar?.preshowDead ? '✎' : '';
+          const isHeavy = bar && barTotalCwBricks(bar) >= 30;
+          return `<div style="display:flex;align-items:center;gap:3px;background:#0f172a;border-radius:5px;padding:3px 6px;flex-shrink:0">
+            <span style="color:#64748b;font-size:10px;flex-shrink:0">B${cb.barId}${overrideNote}</span>
+            <span style="${ds};border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700">${esc(label)}</span>
+            ${isHeavy ? `<span style="color:#fca5a5;font-size:9px;font-weight:800">⚠H</span>` : ''}
+            <select onchange="updatePreshowSpeed(${cb.barId},this.value)"
+              style="background:#0f172a;border:none;border-bottom:1px solid #334155;color:#fbbf24;font-size:10px;padding:0 2px;outline:none;max-width:52px">
+              ${['V.Slow','Slow','Medium','Fast','Max'].map(s => `<option ${s===cb.speed?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>`;
+        }).join('');
+        const dutyStage = flypositions[0] || 'Duty Stage';
+        return `<div style="background:#1e293b;border:2px solid #f59e0b55;border-radius:8px;margin-bottom:8px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1c1507;flex-wrap:wrap">
+            <span style="background:#92400e;color:#fde68a;border-radius:4px;padding:1px 10px;font-size:11px;font-weight:800;flex-shrink:0">PRESHOW</span>
+            <span style="color:#fbbf24;font-size:11px;flex-shrink:0">${dutyStage}</span>
+            <span style="color:#475569;font-size:10px;flex:1">✎ = position set on Bars page · speeds editable</span>
+            <button onclick="generatePreshowCue()" style="background:#92400e;color:#fde68a;border:1px solid #f59e0b44;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-weight:700">↺ Regen</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px">
+            ${barCells}
+          </div>
+        </div>`;
+      })()
+    : `<div style="background:#1c1507;border:2px dashed #f59e0b44;border-radius:8px;padding:8px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="background:#92400e;color:#fde68a;border-radius:4px;padding:1px 10px;font-size:11px;font-weight:800">PRESHOW</span>
+        <span style="color:#f59e0b;font-size:12px">No loaded bars — add fixtures to generate preshow</span>
+      </div>`;
+
+  // Regular cue cards
+  const activeBarOptions = activeBars
+    .filter(b => !b.dnf && !b.notInUse)
+    .map(b => `<option value="${b.id}">Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''}</option>`)
+    .join('');
+
+  const oneFP = showConfig.maxFlymen === 1;
+
+  function renderInsertRow(afterRegIdx) {
+    return `<div style="display:flex;justify-content:center;gap:4px;padding:2px 0;opacity:0.3;transition:opacity 0.15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
+      <button onclick="insertCue(${afterRegIdx})" style="background:#0f172a;color:#475569;border:1px dashed #334155;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Fly Cue</button>
+      <button onclick="insertCue(${afterRegIdx},true)" style="background:#0f172a;color:#475569;border:1px dashed #7c3aed44;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Non-Fly</button>
+    </div>`;
+  }
+
+  const cueCardsList = regularCues.map((cue, regIdx) => {
+    const idx = cues.indexOf(cue);
+    const numVal  = cue.number || '';
+    const nameVal = cue.name   || '';
+    const moveBtns = `<div style="display:flex;gap:4px;margin-left:auto;flex-shrink:0">
+      ${regIdx > 0              ? `<button onclick="moveCue(${idx},-1)" style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↑</button>` : ''}
+      ${regIdx < regularCues.length-1 ? `<button onclick="moveCue(${idx},1)"  style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↓</button>` : ''}
+      <button onclick="deleteCue(${idx})" style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">✕</button>
+    </div>`;
+
+    let card;
+
+    if (cue.isNonFly) {
+      card = `<div style="background:#0d0114;border:1px solid #7c3aed44;border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;flex-wrap:wrap">
+          <span style="background:#4c1d95;color:#ddd6fe;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:800;flex-shrink:0">NON-FLY</span>
+          <input type="text" value="${esc(numVal)}" placeholder="Q#"
+            oninput="showConfig.cues[${idx}].number=this.value||''" onblur="saveShowConfig()"
+            style="background:#0f172a;border:1px solid #4c1d95;border-radius:5px;color:#ddd6fe;padding:3px 8px;font-size:13px;font-weight:800;width:56px;text-align:center;outline:none">
+          <input type="text" value="${esc(nameVal)}" placeholder="Cue name…"
+            oninput="showConfig.cues[${idx}].name=this.value||''" onblur="saveShowConfig()"
+            style="background:transparent;border:none;border-bottom:1px solid #4c1d95;color:#c4b5fd;padding:2px 4px;font-size:13px;font-weight:700;flex:1;min-width:80px;outline:none">
+          <input type="text" value="${esc(cue.notes||'')}" placeholder="Notes / instructions…"
+            oninput="showConfig.cues[${idx}].notes=this.value||''" onblur="saveShowConfig()"
+            style="background:transparent;border:none;border-bottom:1px dashed #334155;color:#94a3b8;padding:2px 4px;font-size:11px;flex:2;min-width:100px;outline:none">
+          ${moveBtns}
+        </div>
+      </div>`;
+    } else {
+      const barLines = (cue.bars || []).map((cb, bi) => {
+        const bar = bars.find(b => b.id === cb.barId);
+        const barName = bar && bar.name !== `Bar ${bar.id}` ? esc(bar.name) : '';
+        const label = getDeadLabel(cb.barId, cb.deadId);
+        const ds = getDeadStyle(cb.barId, cb.deadId);
+        const bricks = bar ? barTotalCwBricks(bar) : 0;
+        const isHeavy = bricks >= 30;
+        const bar1Warn = cb.barId === 1 ? `<span style="background:#7f1d1d;color:#fca5a5;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:800">⚠ SCREEN</span>` : '';
+        const heavyBadge = isHeavy ? `<span style="background:#78350f;color:#fcd34d;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:800">⚠ HEAVY ${bricks}b</span>` : '';
+        const fpBadge = cb.flyperson && !oneFP ? `<span style="background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700">${esc(cb.flyperson)}</span>` : '';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 14px;border-top:1px solid #0f172a;flex-wrap:wrap">
+          <span style="color:#cbd5e1;font-size:12px;font-weight:700;min-width:46px;flex-shrink:0">Bar ${cb.barId}</span>
+          <span style="color:#e2e8f0;font-size:12px;font-weight:600;min-width:50px;flex:1">${barName}</span>
+          <span style="${ds};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(label)}</span>
+          <span style="background:#0f172a;color:#fbbf24;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(cb.speed)}</span>
+          ${bar1Warn}${heavyBadge}${fpBadge}
+          <button onclick="removeBarFromCue(${idx},${bi})" style="background:none;color:#ef4444;border:none;cursor:pointer;font-size:14px;padding:1px 4px;margin-left:auto">✕</button>
+        </div>`;
+      }).join('');
+
+      const atMax = !cue.overrideMax && (cue.bars || []).length >= showConfig.maxFlymen;
+      const addBarForm = addingBarToCue === idx
+        ? `<div style="padding:8px 14px;background:#0a0f1a;border-top:1px solid #1e293b;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <select id="cue_bar_sel_${idx}" onchange="updateCueBarDeadOptions(${idx})"
+              style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 8px;font-size:12px;outline:none">
+              <option value="">— Bar —</option>${activeBarOptions}
+            </select>
+            <select id="cue_dead_sel_${idx}"
+              style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 8px;font-size:12px;outline:none">
+              <option value="">— select bar first —</option>
+            </select>
+            <select id="cue_speed_sel_${idx}"
+              style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 8px;font-size:12px;outline:none">
+              <option value="">— Speed —</option>
+              <option>V.Slow</option><option>Slow</option><option>Medium</option><option>Fast</option><option>Max</option>
+            </select>
+            ${!oneFP ? `<select id="cue_fp_sel_${idx}"
+              style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#60a5fa;padding:5px 8px;font-size:12px;outline:none">
+              ${fpOptions('')}
+            </select>` : ''}
+            <button onclick="confirmAddBarToCue(${idx})" class="btn-add" style="padding:5px 12px;font-size:12px">+ Add</button>
+            <button onclick="toggleAddBarToCue(${idx})" style="background:#1e293b;color:#64748b;border:1px solid #334155;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">Cancel</button>
+          </div>`
+        : `<div style="padding:5px 14px;border-top:1px solid #0f172a">
+            <button onclick="toggleAddBarToCue(${idx})" ${atMax ? `disabled title="Max ${showConfig.maxFlymen} — enable Override"` : ''}
+              style="background:#0f172a;color:${atMax ? '#334155' : '#475569'};border:1px dashed #334155;border-radius:6px;padding:3px 12px;font-size:11px;cursor:${atMax ? 'not-allowed' : 'pointer'};width:100%">
+              + Add bar to cue${atMax ? ` (max ${showConfig.maxFlymen} — Override to add more)` : ''}
+            </button>
+          </div>`;
+
+      const headerInputs = cue.isFollow
+        ? `<span style="background:#7c3aed;color:#ddd6fe;border-radius:5px;padding:2px 12px;font-size:12px;font-weight:800">▶ FOLLOW</span>
+           <input type="text" value="${esc(nameVal)}" placeholder="note…"
+             oninput="showConfig.cues[${idx}].name=this.value||''" onblur="saveShowConfig()"
+             style="background:transparent;border:none;border-bottom:1px solid #334155;color:#94a3b8;padding:2px 4px;font-size:12px;flex:1;min-width:80px;outline:none">`
+        : `<input type="text" value="${esc(numVal)}" placeholder="Q#"
+             oninput="showConfig.cues[${idx}].number=this.value||''" onblur="saveShowConfig()"
+             style="background:#0f172a;border:1px solid #1e40af;border-radius:5px;color:#bfdbfe;padding:3px 8px;font-size:13px;font-weight:800;width:56px;text-align:center;outline:none">
+           <input type="text" value="${esc(nameVal)}" placeholder="Cue name…"
+             oninput="showConfig.cues[${idx}].name=this.value||''" onblur="saveShowConfig()"
+             style="background:transparent;border:none;border-bottom:1px solid #334155;color:#f1f5f9;padding:2px 4px;font-size:14px;font-weight:700;flex:1;min-width:80px;outline:none">`;
+
+      card = `<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:#0f172a;flex-wrap:wrap">
+          ${headerInputs}
+          <button onclick="toggleCueFollow(${idx})"
+            style="background:${cue.isFollow ? '#7c3aed' : '#0f172a'};color:${cue.isFollow ? '#ddd6fe' : '#475569'};border:1px solid ${cue.isFollow ? '#7c3aed' : '#334155'};border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;white-space:nowrap">
+            ▶ Follow</button>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:${cue.overrideMax ? '#f59e0b' : '#475569'};cursor:pointer;white-space:nowrap">
+            <input type="checkbox" ${cue.overrideMax ? 'checked' : ''} onchange="toggleCueOverrideMax(${idx})" style="accent-color:#f59e0b">
+            Override max
+          </label>
+          ${moveBtns}
+        </div>
+        ${barLines}
+        ${addBarForm}
+      </div>`;
+    }
+
+    return `${regIdx === 0 ? renderInsertRow(-1) : ''}${card}${renderInsertRow(regIdx)}`;
+  }).join('\n');
+
+  container.innerHTML = `
+    ${settingsHtml}
+    <div class="show-section">
+      <div class="show-section-title">Bar Deads</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:6px">Out (red/black) and In (white/red) are always available. Click a colour dot to add an extra dead for a bar.</div>
+      ${deadsBody}
+    </div>
+    <div class="show-section">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span class="show-section-title" style="margin:0">Cue Sheet</span>
+        <button onclick="addCue()" class="btn-add" style="padding:5px 12px;font-size:12px">+ New Cue</button>
+        ${cues.length > 0 ? `<button onclick="printCueSheet()" class="btn-print" style="padding:5px 12px;font-size:12px">🖨 Print Cue Sheet</button>` : ''}
+      </div>
+      ${preshowCard}
+      ${regularCues.length === 0
+        ? `<div style="text-align:center;padding:12px 0">${renderInsertRow(-1)}</div>`
+        : cueCardsList}
+    </div>
+  `;
+}
+
 function render() {
   renderSummary();
   const q = document.getElementById('search').value.toLowerCase();
@@ -1216,10 +2352,85 @@ function render() {
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
 }
 
-// Render immediately from localStorage so the UI is usable even if Firebase is slow/offline
+// Auto-generate preshow from current bar state, then render
+regeneratePreshowSilent();
+saveLocal('tbtl_showconfig_v1', showConfig);
+renderUserBar();
+const _viewBanner = document.getElementById('view-mode-banner');
+if (_viewBanner) _viewBanner.className = 'view-mode-banner' + (editMode ? '' : ' active');
 render();
 renderShows();
 loadFromFirebase();
+
+function printCueSheet() {
+  const showName = activeShowName || 'Untitled Show';
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const cues = showConfig.cues || [];
+
+  if (cues.length === 0) { alert('No cues to print.'); return; }
+
+  const rows = cues.map(cue => {
+    const isUncalled = !cue.isFollow && !cue.number && !cue.isPreshow;
+    const cueCell = cue.isPreshow
+      ? `<strong style="color:#92400e">PRESHOW</strong>`
+      : cue.isFollow
+        ? `<span style="font-weight:700;color:#6d28d9">▶ FOLLOW${cue.name ? ' — ' + cue.name : ''}</span>`
+        : cue.number
+          ? `<strong>Cue ${cue.number}</strong>${cue.name ? ` — ${cue.name}` : ''}`
+          : `<em>${cue.name || 'uncalled'}</em>`;
+    const typeCell = cue.isPreshow ? '<strong style="color:#92400e">Preshow</strong>'
+      : cue.isNonFly ? '<span style="color:#6d28d9;font-weight:700">Non-Fly</span>'
+      : '<span style="color:#1e40af;font-weight:700">Fly</span>';
+    if (!cue.bars || cue.bars.length === 0) {
+      return `<tr class="cue-sheet-row"><td>${typeCell}</td><td class="${cue.isFollow ? 'cue-follow' : cue.number ? '' : 'cue-uncalled'}">${cueCell}</td><td colspan="5">—</td></tr>`;
+    }
+    if (cue.isNonFly) {
+      return `<tr class="cue-sheet-row cue-nonfly">
+        <td>${typeCell}</td>
+        <td>${cueCell}</td>
+        <td colspan="5" style="font-style:italic;color:#6d28d9">${esc(cue.notes||'—')}</td>
+      </tr>`;
+    }
+    return cue.bars.map((cb, bi) => {
+      const bar = bars.find(b => b.id === cb.barId);
+      const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
+      const label = getDeadLabel(cb.barId, cb.deadId);
+      const bricks = bar ? barTotalCwBricks(bar) : 0;
+      const isHeavy = bricks >= 30;
+      const rowClass = cue.isPreshow ? 'cue-preshow' : cue.isFollow ? 'cue-follow' : isUncalled ? 'cue-uncalled' : '';
+      return `<tr class="cue-sheet-row ${rowClass}">
+        <td>${bi === 0 ? typeCell : ''}</td>
+        <td>${bi === 0 ? cueCell : ''}</td>
+        <td>Bar ${cb.barId}${cb.barId === 1 ? ' ⚠' : ''}</td>
+        <td>${esc(barName)}</td>
+        <td>&rsaquo; ${esc(label)}</td>
+        <td>${esc(cb.speed)}</td>
+        <td>${cb.flyperson ? esc(cb.flyperson) : ''}</td>
+        <td>${isHeavy ? `⚠ HEAVY (${bricks}b)` : ''}</td>
+      </tr>`;
+    }).join('');
+  }).join('');
+
+  document.getElementById('print-section').innerHTML = `
+    <div class="print-header">
+      <h2>TBTL Fly Cue Sheet</h2>
+      <p>${esc(showName)} &nbsp;·&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;·&nbsp; Printed ${dateStr}</p>
+    </div>
+    <table class="print-table print-cue-table">
+      <thead><tr>
+        <th style="width:55px">Type</th>
+        <th style="width:180px">Cue</th>
+        <th style="width:45px">Bar</th>
+        <th style="width:90px">Name</th>
+        <th>Dead</th>
+        <th style="width:50px">Speed</th>
+        <th style="width:80px">Flyperson</th>
+        <th style="width:80px">Notes</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  window.print();
+}
 
 function printSchedule() {
   const showName = activeShowName || 'Untitled Show';
@@ -1256,6 +2467,7 @@ function printSchedule() {
     const status = statusParts.join(' · ') || '—';
 
     const rowClass = bar.dnf ? 'dnf-row' : isBar1 ? 'locked-row' : hung === 0 ? 'empty-row' : '';
+    const noteRow = bar.note ? `<tr class="${rowClass}"><td></td><td colspan="6" style="color:#555;font-style:italic;padding-left:6px">📝 ${esc(bar.note)}</td></tr>` : '';
     return `<tr class="${rowClass}">
       <td style="font-weight:700;white-space:nowrap">BAR ${bar.id}</td>
       <td>${bar.name !== `Bar ${bar.id}` ? bar.name : '—'}</td>
@@ -1264,7 +2476,7 @@ function printSchedule() {
       <td style="text-align:right">${hung > 0 ? cw.toFixed(1) : '—'}</td>
       <td class="print-bricks" style="text-align:right">${hung > 0 ? bricks.full : '—'}</td>
       <td class="${bar.dnf ? 'dnf-cell' : ''}">${status}</td>
-    </tr>`;
+    </tr>${noteRow}`;
   }).join('');
 
   document.getElementById('print-section').innerHTML = `
