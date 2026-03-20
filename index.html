@@ -212,6 +212,15 @@
 
 <div id="names-modal-root"></div>
 
+<div class="user-bar" id="user-bar">
+  <span class="user-bar-label">Working as:</span>
+  <select class="user-select" id="user-selector" onchange="setCurrentUser(this.value)">
+    <option value="">— Select user —</option>
+  </select>
+  <button class="edit-toggle-btn edit" id="edit-toggle-btn" onclick="toggleEditMode()">✏ EDIT MODE</button>
+</div>
+<div class="view-mode-banner" id="view-mode-banner">👁 VIEW ONLY — All editing is disabled. Click EDIT MODE to re-enable.</div>
+
 <div class="sync-bar">
   <div class="sync-dot syncing" id="sync-dot"></div>
   <span class="sync-text" id="sync-text">Connecting to Firebase...</span>
