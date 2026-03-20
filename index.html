@@ -127,6 +127,7 @@
   .active-show-badge { background: #14532d; color: #22c55e; border: 1px solid #22c55e44; border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 700; white-space: nowrap; }
   /* DNF */
   .bar-wrap.dnf { border-color: #ef444466 !important; }
+  .bar-wrap.not-in-use { opacity: 0.55; border-color: #78716c55 !important; }
   .dnf-btn-on  { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef444466; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; letter-spacing: 0.5px; }
   .dnf-btn-off { background: #1e293b; color: #64748b; border: 1px solid #334155; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   /* Show tab */
@@ -296,7 +297,7 @@ const DEFAULT_FIXTURES = [
 
 function defaultBars() {
   return BAR_IDS.map(id => ({
-    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null
+    id, name: `Bar ${id}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: false
   }));
 }
 
@@ -325,7 +326,7 @@ let inputMode = {};
 let saveTimeout = null;
 let addingBarToCue = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null}));
+bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false}));
 
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('sync-dot');
@@ -447,8 +448,22 @@ function cradleBricksToHungLoad(fullBricks, halfBricks) {
   return ((fullBricks * FULL) + (halfBricks * HALF)) / 2;
 }
 
+function toggleNotInUse(barId) {
+  const bar = bars.find(b => b.id === barId);
+  if (!bar) return;
+  bar.notInUse = !bar.notInUse;
+  scheduleSave();
+  render();
+}
+
+// Called silently whenever something is added to a bar — clears notInUse so user must re-apply
+function clearNotInUse(bar) {
+  if (bar && bar.notInUse) { bar.notInUse = false; }
+}
+
 function toggleExtensions(barId) {
   const bar = bars.find(b => b.id === barId);
+  if (!bar.extensions) clearNotInUse(bar); // turning ON clears not-in-use
   bar.extensions = !bar.extensions;
   scheduleSave();
   render();
@@ -466,12 +481,14 @@ function selectIWB(barId, colourId) {
     if (!confirm(`Move ${col.label} IWB from Bar ${owner.id} to Bar ${barId}?`)) return;
     owner.iwb = null;
   }
+  clearNotInUse(bar);
   bar.iwb = colourId;
   scheduleSave(); render();
 }
 
 function toggleCable(barId) {
   const bar = bars.find(b => b.id === barId);
+  if (!bar.cable) clearNotInUse(bar); // turning ON clears not-in-use
   bar.cable = !bar.cable;
   scheduleSave();
   render();
@@ -545,6 +562,7 @@ function addFixture(barId) {
     alert('This bar is full — the exclusive item takes up the whole bar.');
     return;
   }
+  clearNotInUse(bar);
   bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive, conduit: false});
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
@@ -1069,6 +1087,16 @@ function renderBar(bar) {
         </div>
       </div>`;
       })() : ''}
+      <div class="ext-section" style="${bar.notInUse ? 'border:2px solid #78716c55;background:#1c1917;' : ''}">
+        <div class="ext-info">
+          <strong style="color:${bar.notInUse ? '#d6d3d1' : '#e2e8f0'}">Bar not in use for show</strong>
+          <small>${bar.notInUse ? 'Excluded from preshow — adding equipment will clear this' : 'Mark as no dead / not being used this show'}</small>
+        </div>
+        ${bar.notInUse ? `<span class="ext-badge" style="background:#44403c;color:#d6d3d1;border:1px solid #78716c66">NOT IN USE</span>` : ''}
+        <button class="${bar.notInUse ? 'dnf-btn-on' : 'dnf-btn-off'}" style="${bar.notInUse ? 'background:#44403c;border-color:#78716c;color:#d6d3d1;' : ''}" onclick="toggleNotInUse(${bar.id})">
+          ${bar.notInUse ? 'Not in Use' : 'In Use'}
+        </button>
+      </div>
       <div class="ext-section" style="${bar.dnf ? 'border:2px solid #ef444466;background:#1c0a0a;' : ''}">
         <div class="ext-info">
           <strong style="color:${bar.dnf ? '#fca5a5' : '#e2e8f0'}">⛔ Do Not Fly Tag</strong>
@@ -1101,9 +1129,9 @@ function renderBar(bar) {
   ` : '';
 
   return `
-    ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()}
+    ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''} ${bar.notInUse ? 'not-in-use' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()}
       <div class="bar-header" onclick="toggleBar(${bar.id})">
-        ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}</span>`; })()}
+        ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}${bar.notInUse ? ` <span style="color:#d6d3d1;font-size:10px;font-weight:800;background:#44403c;padding:1px 5px;border-radius:3px">NOT IN USE</span>` : ''}</span>`; })()}
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
           ${bar.extensions && !exp ? `<span style="color:#34d399;font-size:11px;font-weight:700">EXT</span>` : ''}
@@ -1348,7 +1376,7 @@ function barTotalCwBricks(bar) {
 
 // ── Preshow generation ──────────────────────────────────────
 function regeneratePreshowSilent() {
-  const loaded = bars.filter(b => (b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null);
+  const loaded = bars.filter(b => !b.notInUse && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
   if (!showConfig.cues) showConfig.cues = [];
   const existingIdx = showConfig.cues.findIndex(c => c.isPreshow);
   const existingPreshow = existingIdx >= 0 ? showConfig.cues[existingIdx] : null;
