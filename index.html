@@ -1097,7 +1097,7 @@ function openNewShowModal() {
     saveLocal('tbtl_shows_v1', shows);
     firebasePut('shows', shows).catch(() => {});
   }
-  const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  const loadedBars = bars.filter(b => !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || b.cable));
   const barCheckboxes = loadedBars.length > 0
     ? loadedBars.map(b => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#e2e8f0;padding:3px 0;cursor:pointer">
         <input type="checkbox" id="keep_bar_${b.id}" checked style="accent-color:#3b82f6">
@@ -1132,7 +1132,7 @@ async function confirmNewShow() {
   if (resetMode === 'reset') {
     newBars = defaultBars();
   } else {
-    const loadedBars = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+    const loadedBars = bars.filter(b => !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || b.cable));
     const keepIds = new Set(loadedBars.filter(b => {
       const cb = document.getElementById(`keep_bar_${b.id}`);
       return cb && cb.checked;
@@ -1820,7 +1820,7 @@ function barTotalCwBricks(bar) {
 
 // ── Preshow generation ──────────────────────────────────────
 function regeneratePreshowSilent() {
-  const loaded = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null));
+  const loaded = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || b.cable));
   if (!showConfig.cues) showConfig.cues = [];
   const existingIdx = showConfig.cues.findIndex(c => c.isPreshow);
   const existingPreshow = existingIdx >= 0 ? showConfig.cues[existingIdx] : null;
