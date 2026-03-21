@@ -1,4 +1,5 @@
 import { bars, showConfig, shows, activeShowName, editMode, saveTimeout } from './state.js';
+import * as State from './state.js';
 import { saveLocal } from './storage.js';
 import { firebasePut, loadFromFirebase, setSyncStatus, scheduleSave } from './firebase.js';
 import { renderUserBar, renderHistoryPage } from './users.js';
@@ -7,21 +8,12 @@ import { renderLibraryPage, renderInventoryPage } from './render-library.js';
 import { renderShows } from './shows.js';
 import { renderShowPage, regeneratePreshowSilent, getDeadLabel, barTotalCwBricks } from './show-page.js';
 import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, toggleExtensions, selectIWB, toggleCable, toggleDNF, toggleConduit, updateBarName, updatePreview, switchMode, addFixture, removeFixture, updateQty, setBarPreshowDead, updateBarNote, updateTare, updateMiscBricks, pickLib } from './bar-actions.js';
-import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow, openNamesEditor as _openNamesEditor } from './shows.js';
+import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, printCueSheet as _noop } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
-
-export function render() {
-  renderSummary();
-  const q = document.getElementById('search').value.toLowerCase();
-  const filtered = bars.filter(b =>
-    String(b.id).includes(q) || b.name.toLowerCase().includes(q)
-  );
-  document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
-}
 
 let currentPage = 'bars';
 // editingLibItem lives in render-library.js
@@ -391,21 +383,20 @@ window.saveNamesEdit = saveNamesEdit;
 window.printCueSheet = printCueSheet;
 window.printSchedule = printSchedule;
 // showConfig must be a live getter so inline oninput handlers always get the current object
-import * as State from './state.js';
 Object.defineProperty(window, 'showConfig', { get() { return State.showConfig; }, configurable: true });
 
 // ── Init ─────────────────────────────────────────────────────
 regeneratePreshowSilent();
-saveLocal('tbtl_showconfig_v1', State.showConfig);
+saveLocal('tbtl_showconfig_v1', showConfig);
 renderUserBar();
 const _viewBanner = document.getElementById('view-mode-banner');
-if (_viewBanner) _viewBanner.className = 'view-mode-banner' + (State.editMode ? '' : ' active');
+if (_viewBanner) _viewBanner.className = 'view-mode-banner' + (editMode ? '' : ' active');
 render();
 renderShows();
 loadFromFirebase();
 
 window.addEventListener('beforeunload', function(e) {
-  if (State.saveTimeout !== null) {
+  if (saveTimeout !== null) {
     e.preventDefault();
     e.returnValue = '';
   }
