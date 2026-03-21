@@ -178,6 +178,7 @@
   #print-section { display: none; }
   @media print {
     @page { size: A4 landscape; margin: 0.8cm; }
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     body { background: #fff !important; color: #111 !important; padding: 0; }
     .sync-bar, .shows-panel, .page-tabs, .info-bar, .summary, .controls,
     #page-library, #page-inventory, #page-show, .footer, h1, .subtitle, #bars-container { display: none !important; }
@@ -2141,8 +2142,8 @@ function confirmAddBarToCue(cueIdx) {
     return;
   }
 
-  // Auto-assign Duty Stage when only 1 flyperson
-  const autoFP = showConfig.maxFlymen === 1 ? (flypositions[0] || 'Duty Stage') : flyperson;
+  // Auto-assign first position only when single flyperson AND not overridden
+  const autoFP = (showConfig.maxFlymen === 1 && !cue.overrideMax) ? (flypositions[0] || 'Duty Stage') : (flyperson || flypositions[0] || 'Duty Stage');
   cue.bars.push({ barId, deadId, speed, flyperson: autoFP });
   logHistory(`Added Bar ${barId} to cue ${cue.number || cue.name || '—'}`);
   addingBarToCue = null;
@@ -2349,13 +2350,16 @@ function renderShowPage() {
         const isHeavy = bricks >= 30;
         const bar1Warn = cb.barId === 1 ? `<span style="background:#7f1d1d;color:#fca5a5;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:800">⚠ SCREEN</span>` : '';
         const heavyBadge = isHeavy ? `<span style="background:#78350f;color:#fcd34d;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:800">⚠ HEAVY ${bricks}b</span>` : '';
-        const fpBadge = cb.flyperson && !oneFP ? `<span style="background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700">${esc(cb.flyperson)}</span>` : '';
+        const showFP = !oneFP || cue.overrideMax;
+        const fpSelect = showFP
+          ? `<select onchange="updateBarFlyperson(${idx},${bi},this.value)" style="background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f644;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;outline:none">${fpOptions(cb.flyperson)}</select>`
+          : '';
         return `<div style="display:flex;align-items:center;gap:8px;padding:5px 14px;border-top:1px solid #0f172a;flex-wrap:wrap">
           <span style="color:#cbd5e1;font-size:12px;font-weight:700;min-width:46px;flex-shrink:0">Bar ${cb.barId}</span>
           <span style="color:#e2e8f0;font-size:12px;font-weight:600;min-width:50px;flex:1">${barName}</span>
           <span style="${ds};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(label)}</span>
           <span style="background:#0f172a;color:#fbbf24;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(cb.speed)}</span>
-          ${bar1Warn}${heavyBadge}${fpBadge}
+          ${bar1Warn}${heavyBadge}${fpSelect}
           <button onclick="removeBarFromCue(${idx},${bi})" style="background:none;color:#ef4444;border:none;cursor:pointer;font-size:14px;padding:1px 4px;margin-left:auto">✕</button>
         </div>`;
       }).join('');
@@ -2376,7 +2380,7 @@ function renderShowPage() {
               <option value="">— Speed —</option>
               <option>V.Slow</option><option>Slow</option><option>Medium</option><option>Fast</option><option>Max</option>
             </select>
-            ${!oneFP ? `<select id="cue_fp_sel_${idx}"
+            ${(!oneFP || cue.overrideMax) ? `<select id="cue_fp_sel_${idx}"
               style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#60a5fa;padding:5px 8px;font-size:12px;outline:none">
               ${fpOptions('')}
             </select>` : ''}
@@ -2506,8 +2510,8 @@ function printCueSheet() {
     const printDeadBadge = (barId, deadId) => {
       const label = getDeadLabel(barId, deadId);
       let bg, fg, border;
-      if (deadId === 'out') { bg = '#fee2e2'; fg = '#991b1b'; border = '#ef4444'; }
-      else if (deadId === 'in') { bg = '#f0fdf4'; fg = '#166534'; border = '#22c55e'; }
+      if (deadId === 'out') { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+      else if (deadId === 'in') { bg = '#fff'; fg = '#ef4444'; border = '#ef4444'; }
       else {
         const customs = showConfig.customDeads[barId] || [];
         const dead = customs.find(d => d.id === deadId);
@@ -2554,7 +2558,7 @@ function printCueSheet() {
 <title>Fly Cue Sheet — ${esc(showName)}</title>
 <style>
   @page { size: A4 portrait; margin: 15mm 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 15px; }
   h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 2px; }
   .meta { font-size: 13px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
