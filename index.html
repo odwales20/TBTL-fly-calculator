@@ -14,7 +14,7 @@
   .subtitle { color: #475569; font-size: 12px; margin: 3px 0 14px; }
   .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; min-width: 100px; }
-  .card-label { color: #475569; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .card-label { color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
   .card-value { font-weight: 800; font-size: 18px; margin-top: 1px; }
   .info-bar { background: #1e293b; border: 1px solid #fbbf2422; border-radius: 7px; padding: 7px 12px; font-size: 11px; color: #64748b; margin-bottom: 12px; }
   .info-bar strong { color: #fbbf24; }
@@ -50,7 +50,7 @@
   .breakdown span { color: #64748b; }
   .breakdown strong { font-weight: 700; }
   .add-section { margin-top: 8px; background: #0f172a; border-radius: 8px; padding: 10px 12px; }
-  .add-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 8px; }
+  .add-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 8px; }
   .add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
   .inp-name { flex: 1 1 120px; min-width: 110px; }
   .inp-kg { width: 80px; }
@@ -224,7 +224,7 @@
 
 <div class="sync-bar">
   <div class="sync-dot syncing" id="sync-dot"></div>
-  <span class="sync-text" id="sync-text">Connecting to Firebase...</span>
+  <span class="sync-text" id="sync-text" aria-live="polite">Connecting to Firebase...</span>
   <button class="sync-btn" onclick="forceSave()">Save Now</button>
 </div>
 
@@ -240,12 +240,12 @@
   </div>
 </div>
 
-<div class="page-tabs">
-  <button class="page-tab active" id="tab-bars" onclick="switchPage('bars')">Bars</button>
-  <button class="page-tab" id="tab-library" onclick="switchPage('library')">Library</button>
-  <button class="page-tab" id="tab-inventory" onclick="switchPage('inventory')">Inventory</button>
-  <button class="page-tab" id="tab-show" onclick="switchPage('show')">Show</button>
-  <button class="page-tab" id="tab-history" onclick="switchPage('history')">History</button>
+<div class="page-tabs" role="tablist">
+  <button class="page-tab active" id="tab-bars" role="tab" aria-selected="true" onclick="switchPage('bars')">Bars</button>
+  <button class="page-tab" id="tab-library" role="tab" aria-selected="false" onclick="switchPage('library')">Library</button>
+  <button class="page-tab" id="tab-inventory" role="tab" aria-selected="false" onclick="switchPage('inventory')">Inventory</button>
+  <button class="page-tab" id="tab-show" role="tab" aria-selected="false" onclick="switchPage('show')">Show</button>
+  <button class="page-tab" id="tab-history" role="tab" aria-selected="false" onclick="switchPage('history')">History</button>
 </div>
 
 <div id="page-bars">
@@ -405,7 +405,16 @@ function mergeDefaultsIntoLibrary(lib) {
 function loadLocal(key, def) {
   try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
 }
-function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function saveLocal(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch(e) {
+    console.error('[storage] Failed to save', key, e);
+    if (key !== 'tbtl_current_user_v1') {
+      setSyncStatus('offline', 'Local storage full — rely on Firebase sync');
+    }
+  }
+}
 
 const DEFAULT_POSITIONS = ['Duty Stage', 'Duty Tech', 'ASM', 'CSM', 'DSM'];
 
@@ -434,7 +443,23 @@ let saveTimeout = null;
 let historyTimeout = null;
 let addingBarToCue = null;
 
-bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false, liveFly: b.liveFly || false}));
+function normaliseBar(b) {
+  return {
+    ...b,
+    extensions:  b.extensions  || false,
+    iwb:         (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null,
+    cable:       b.cable       || false,
+    fixtures:    b.fixtures    || [],
+    miscBricks:  b.miscBricks  || 0,
+    dnf:         b.dnf         || false,
+    note:        b.note        || '',
+    preshowDead: b.preshowDead || null,
+    notInUse:    b.notInUse    || false,
+    liveFly:     b.liveFly     || false,
+  };
+}
+
+bars = bars.map(normaliseBar);
 
 // ── Auto-flag helpers ─────────────────────────────────────────
 // Recomputes liveFly on each bar from cues (any non-Preshow cue that references the bar).
@@ -483,7 +508,7 @@ function logHistory(action) {
   if (historyLog.length > 200) historyLog = historyLog.slice(0, 200);
   saveLocal('tbtl_history_v1', historyLog);
   clearTimeout(historyTimeout);
-  historyTimeout = setTimeout(() => firebasePut('history', historyLog).catch(()=>{}), 2000);
+  historyTimeout = setTimeout(() => firebasePut('history', historyLog).catch(e => console.warn('[Firebase history]', e)), 2000);
 }
 
 function setCurrentUser(name) {
@@ -563,7 +588,7 @@ function setUserPerm(idx, perm, val) {
   if (!isAdminUser()) return;
   users[idx][perm] = val;
   saveLocal('tbtl_users_v1', users);
-  firebasePut('users', users).catch(()=>{});
+  firebasePut('users', users).catch(e => console.warn('[Firebase users]', e));
   openManageUsersModal();
 }
 function addUser() {
@@ -575,7 +600,7 @@ function addUser() {
   users.push({ name, canEdit: true, isAdmin: false, canViewHistory: false });
   users.sort((a, b) => a.name.localeCompare(b.name));
   saveLocal('tbtl_users_v1', users);
-  firebasePut('users', users).catch(()=>{});
+  firebasePut('users', users).catch(e => console.warn('[Firebase users]', e));
   logHistory(`Added user "${name}"`);
   openManageUsersModal();
   renderUserBar();
@@ -588,7 +613,7 @@ function removeUser(idx) {
   if (currentUser === u.name) { currentUser = null; saveLocal('tbtl_current_user_v1', null); }
   users.splice(idx, 1);
   saveLocal('tbtl_users_v1', users);
-  firebasePut('users', users).catch(()=>{});
+  firebasePut('users', users).catch(e => console.warn('[Firebase users]', e));
   openManageUsersModal();
   renderUserBar();
 }
@@ -631,7 +656,7 @@ function clearHistory() {
   if (!confirm('Clear all history? This cannot be undone.')) return;
   historyLog = [];
   saveLocal('tbtl_history_v1', historyLog);
-  firebasePut('history', historyLog).catch(()=>{});
+  firebasePut('history', historyLog).catch(e => console.warn('[Firebase history]', e));
   renderHistoryPage();
 }
 
@@ -676,7 +701,7 @@ async function loadFromFirebase() {
       firebaseGet('users')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
-      bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false, liveFly: b.liveFly || false}));
+      bars = fbBars.map(normaliseBar);
       applyAutoFlags();
       saveLocal('tbtl_bars_v3', bars);
     }
@@ -915,7 +940,7 @@ function addFixture(barId) {
   }
   // Check if bar is already exclusive
   if (bar.fixtures.some(f => f.exclusive)) {
-    alert('This bar is full — the exclusive item takes up the whole bar.');
+    alert(`"${bar.fixtures.find(f => f.exclusive).name}" occupies this entire bar. Remove it first if you need to replace it.`);
     return;
   }
   clearNotInUse(bar);
@@ -937,6 +962,7 @@ function removeFixture(barId, fixId) {
   if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
   const fix = bar.fixtures.find(f => f.id === fixId);
+  if (bar.fixtures.length === 1 && !confirm(`Remove ${fix.name}? This will leave Bar ${barId} empty.`)) return;
   if (fix) logHistory(`Removed ${fix.name} from Bar ${barId}`);
   bar.fixtures = bar.fixtures.filter(f => f.id !== fixId);
   scheduleSave();
@@ -1005,7 +1031,15 @@ function pickLib(barId) {
 
 function toggleBar(id) {
   expanded[id] = !expanded[id];
-  render();
+  const bar = bars.find(b => b.id === id);
+  const el = document.getElementById(`bar_${id}`);
+  if (bar && el) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderBar(bar);
+    el.replaceWith(tmp.firstElementChild);
+  } else {
+    render();
+  }
 }
 
 function resetAll() {
@@ -1030,7 +1064,7 @@ async function saveShowsToFirebase() {
   try {
     await firebasePut('shows', shows);
   } catch(e) {
-    // offline — already saved locally
+    console.warn('[Firebase shows]', e);
   }
 }
 
@@ -1067,10 +1101,10 @@ function loadShow(name) {
       savedAt: new Date().toISOString()
     };
     saveLocal('tbtl_shows_v1', shows);
-    firebasePut('shows', shows).catch(() => {});
+    firebasePut('shows', shows).catch(e => console.warn('[Firebase shows]', e));
   }
   if (!confirm(`Switch to "${name}"?${activeShowName && activeShowName !== name ? `\n\nYour current show "${activeShowName}" has been auto-saved.` : ''}`)) return;
-  bars = show.bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false, liveFly: b.liveFly || false}));
+  bars = show.bars.map(normaliseBar);
   showConfig = show.showConfig ? { maxFlymen: 1, customDeads: {}, cues: [], ...show.showConfig } : { maxFlymen: 1, customDeads: {}, cues: [] };
   applyAutoFlags();
   saveLocal('tbtl_showconfig_v1', showConfig);
@@ -1123,7 +1157,7 @@ function openNewShowModal() {
       savedAt: new Date().toISOString()
     };
     saveLocal('tbtl_shows_v1', shows);
-    firebasePut('shows', shows).catch(() => {});
+    firebasePut('shows', shows).catch(e => console.warn('[Firebase shows]', e));
   }
   const loadedBars = bars.filter(b => !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || b.cable));
   const barCheckboxes = loadedBars.length > 0
@@ -1230,10 +1264,10 @@ function renderShows() {
           <div class="show-item">
             <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
             <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
-            <button class="btn-show-load" onclick="loadShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Load</button>
-            <button class="btn-lib-edit" onclick="openNamesEditor(${JSON.stringify(name).replace(/"/g, '&quot;')})">Edit Names</button>
-            <button class="btn-show-override" onclick="overrideShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Override</button>
-            <button class="btn-show-del" onclick="deleteShow(${JSON.stringify(name).replace(/"/g, '&quot;')})">Delete</button>
+            <button class="btn-show-load" onclick="loadShow(${escAttr(name)})">Load</button>
+            <button class="btn-lib-edit" onclick="openNamesEditor(${escAttr(name)})">Edit Names</button>
+            <button class="btn-show-override" onclick="overrideShow(${escAttr(name)})">Override</button>
+            <button class="btn-show-del" onclick="deleteShow(${escAttr(name)})">Delete</button>
           </div>
         `;
       }).join('');
@@ -1241,7 +1275,7 @@ function renderShows() {
   const updateBtn = activeShowName ? `
     <div class="shows-save-row" style="margin-bottom:6px">
       <span style="font-size:12px;color:#94a3b8;flex:1">Loaded: <strong style="color:#22c55e">${esc(activeShowName)}</strong></span>
-      <button class="btn-update-show" onclick="saveShow(${JSON.stringify(activeShowName).replace(/"/g,'&quot;')}, true)">
+      <button class="btn-update-show" onclick="saveShow(${escAttr(activeShowName)}, true)">
         ↑ Save to "${esc(activeShowName)}"
       </button>
     </div>
@@ -1259,6 +1293,12 @@ function renderShows() {
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Safely embeds a JS string argument inside an HTML onclick attribute value.
+// JSON.stringify produces a quoted JS string; esc() then escapes it for HTML attribute context.
+function escAttr(val) {
+  return esc(JSON.stringify(String(val)));
 }
 
 function libOptions() {
@@ -1405,7 +1445,7 @@ function renderBar(bar) {
       <td class="r yellow">${(f.weight*f.qty).toFixed(1)}</td>
       <td class="r" style="color:#818cf8">${cwBricks.toFixed(2)}</td>
       ${conduitCell}
-      <td class="r">${bar.id !== 1 ? `<button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})">✕</button>` : ''}</td>
+      <td class="r">${bar.id !== 1 ? `<button class="remove-btn" onclick="removeFixture(${bar.id},${f.id})" aria-label="Remove ${esc(f.name)} from Bar ${bar.id}">✕</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -1603,7 +1643,7 @@ function renderBar(bar) {
 
   return `
     ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<div class="bar-wrap ${loaded ? 'loaded' : ''} ${(bar.id === 1 || isExclusive) ? 'exclusive' : ''} ${bar.dnf ? 'dnf' : ''} ${bar.notInUse ? 'not-in-use' : ''}" id="bar_${bar.id}" ${iwbC ? `style="border-left:4px solid ${iwbC.border};background:color-mix(in srgb, ${iwbC.bg} 30%, #1e293b)"` : ''}>`; })()}
-      <div class="bar-header" onclick="toggleBar(${bar.id})">
+      <div class="bar-header" role="button" tabindex="0" onclick="toggleBar(${bar.id})" onkeydown="if(event.key==='Enter'||event.key===' ')toggleBar(${bar.id})">
         ${(() => { const iwbC = bar.iwb ? IWB_COLOURS.find(c=>c.id===bar.iwb) : null; return `<span class="bar-num" ${iwbC ? `style="background:${iwbC.bg};color:${iwbC.text};border:1px solid ${iwbC.border}88"` : ''}>BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}${bar.id === 1 ? ` <span style="color:#c084fc;font-size:10px;font-weight:800">🔒 LOCKED</span>` : isExclusive ? ` <span style="color:#f59e0b;font-size:10px;font-weight:800">BAR FULL</span>` : ''}${bar.dnf ? ` <span style="color:#fca5a5;font-size:10px;font-weight:800;background:#7f1d1d;padding:1px 5px;border-radius:3px">⛔ DO NOT FLY</span>` : ''}${bar.notInUse ? ` <span style="color:#d6d3d1;font-size:10px;font-weight:800;background:#44403c;padding:1px 5px;border-radius:3px">NOT IN USE</span>` : ''}${bar.liveFly ? ` <span style="color:#6ee7b7;font-size:10px;font-weight:800;background:#064e3b;padding:1px 5px;border-radius:3px">LIVE FLY</span>` : ''}</span>`; })()}
         <span class="bar-summary">${summaryText}</span>
         <div class="bar-stats">
@@ -1630,11 +1670,12 @@ function switchPage(page) {
   document.getElementById('page-inventory').style.display = page === 'inventory' ? 'block' : 'none';
   document.getElementById('page-show').style.display = page === 'show' ? 'block' : 'none';
   document.getElementById('page-history').style.display = page === 'history' ? 'block' : 'none';
-  document.getElementById('tab-bars').className = 'page-tab' + (page === 'bars' ? ' active' : '');
-  document.getElementById('tab-library').className = 'page-tab' + (page === 'library' ? ' active' : '');
-  document.getElementById('tab-inventory').className = 'page-tab' + (page === 'inventory' ? ' active' : '');
-  document.getElementById('tab-show').className = 'page-tab' + (page === 'show' ? ' active' : '');
-  document.getElementById('tab-history').className = 'page-tab' + (page === 'history' ? ' active' : '');
+  ['bars','library','inventory','show','history'].forEach(p => {
+    const t = document.getElementById(`tab-${p}`);
+    const active = p === page;
+    t.className = 'page-tab' + (active ? ' active' : '');
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   if (page === 'library') renderLibraryPage();
   else if (page === 'inventory') renderInventoryPage();
   else if (page === 'show') renderShowPage();
@@ -1728,7 +1769,11 @@ function saveLibEdit(oldName) {
   const newCat = document.getElementById('ledit_cat').value;
   const newExcl = document.getElementById('ledit_excl').checked;
   const newDefaultDead = document.getElementById('ledit_defaultdead')?.value || null;
-  if (!newName || isNaN(newWeight) || newWeight <= 0) return;
+  if (!newName || isNaN(newWeight) || newWeight <= 0) {
+    const wi = document.getElementById('ledit_weight');
+    if (wi) { wi.style.borderColor = '#ef4444'; setTimeout(() => wi.style.borderColor = '#3b82f6', 1500); }
+    return;
+  }
   const idx = library.findIndex(f => f.name === oldName);
   if (idx === -1) return;
   library[idx] = {name: newName, weight: newWeight, category: newCat, exclusive: newExcl, defaultDead: newDefaultDead || null};
@@ -1809,7 +1854,7 @@ function renderLibraryPage() {
           </select>
         </td>
         <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
-          <button class="btn-lib-save" onclick="saveLibEdit('${esc(f.name)}')">Save</button>
+          <button class="btn-lib-save" onclick="saveLibEdit(${escAttr(f.name)})">Save</button>
           <button class="btn-lib-cancel" onclick="cancelLibEdit()">Cancel</button>
         </td>
       </tr>`;
@@ -1826,8 +1871,8 @@ function renderLibraryPage() {
       <td style="text-align:center;color:${f.exclusive?'#f59e0b':'#334155'}">${f.exclusive?'✓':'—'}</td>
       <td style="text-align:center">${deadBadge}</td>
       <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
-        <button class="btn-lib-edit" onclick="startLibEdit('${esc(f.name)}')">Edit</button>
-        <button class="btn-lib-del" onclick="deleteLibItem('${esc(f.name)}')">Delete</button>
+        <button class="btn-lib-edit" onclick="startLibEdit(${escAttr(f.name)})">Edit</button>
+        <button class="btn-lib-del" onclick="deleteLibItem(${escAttr(f.name)})">Delete</button>
       </td>
     </tr>`;
   }).join('');
@@ -2167,7 +2212,7 @@ function addPosition(name) {
   if (!n || flypositions.includes(n)) return;
   flypositions.push(n);
   saveLocal('tbtl_positions_v1', flypositions);
-  firebasePut('positions', flypositions).catch(() => {});
+  firebasePut('positions', flypositions).catch(e => console.warn('[Firebase positions]', e));
   renderShowPage();
 }
 
@@ -2178,7 +2223,7 @@ function removePosition(idx) {
   }
   flypositions.splice(idx, 1);
   saveLocal('tbtl_positions_v1', flypositions);
-  firebasePut('positions', flypositions).catch(() => {});
+  firebasePut('positions', flypositions).catch(e => console.warn('[Firebase positions]', e));
   renderShowPage();
 }
 
@@ -2240,7 +2285,7 @@ function renderShowPage() {
         const customBadges = customs.map(d => {
           const col = BAND_COLORS.find(c => c.id === d.bandColor) || { hex: '#888', label: '?' };
           return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:#111;border:2px solid ${col.hex};border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;margin-right:4px">
-            <span style="width:10px;height:10px;border-radius:50%;background:${col.hex};flex-shrink:0;display:inline-block"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:${col.hex};flex-shrink:0;display:inline-block" title="${esc(col.label)}" aria-label="${esc(col.label)}"></span>
             <input value="${esc(d.name||col.label)}" onblur="renameCustomDead(${bar.id},'${d.id}',this.value)"
               style="background:transparent;border:none;border-bottom:1px dashed #94a3b8;color:#111;font-size:11px;font-weight:700;width:80px;outline:none;padding:0">
             <button onclick="removeCustomDead(${bar.id},'${d.id}')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;padding:0;line-height:1">&times;</button>
