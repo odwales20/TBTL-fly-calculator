@@ -381,10 +381,10 @@ const DEFAULT_FIXTURES = [
   {name:"Nexo PS10",              weight:14.0, category:"Sound"},
   {name:"GLP Impression X5",     weight:13.3, category:"Lighting"},
   {name:"GLP Impression X5 Compact", weight:7.5, category:"Lighting"},
-  {name:"White Cyc/BP",           weight:36.0, category:"Drapes", exclusive:true},
-  {name:"Drape (per metre run)",  weight:2.5,  category:"Drapes"},
-  {name:"Tab (per metre run)",    weight:1.8,  category:"Drapes"},
-  {name:"Gauze (per metre run)",  weight:0.8,  category:"Drapes"},
+  {name:"White Cyc/BP",           weight:36.0, category:"Drapes", exclusive:true, defaultDead:'in'},
+  {name:"Drape (per metre run)",  weight:2.5,  category:"Drapes", defaultDead:'in'},
+  {name:"Tab (per metre run)",    weight:1.8,  category:"Drapes", defaultDead:'in'},
+  {name:"Gauze (per metre run)",  weight:0.8,  category:"Drapes", defaultDead:'in'},
   {name:"Cable Loom (per 5m)",    weight:1.0,  category:"Set"},
   {name:"Boom Arm",               weight:1.5,  category:"Set"},
 ];
@@ -430,6 +430,7 @@ let showsPanelOpen = false;
 let expanded = {};
 let inputMode = {};
 let saveTimeout = null;
+let historyTimeout = null;
 let addingBarToCue = null;
 
 bars = bars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false, liveFly: b.liveFly || false}));
@@ -480,6 +481,8 @@ function logHistory(action) {
   historyLog.unshift({ user: currentUser, action, timestamp: new Date().toISOString() });
   if (historyLog.length > 200) historyLog = historyLog.slice(0, 200);
   saveLocal('tbtl_history_v1', historyLog);
+  clearTimeout(historyTimeout);
+  historyTimeout = setTimeout(() => firebasePut('history', historyLog).catch(()=>{}), 2000);
 }
 
 function setCurrentUser(name) {
@@ -559,6 +562,7 @@ function setUserPerm(idx, perm, val) {
   if (!isAdminUser()) return;
   users[idx][perm] = val;
   saveLocal('tbtl_users_v1', users);
+  firebasePut('users', users).catch(()=>{});
   openManageUsersModal();
 }
 function addUser() {
@@ -570,6 +574,7 @@ function addUser() {
   users.push({ name, canEdit: true, isAdmin: false, canViewHistory: false });
   users.sort((a, b) => a.name.localeCompare(b.name));
   saveLocal('tbtl_users_v1', users);
+  firebasePut('users', users).catch(()=>{});
   logHistory(`Added user "${name}"`);
   openManageUsersModal();
   renderUserBar();
@@ -582,6 +587,7 @@ function removeUser(idx) {
   if (currentUser === u.name) { currentUser = null; saveLocal('tbtl_current_user_v1', null); }
   users.splice(idx, 1);
   saveLocal('tbtl_users_v1', users);
+  firebasePut('users', users).catch(()=>{});
   openManageUsersModal();
   renderUserBar();
 }
@@ -624,6 +630,7 @@ function clearHistory() {
   if (!confirm('Clear all history? This cannot be undone.')) return;
   historyLog = [];
   saveLocal('tbtl_history_v1', historyLog);
+  firebasePut('history', historyLog).catch(()=>{});
   renderHistoryPage();
 }
 
@@ -660,10 +667,12 @@ async function firebasePut(path, data) {
 async function loadFromFirebase() {
   try {
     setSyncStatus('syncing', 'Loading from Firebase...');
-    const [fbBars, fbLib, fbPos] = await Promise.all([
+    const [fbBars, fbLib, fbPos, fbHistory, fbUsers] = await Promise.all([
       firebaseGet('bars'),
       firebaseGet('library'),
-      firebaseGet('positions')
+      firebaseGet('positions'),
+      firebaseGet('history'),
+      firebaseGet('users')
     ]);
     if (fbBars && Array.isArray(fbBars)) {
       bars = fbBars.map(b => ({...b, extensions: b.extensions || false, iwb: (typeof b.iwb === 'string' && IWB_COLOURS.some(c => c.id === b.iwb)) ? b.iwb : null, cable: b.cable || false, fixtures: b.fixtures || [], miscBricks: b.miscBricks || 0, dnf: b.dnf || false, note: b.note || '', preshowDead: b.preshowDead || null, notInUse: b.notInUse || false, liveFly: b.liveFly || false}));
@@ -677,6 +686,14 @@ async function loadFromFirebase() {
     if (fbPos && Array.isArray(fbPos) && fbPos.length > 0) {
       flypositions = fbPos;
       saveLocal('tbtl_positions_v1', flypositions);
+    }
+    if (fbHistory && Array.isArray(fbHistory) && fbHistory.length > 0) {
+      historyLog = fbHistory;
+      saveLocal('tbtl_history_v1', historyLog);
+    }
+    if (fbUsers && Array.isArray(fbUsers) && fbUsers.length > 0) {
+      users = fbUsers;
+      saveLocal('tbtl_users_v1', users);
     }
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
@@ -701,11 +718,15 @@ async function saveToFirebase() {
     await Promise.all([
       firebasePut('bars', bars),
       firebasePut('library', library),
-      firebasePut('positions', flypositions)
+      firebasePut('positions', flypositions),
+      firebasePut('history', historyLog),
+      firebasePut('users', users)
     ]);
     saveLocal('tbtl_bars_v3', bars);
     saveLocal('tbtl_lib_v3', library);
     saveLocal('tbtl_positions_v1', flypositions);
+    saveLocal('tbtl_history_v1', historyLog);
+    saveLocal('tbtl_users_v1', users);
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
     console.error('[Firebase save error]', e);
@@ -897,6 +918,11 @@ function addFixture(barId) {
   }
   clearNotInUse(bar);
   bar.fixtures.push({id: Date.now(), name, weight, qty, category, exclusive, conduit: false});
+  // Auto-apply defaultDead from library if bar hasn't been manually set
+  if (bar.preshowDead === null) {
+    const libEntry = library.find(f => f.name.toLowerCase() === name.toLowerCase());
+    if (libEntry && libEntry.defaultDead) bar.preshowDead = libEntry.defaultDead;
+  }
   if (!library.some(f => f.name.toLowerCase() === name.toLowerCase())) {
     library.push({name, weight, category, exclusive});
   }
@@ -1699,10 +1725,11 @@ function saveLibEdit(oldName) {
   const newWeight = parseFloat(document.getElementById('ledit_weight').value);
   const newCat = document.getElementById('ledit_cat').value;
   const newExcl = document.getElementById('ledit_excl').checked;
+  const newDefaultDead = document.getElementById('ledit_defaultdead')?.value || null;
   if (!newName || isNaN(newWeight) || newWeight <= 0) return;
   const idx = library.findIndex(f => f.name === oldName);
   if (idx === -1) return;
-  library[idx] = {name: newName, weight: newWeight, category: newCat, exclusive: newExcl};
+  library[idx] = {name: newName, weight: newWeight, category: newCat, exclusive: newExcl, defaultDead: newDefaultDead || null};
   // Propagate changes to all bar fixtures using this item
   bars.forEach(bar => bar.fixtures.forEach(f => {
     if (f.name === oldName) { f.name = newName; f.weight = newWeight; f.category = newCat; f.exclusive = newExcl; }
@@ -1723,6 +1750,7 @@ function addLibItem() {
   const weight = parseFloat(document.getElementById('lnew_weight').value);
   const cat = document.getElementById('lnew_cat').value;
   const excl = document.getElementById('lnew_excl').checked;
+  const defDead = document.getElementById('lnew_defaultdead')?.value || null;
   if (!name || isNaN(weight) || weight <= 0) {
     const el = document.getElementById('lnew_name');
     if (el) { el.style.borderColor='#ef4444'; setTimeout(()=>el.style.borderColor='#334155',1500); }
@@ -1732,13 +1760,14 @@ function addLibItem() {
     alert(`"${name}" already exists in the library.`);
     return;
   }
-  library.push({name, weight, category: cat, exclusive: excl});
+  library.push({name, weight, category: cat, exclusive: excl, defaultDead: defDead || null});
   scheduleSave();
   document.getElementById('lnew_name').value = '';
   document.getElementById('lnew_weight').value = '';
   document.getElementById('lnew_bricks').value = '';
   document.getElementById('lnew_cat').value = '';
   document.getElementById('lnew_excl').checked = false;
+  const dd = document.getElementById('lnew_defaultdead'); if (dd) dd.value = '';
   renderLibraryPage();
 }
 function renderLibraryPage() {
@@ -1770,17 +1799,30 @@ function renderLibraryPage() {
           </div>
         </td>
         <td style="text-align:center"><input type="checkbox" id="ledit_excl" ${f.exclusive?'checked':''} style="accent-color:#f59e0b;width:16px;height:16px"></td>
+        <td style="text-align:center">
+          <select id="ledit_defaultdead" class="lib-edit-inp" style="width:80px;font-size:11px">
+            <option value="" ${!f.defaultDead?'selected':''}>Auto</option>
+            <option value="in" ${f.defaultDead==='in'?'selected':''}>→ In</option>
+            <option value="out" ${f.defaultDead==='out'?'selected':''}>→ Out</option>
+          </select>
+        </td>
         <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
           <button class="btn-lib-save" onclick="saveLibEdit('${esc(f.name)}')">Save</button>
           <button class="btn-lib-cancel" onclick="cancelLibEdit()">Cancel</button>
         </td>
       </tr>`;
     }
+    const deadBadge = f.defaultDead === 'in'
+      ? `<span style="font-size:10px;background:#1e3a5f;color:#7dd3fc;border:1px solid #3b82f644;border-radius:3px;padding:1px 6px;font-weight:700">→ In</span>`
+      : f.defaultDead === 'out'
+        ? `<span style="font-size:10px;background:#1e293b;color:#94a3b8;border:1px solid #47556944;border-radius:3px;padding:1px 6px;font-weight:700">→ Out</span>`
+        : `<span style="color:#334155;font-size:11px">—</span>`;
     return `<tr>
       <td style="font-weight:600">${esc(f.name)}${f.exclusive?` <span style="font-size:10px;color:#f59e0b">⚠ exclusive</span>`:''}</td>
       <td>${catPill(f.category)}</td>
       <td class="r" style="color:#fbbf24;font-weight:700">${f.weight} kg</td>
       <td style="text-align:center;color:${f.exclusive?'#f59e0b':'#334155'}">${f.exclusive?'✓':'—'}</td>
+      <td style="text-align:center">${deadBadge}</td>
       <td style="white-space:nowrap;display:flex;gap:4px;padding:7px 8px">
         <button class="btn-lib-edit" onclick="startLibEdit('${esc(f.name)}')">Edit</button>
         <button class="btn-lib-del" onclick="deleteLibItem('${esc(f.name)}')">Delete</button>
@@ -1804,12 +1846,17 @@ function renderLibraryPage() {
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#f59e0b;cursor:pointer;white-space:nowrap">
           <input type="checkbox" id="lnew_excl" style="accent-color:#f59e0b"> Exclusive
         </label>
+        <select id="lnew_defaultdead" class="lib-edit-inp" style="width:90px;font-size:11px" title="Default preshow dead position">
+          <option value="">Dead: Auto</option>
+          <option value="in">Dead: → In</option>
+          <option value="out">Dead: → Out</option>
+        </select>
         <button class="btn-add" onclick="addLibItem()">+ Add</button>
       </div>
     </div>
     <table class="lib-table">
       <thead><tr>
-        <th>Name</th><th>Category</th><th class="r">Weight</th><th style="text-align:center">Excl.</th><th>Actions</th>
+        <th>Name</th><th>Category</th><th class="r">Weight</th><th style="text-align:center">Excl.</th><th style="text-align:center">Default Dead</th><th>Actions</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -2507,7 +2554,7 @@ function printCueSheet() {
   </tr></thead>
   <tbody>\${rows}</tbody>
 </table>
-<script>window.onload = function(){ window.print(); };<\/script>
+<script>window.onload = function(){ window.print(); }; window.onafterprint = function(){ window.close(); };<\/script>
 </body>
 </html>\`;
 
