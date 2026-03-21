@@ -2510,8 +2510,8 @@ function printCueSheet() {
     const printDeadBadge = (barId, deadId) => {
       const label = getDeadLabel(barId, deadId);
       let bg, fg, border;
-      if (deadId === 'out') { bg = '#fee2e2'; fg = '#991b1b'; border = '#ef4444'; }
-      else if (deadId === 'in') { bg = '#f0fdf4'; fg = '#166534'; border = '#22c55e'; }
+      if (deadId === 'out') { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+      else if (deadId === 'in') { bg = '#fff'; fg = '#ef4444'; border = '#ef4444'; }
       else {
         const customs = showConfig.customDeads[barId] || [];
         const dead = customs.find(d => d.id === deadId);
