@@ -727,6 +727,7 @@ async function saveToFirebase() {
     saveLocal('tbtl_positions_v1', flypositions);
     saveLocal('tbtl_history_v1', historyLog);
     saveLocal('tbtl_users_v1', users);
+    saveTimeout = null; // mark as fully saved — clears the beforeunload warning
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
     console.error('[Firebase save error]', e);
@@ -2460,6 +2461,13 @@ if (_viewBanner) _viewBanner.className = 'view-mode-banner' + (editMode ? '' : '
 render();
 renderShows();
 loadFromFirebase();
+
+window.addEventListener('beforeunload', function(e) {
+  if (saveTimeout !== null) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 function printCueSheet() {
   const showName = activeShowName || 'Untitled Show';
