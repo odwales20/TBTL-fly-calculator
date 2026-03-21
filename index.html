@@ -178,6 +178,7 @@
   #print-section { display: none; }
   @media print {
     @page { size: A4 landscape; margin: 0.8cm; }
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     body { background: #fff !important; color: #111 !important; padding: 0; }
     .sync-bar, .shows-panel, .page-tabs, .info-bar, .summary, .controls,
     #page-library, #page-inventory, #page-show, .footer, h1, .subtitle, #bars-container { display: none !important; }
@@ -2557,7 +2558,7 @@ function printCueSheet() {
 <title>Fly Cue Sheet — ${esc(showName)}</title>
 <style>
   @page { size: A4 portrait; margin: 15mm 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 15px; }
   h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 2px; }
   .meta { font-size: 13px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
