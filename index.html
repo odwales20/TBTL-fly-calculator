@@ -2423,48 +2423,62 @@ function printCueSheet() {
 
   const rows = cues.map(cue => {
     const isUncalled = !cue.isFollow && !cue.number && !cue.isPreshow;
-    const typeLabel = cue.isPreshow ? 'Preshow' : cue.isNonFly ? '(Non-Fly)' : '(Fly)';
-    const cueCell = cue.isPreshow
-      ? `<strong style="color:#7c2d00">PRESHOW</strong>`
-      : cue.isFollow
-        ? `<span style="font-weight:700;color:#5b21b6">&#9654; FOLLOW${cue.name ? ' &mdash; ' + esc(cue.name) : ''} <span style="font-size:0.85em;font-weight:600">(${typeLabel})</span></span>`
-        : cue.number
-          ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`
-          : `<em>${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`;
-    const rowBg = cue.isPreshow ? '#fff8e6' : cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
-    const borderStyle = rowBg ? `border-left:4px solid ${cue.isPreshow ? '#d97706' : cue.isNonFly ? '#7c3aed' : '#5b21b6'};` : '';
+    const typeLabel = cue.isNonFly ? '(Non-Fly)' : '(Fly)';
+
+    // ── PRESHOW: compact single row, muted ─────────────────────────────────
+    if (cue.isPreshow) {
+      const preshowBars = (cue.bars || []).map(cb => {
+        const bar = bars.find(b => b.id === cb.barId);
+        const label = getDeadLabel(cb.barId, cb.deadId);
+        return `Bar ${cb.barId}${bar && bar.name !== \`Bar \${bar.id}\` ? \` (\${bar.name})\` : ''} › \${label}`;
+      }).join(', ');
+      return \`<tr class="preshow-row">
+        <td colspan="6" style="padding:3px 10px 3px 14px;font-size:11px;color:#888;font-style:italic;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0">
+          <strong style="color:#b45309;font-style:normal">PRESHOW</strong>\${preshowBars ? ' — ' + preshowBars : ''}
+        </td>
+      </tr>\`;
+    }
+
+    const cueCell = cue.isFollow
+      ? \`<span style="font-weight:700;color:#5b21b6">&#9654; FOLLOW\${cue.name ? ' &mdash; ' + esc(cue.name) : ''} <span style="font-size:0.85em;font-weight:600">(\${typeLabel.slice(1,-1)})</span></span>\`
+      : cue.number
+        ? \`<strong>Cue \${esc(cue.number)}</strong>\${cue.name ? \` &mdash; \${esc(cue.name)}\` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">\${typeLabel}</span>\`
+        : \`<em>\${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">\${typeLabel}</span>\`;
+    const rowBg = cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
+    const accentColor = cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af';
 
     if (!cue.bars || cue.bars.length === 0) {
-      return `<tr style="background:${rowBg}"><td style="${borderStyle}padding:8px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td></tr>`;
+      return \`<tr class="cue-first-row" style="background:\${rowBg}">
+        <td style="border-left:4px solid \${accentColor};padding:9px 10px;font-size:15px" colspan="6">\${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
+      </tr>\`;
     }
     if (cue.isNonFly) {
-      return `<tr style="background:#f5f0ff">
-        <td style="border-left:4px solid #7c3aed;padding:8px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#5b21b6">${esc(cue.notes||'—')}</em></td>
-      </tr>`;
+      return \`<tr class="cue-first-row" style="background:#f5f0ff">
+        <td style="border-left:4px solid #7c3aed;padding:9px 10px;font-size:15px" colspan="6">\${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#5b21b6">\${esc(cue.notes||'—')}</em></td>
+      </tr>\`;
     }
     return cue.bars.map((cb, bi) => {
       const bar = bars.find(b => b.id === cb.barId);
-      const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
+      const barName = bar && bar.name !== \`Bar \${bar.id}\` ? bar.name : '';
       const label = getDeadLabel(cb.barId, cb.deadId);
       const bricks = bar ? barTotalCwBricks(bar) : 0;
       const isHeavy = bricks >= 30;
-      const rowStyle = `background:${bi === 0 ? rowBg : ''};`;
-      return `<tr style="${rowStyle}">
-        <td style="${bi === 0 ? borderStyle : 'border-left:4px solid transparent;'}padding:7px 10px;font-size:15px;font-weight:700">${bi === 0 ? cueCell : ''}</td>
-        <td style="padding:7px 10px;font-size:15px;font-weight:700">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
-        <td style="padding:7px 10px;font-size:14px;color:#444">${esc(barName)}</td>
-        <td style="padding:7px 10px;font-size:15px;font-weight:700">&rsaquo; ${esc(label)}</td>
-        <td style="padding:7px 10px;font-size:14px">${esc(cb.speed)}</td>
-        <td style="padding:7px 10px;font-size:14px">${cb.flyperson ? esc(cb.flyperson) : ''}${isHeavy ? ` <strong style="color:#b91c1c">&#9888; HEAVY (${bricks}b)</strong>` : ''}</td>
-      </tr>`;
+      return \`<tr class="\${bi === 0 ? 'cue-first-row' : 'cue-cont-row'}" style="background:\${bi === 0 ? rowBg : ''};border-top:\${bi === 0 ? '3px solid #94a3b8' : 'none'}">
+        <td style="border-left:4px solid \${bi === 0 ? accentColor : 'transparent'};padding:9px 10px;font-size:15px;font-weight:700">\${bi === 0 ? cueCell : ''}</td>
+        <td style="padding:9px 10px;font-size:15px;font-weight:700">Bar \${cb.barId}\${cb.barId === 1 ? ' &#9888;' : ''}</td>
+        <td style="padding:9px 10px;font-size:14px;color:#444">\${esc(barName)}</td>
+        <td style="padding:9px 10px;font-size:15px;font-weight:700">&rsaquo; \${esc(label)}</td>
+        <td style="padding:9px 10px;font-size:14px">\${esc(cb.speed)}</td>
+        <td style="padding:9px 10px;font-size:14px">\${cb.flyperson ? esc(cb.flyperson) : ''}\${isHeavy ? \` <strong style="color:#b91c1c">&#9888; HEAVY (\${bricks}b)</strong>\` : ''}</td>
+      </tr>\`;
     }).join('');
   }).join('');
 
-  const html = `<!DOCTYPE html>
+  const html = \`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Fly Cue Sheet — ${esc(showName)}</title>
+<title>Fly Cue Sheet — \${esc(showName)}</title>
 <style>
   @page { size: A4 portrait; margin: 15mm 12mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2473,14 +2487,15 @@ function printCueSheet() {
   .meta { font-size: 13px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
   table { width: 100%; border-collapse: collapse; }
   th { background: #1e293b; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 10px; text-align: left; }
-  td { border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-  tr:last-child td { border-bottom: 2px solid #94a3b8; }
+  td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+  tr.cue-first-row td { border-top: 3px solid #94a3b8; }
+  tr.preshow-row td { border-top: 1px solid #f0e8d0; }
   .page-break { page-break-before: always; }
 </style>
 </head>
 <body>
 <h1>TBTL Fly Cue Sheet</h1>
-<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
+<div class="meta">\${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: \${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed \${dateStr}</div>
 <table>
   <thead><tr>
     <th style="width:45%">Cue</th>
@@ -2490,11 +2505,11 @@ function printCueSheet() {
     <th style="width:9%">Speed</th>
     <th style="width:11%">Flyperson</th>
   </tr></thead>
-  <tbody>${rows}</tbody>
+  <tbody>\${rows}</tbody>
 </table>
 <script>window.onload = function(){ window.print(); };<\/script>
 </body>
-</html>`;
+</html>\`;
 
   const w = window.open('', '_blank');
   if (w) { w.document.write(html); w.document.close(); }
