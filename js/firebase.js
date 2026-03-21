@@ -1,21 +1,19 @@
-/**
- * firebase.js — Firebase Realtime Database helpers and initial data load.
- *
- * Provides low-level firebaseGet / firebasePut utilities and the
- * loadFromFirebase / saveToFirebase orchestration functions.
- *
- * Users are fetched here along with all other data (cross-device sync
- * requirement), but ownership of the `users` array and its persistence
- * lives in users.js.  After fetching, we call setUsers() so users.js
- * stays the single source of truth.
- */
-
+import { FIREBASE_URL } from './constants.js';
 import { saveLocal } from './storage.js';
-import { setUsers } from './users.js';
+import {
+  bars, library, flypositions, historyLog, shows,
+  setBars, setLibrary, setFlypositions, setHistoryLog, setShows,
+  normaliseBar, mergeDefaultsIntoLibrary, applyAutoFlags,
+  saveTimeout, setSaveTimeout, showConfig, activeShowName
+} from './state.js';
 
-const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
-
-// ── Low-level helpers ─────────────────────────────────────────────────────────
+export function setSyncStatus(status, msg) {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  if (!dot || !text) return;
+  dot.className = `sync-dot ${status}`;
+  text.textContent = msg;
+}
 
 export async function firebaseGet(path) {
   const controller = new AbortController();
@@ -32,122 +30,111 @@ export async function firebaseGet(path) {
 export async function firebasePut(path, data) {
   const res = await fetch(`${FIREBASE_URL}/${path}.json`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
   });
   if (!res.ok) throw new Error(`PUT /${path} → HTTP ${res.status}`);
   return await res.json();
 }
 
-// ── Orchestration ─────────────────────────────────────────────────────────────
-
-/**
- * Load all shared data from Firebase in parallel.
- *
- * Users are always fetched so that additions/changes made on another
- * device are picked up on load.  The `if (fbUsers ...)` block delegates
- * to setUsers() in users.js, which saves to localStorage and updates the
- * in-memory array — no separate firebasePut is issued (we just read here).
- *
- * @param {object} ctx  - App context passed in by the caller.
- *   ctx.bars            mutable ref — replaced on success
- *   ctx.library         mutable ref — replaced on success
- *   ctx.flypositions    mutable ref — replaced on success
- *   ctx.historyLog      mutable ref — replaced on success
- *   ctx.shows           mutable ref — replaced on success
- *   ctx.normaliseBar    function(bar) → bar
- *   ctx.mergeDefaultsIntoLibrary  function(lib) → lib
- *   ctx.applyAutoFlags  function()
- *   ctx.setSyncStatus   function(status, msg)
- *   ctx.render          function()
- *   ctx.renderShows     function()
- */
-export async function loadFromFirebase(ctx) {
-  const {
-    setSyncStatus, normaliseBar, mergeDefaultsIntoLibrary, applyAutoFlags,
-    render, renderShows,
-  } = ctx;
-
+export async function loadFromFirebase() {
   try {
     setSyncStatus('syncing', 'Loading from Firebase...');
-
     const [fbBars, fbLib, fbPos, fbHistory, fbUsers] = await Promise.all([
       firebaseGet('bars'),
       firebaseGet('library'),
       firebaseGet('positions'),
       firebaseGet('history'),
-      firebaseGet('users'),       // users fetched for cross-device sync
+      firebaseGet('users'),
     ]);
-
     if (fbBars && Array.isArray(fbBars)) {
-      ctx.bars = fbBars.map(normaliseBar);
+      setBars(fbBars.map(normaliseBar));
       applyAutoFlags();
-      saveLocal('tbtl_bars_v3', ctx.bars);
+      saveLocal('tbtl_bars_v3', bars);
     }
     if (fbLib && Array.isArray(fbLib)) {
-      ctx.library = mergeDefaultsIntoLibrary(fbLib);
-      saveLocal('tbtl_lib_v3', ctx.library);
+      setLibrary(mergeDefaultsIntoLibrary(fbLib));
+      saveLocal('tbtl_lib_v3', library);
     }
     if (fbPos && Array.isArray(fbPos) && fbPos.length > 0) {
-      ctx.flypositions = fbPos;
-      saveLocal('tbtl_positions_v1', ctx.flypositions);
+      setFlypositions(fbPos);
+      saveLocal('tbtl_positions_v1', flypositions);
     }
     if (fbHistory && Array.isArray(fbHistory) && fbHistory.length > 0) {
-      ctx.historyLog = fbHistory;
-      saveLocal('tbtl_history_v1', ctx.historyLog);
+      setHistoryLog(fbHistory);
+      saveLocal('tbtl_history_v1', historyLog);
     }
-    // users.js owns user persistence — delegate via setUsers()
     if (fbUsers && Array.isArray(fbUsers) && fbUsers.length > 0) {
+      const { setUsers } = await import('./users.js');
       setUsers(fbUsers);
     }
-
     setSyncStatus('online', `Synced · ${new Date().toLocaleTimeString()}`);
-  } catch (e) {
+  } catch(e) {
     console.error('[Firebase load error]', e);
     setSyncStatus('offline', `Offline: ${e.message}`);
   }
-
+  const { render } = await import('./main.js');
   render();
-
-  // Shows are loaded separately so a failure here never breaks the main sync.
   try {
     const fbShows = await firebaseGet('shows');
     if (fbShows && typeof fbShows === 'object' && !Array.isArray(fbShows)) {
-      ctx.shows = fbShows;
-      saveLocal('tbtl_shows_v1', ctx.shows);
+      setShows(fbShows);
+      saveLocal('tbtl_shows_v1', shows);
     }
-  } catch (e) {
-    console.warn('[Firebase shows load]', e);
-  }
-
+  } catch(e) { console.warn('[Firebase shows load]', e); }
+  const { renderShows } = await import('./shows.js');
   renderShows();
 }
 
-/**
- * Persist all shared data to Firebase in parallel.
- * Users are written via firebasePut directly here (bulk save button path),
- * separate from the incremental saveUsers() used by users.js mutations.
- */
-export async function saveToFirebase(ctx) {
-  const { setSyncStatus } = ctx;
+export async function saveToFirebase() {
   try {
     setSyncStatus('syncing', 'Saving...');
+    const { users } = await import('./users.js');
     await Promise.all([
-      firebasePut('bars',      ctx.bars),
-      firebasePut('library',   ctx.library),
-      firebasePut('positions', ctx.flypositions),
-      firebasePut('history',   ctx.historyLog),
-      firebasePut('users',     ctx.users),
+      firebasePut('bars', bars),
+      firebasePut('library', library),
+      firebasePut('positions', flypositions),
+      firebasePut('history', historyLog),
+      firebasePut('users', users),
     ]);
-    saveLocal('tbtl_bars_v3',       ctx.bars);
-    saveLocal('tbtl_lib_v3',        ctx.library);
-    saveLocal('tbtl_positions_v1',  ctx.flypositions);
-    saveLocal('tbtl_history_v1',    ctx.historyLog);
-    saveLocal('tbtl_users_v1',      ctx.users);
-    ctx.saveTimeout = null; // clears beforeunload warning
+    saveLocal('tbtl_bars_v3', bars);
+    saveLocal('tbtl_lib_v3', library);
+    saveLocal('tbtl_positions_v1', flypositions);
+    saveLocal('tbtl_history_v1', historyLog);
+    saveLocal('tbtl_users_v1', users);
+    setSaveTimeout(null);
     setSyncStatus('online', `Saved · ${new Date().toLocaleTimeString()}`);
-  } catch (e) {
+  } catch(e) {
     console.error('[Firebase save error]', e);
     setSyncStatus('offline', `Save failed: ${e.message}`);
+  }
+}
+
+export function scheduleSave() {
+  // regeneratePreshowSilent is called lazily to avoid circular init
+  import('./show-page.js').then(({ regeneratePreshowSilent }) => {
+    regeneratePreshowSilent();
+    saveLocal('tbtl_bars_v3', bars);
+    saveLocal('tbtl_lib_v3', library);
+    saveLocal('tbtl_showconfig_v1', showConfig);
+    if (activeShowName) {
+      shows[activeShowName] = {
+        bars: JSON.parse(JSON.stringify(bars)),
+        showConfig: JSON.parse(JSON.stringify(showConfig)),
+        savedAt: new Date().toISOString()
+      };
+      saveLocal('tbtl_shows_v1', shows);
+    }
+    clearTimeout(saveTimeout);
+    setSaveTimeout(setTimeout(saveToFirebase, 1500));
+  });
+}
+
+export function forceSave() {
+  clearTimeout(saveTimeout);
+  if (activeShowName) {
+    import('./shows.js').then(({ saveShow }) => saveShow(activeShowName, true));
+  } else {
+    saveToFirebase();
   }
 }

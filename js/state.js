@@ -1,19 +1,7 @@
 import { BAR_IDS, DEFAULT_FIXTURES, DEFAULT_POSITIONS, DEFAULT_USERS, IWB_COLOURS } from './constants.js';
+import { loadLocal, saveLocal } from './storage.js';
 
-export function loadLocal(key, def) {
-  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
-}
-export function saveLocal(key, val) {
-  try {
-    localStorage.setItem(key, JSON.stringify(val));
-  } catch(e) {
-    console.error('[storage] Failed to save', key, e);
-    if (key !== 'tbtl_current_user_v1') {
-      // Import setSyncStatus lazily to avoid circular init issues
-      import('./firebase.js').then(m => m.setSyncStatus('offline', 'Local storage full — rely on Firebase sync'));
-    }
-  }
-}
+export { loadLocal, saveLocal };
 
 export function defaultBars() {
   return BAR_IDS.map(id => ({
@@ -43,7 +31,7 @@ export function normaliseBar(b) {
   };
 }
 
-// State variables (exported as mutable references via object)
+// ── Mutable state ─────────────────────────────────────────────
 export let bars = loadLocal('tbtl_bars_v3', defaultBars()).map(normaliseBar);
 export let library = mergeDefaultsIntoLibrary(loadLocal('tbtl_lib_v3', DEFAULT_FIXTURES));
 export let shows = loadLocal('tbtl_shows_v1', {});
@@ -60,19 +48,14 @@ export let saveTimeout = null;
 export let historyTimeout = null;
 export let addingBarToCue = null;
 
-// Setters for mutable state
+// ── Setters ───────────────────────────────────────────────────
 export function setBars(v) { bars = v; }
 export function setLibrary(v) { library = v; }
 export function setShows(v) { shows = v; }
 export function setFlypositions(v) { flypositions = v; }
 export function setShowConfig(v) { showConfig = v; }
 export function setActiveShowName(v) { activeShowName = v; }
-export function setCurrentUser(name) {
-  currentUser = name || null;
-  saveLocal('tbtl_current_user_v1', currentUser);
-  // renderUserBar called from users.js
-  import('./users.js').then(m => m.renderUserBar());
-}
+export function _setCurrentUser(v) { currentUser = v; }
 export function setEditMode(v) { editMode = v; }
 export function setHistoryLog(v) { historyLog = v; }
 export function setShowsPanelOpen(v) { showsPanelOpen = v; }
