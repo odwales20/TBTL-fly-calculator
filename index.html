@@ -2502,27 +2502,45 @@ function printCueSheet() {
     const rowBg = cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
     const accentColor = cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af';
 
+    // Print-friendly dead badge (coloured for ease of use)
+    const printDeadBadge = (barId, deadId) => {
+      const label = getDeadLabel(barId, deadId);
+      let bg, fg, border;
+      if (deadId === 'out') { bg = '#fee2e2'; fg = '#991b1b'; border = '#ef4444'; }
+      else if (deadId === 'in') { bg = '#f0fdf4'; fg = '#166534'; border = '#22c55e'; }
+      else {
+        const customs = showConfig.customDeads[barId] || [];
+        const dead = customs.find(d => d.id === deadId);
+        const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+        bg = '#f8f8f8'; fg = '#111'; border = hex;
+      }
+      return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
+    };
+
+    const notesRow = cue.isNonFly && cue.notes
+      ? `<tr style="background:#f5f0ff"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
+      : '';
+
     if (!cue.bars || cue.bars.length === 0) {
       return `<tr class="cue-first-row" style="background:${rowBg}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
-      </tr>`;
+      </tr>${notesRow}`;
     }
     if (cue.isNonFly) {
       return `<tr class="cue-first-row" style="background:#f5f0ff">
-        <td style="border-left:4px solid #7c3aed;padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#5b21b6">${esc(cue.notes||'—')}</em></td>
-      </tr>`;
+        <td style="border-left:4px solid #7c3aed;padding:9px 10px;font-size:15px" colspan="6">${cueCell}</td>
+      </tr>${notesRow}`;
     }
     return cue.bars.map((cb, bi) => {
       const bar = bars.find(b => b.id === cb.barId);
       const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
-      const label = getDeadLabel(cb.barId, cb.deadId);
       const bricks = bar ? barTotalCwBricks(bar) : 0;
       const isHeavy = bricks >= 30;
       return `<tr class="${bi === 0 ? 'cue-first-row' : 'cue-cont-row'}" style="background:${bi === 0 ? rowBg : ''};border-top:${bi === 0 ? '3px solid #94a3b8' : 'none'}">
         <td style="border-left:4px solid ${bi === 0 ? accentColor : 'transparent'};padding:9px 10px;font-size:15px;font-weight:700">${bi === 0 ? cueCell : ''}</td>
-        <td style="padding:9px 10px;font-size:15px;font-weight:700">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
+        <td style="padding:9px 10px;font-size:15px;font-weight:700;white-space:nowrap">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
         <td style="padding:9px 10px;font-size:14px;color:#444">${esc(barName)}</td>
-        <td style="padding:9px 10px;font-size:15px;font-weight:700">&rsaquo; ${esc(label)}</td>
+        <td style="padding:9px 10px">${printDeadBadge(cb.barId, cb.deadId)}</td>
         <td style="padding:9px 10px;font-size:14px">${esc(cb.speed)}</td>
         <td style="padding:9px 10px;font-size:14px">${cb.flyperson ? esc(cb.flyperson) : ''}${isHeavy ? ` <strong style="color:#b91c1c">&#9888; HEAVY (${bricks}b)</strong>` : ''}</td>
       </tr>`;
