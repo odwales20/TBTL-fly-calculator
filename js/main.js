@@ -308,7 +308,6 @@ export async function saveNamesEdit() {
   document.getElementById('names-modal-root').innerHTML = '';
   _namesEditorShow = null;
 }
-</script>
 
 // ── Expose all functions called from inline HTML handlers ────
 window.render = render;
