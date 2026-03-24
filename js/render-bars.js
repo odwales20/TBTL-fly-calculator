@@ -1,14 +1,9 @@
-import { FULL, HALF, IWB_COLOURS, IWB_WEIGHT, CABLE_WEIGHT, CAT_COLOURS } from './constants.js';
+import { FULL, HALF, IWB_COLOURS, IWB_WEIGHT, CABLE_WEIGHT, CAT_COLOURS, esc, escAttr } from './constants.js';
 import { bars, library, expanded, inputMode } from './state.js';
 import { calcBricks, hungLoad, getMode, cradleBricksToHungLoad } from './bar-actions.js';
 
-export function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-export function escAttr(val) {
-  return esc(JSON.stringify(String(val)));
-}
+// Re-export for backwards compatibility
+export { esc, escAttr };
 
 export function libOptions() {
   const cats = {};

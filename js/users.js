@@ -1,11 +1,10 @@
-import { DEFAULT_USERS } from './constants.js';
+import { DEFAULT_USERS, esc } from './constants.js';
 import { loadLocal, saveLocal } from './storage.js';
 import {
   currentUser, _setCurrentUser,
   editMode, setEditMode,
   historyLog, setHistoryLog
 } from './state.js';
-import { esc } from './render-bars.js';
 import { firebasePut } from './firebase.js';
 
 export let users = loadLocal('tbtl_users_v1', DEFAULT_USERS);
