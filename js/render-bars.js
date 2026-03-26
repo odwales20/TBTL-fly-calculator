@@ -221,6 +221,8 @@ export function renderBar(bar) {
         <input type="text" value="${esc(bar.name)}"
           onblur="updateBarName(${bar.id},this.value)"
           style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:4px 8px;font-size:12px;width:140px;">
+        <button onclick="moveBarConfig(${bar.id})" title="Move all config from this bar to another bar number"
+          style="background:#0f172a;color:#60a5fa;border:1px solid #3b82f644;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap">Move to →</button>
       </div>
       <div class="tare-row" style="align-items:flex-start">
         <span style="font-size:12px;color:#475569;white-space:nowrap;padding-top:5px;min-width:42px">Notes:</span>
