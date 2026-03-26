@@ -1,5 +1,5 @@
 import { BAND_COLORS, DEFAULT_POSITIONS, FULL } from './constants.js';
-import { bars, showConfig, flypositions, addingBarToCue, setAddingBarToCue, recomputeLiveFlyTags } from './state.js';
+import { bars, showConfig, flypositions, addingBarToCue, setAddingBarToCue, recomputeLiveFlyTags, defaultBars } from './state.js';
 import { saveLocal } from './storage.js';
 import { firebasePut, scheduleSave } from './firebase.js';
 import { requireEdit } from './users.js';
@@ -118,6 +118,45 @@ export function removeCustomDead(barId, deadId) {
   renderShowPage();
 }
 
+export function copyBarDeadConfig(fromBarId) {
+  if (!requireEdit()) return;
+  const input = prompt(`Copy dead config from Bar ${fromBarId} to which bar?\nEnter a bar number, or "all" to copy to every bar:`);
+  if (!input) return;
+  const targets = input.trim().toLowerCase() === 'all'
+    ? bars.map(b => b.id).filter(id => id !== fromBarId)
+    : input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n !== fromBarId);
+  if (targets.length === 0) return;
+  const srcDeads   = JSON.parse(JSON.stringify(showConfig.customDeads[fromBarId] || []));
+  const srcDefault = (showConfig.barDefaults || {})[fromBarId] || 'out';
+  if (!showConfig.barDefaults) showConfig.barDefaults = {};
+  targets.forEach(id => {
+    showConfig.customDeads[id] = srcDeads.map(d => ({ ...d, id: `${id}_${d.bandColor}_${Date.now()}` }));
+    showConfig.barDefaults[id] = srcDefault;
+  });
+  logHistory(`Copied dead config from Bar ${fromBarId} to ${targets.length === 1 ? `Bar ${targets[0]}` : `${targets.length} bars`}`);
+  saveShowConfig();
+  renderShowPage();
+}
+
+export function resetBarToDefault(barId) {
+  if (!requireEdit()) return;
+  if (!confirm(`Reset Bar ${barId} to default and mark as Not In Use?`)) return;
+  const idx = bars.findIndex(b => b.id === barId);
+  if (idx < 0) return;
+  const def = defaultBars().find(b => b.id === barId);
+  if (def) bars[idx] = { ...def, notInUse: true };
+  delete (showConfig.customDeads || {})[barId];
+  delete (showConfig.barDefaults || {})[barId];
+  showConfig.cues = (showConfig.cues || []).map(c => ({
+    ...c,
+    bars: (c.bars || []).filter(cb => cb.barId !== barId)
+  }));
+  logHistory(`Reset Bar ${barId} to default (Not In Use)`);
+  saveShowConfig();
+  import('./main.js').then(({ render }) => render());
+  renderShowPage();
+}
+
 export function nextCueNumber() {
   const nums = (showConfig.cues || [])
     .filter(c => !c.isPreshow && c.number && /^\d+(\.\d+)?$/.test(c.number.trim()))
@@ -212,9 +251,18 @@ export function updateBarFlyperson(cueIdx, barIdx, fp) {
   saveShowConfig();
 }
 
+// ── Bar default dead ─────────────────────────────────────────
+export function setBarDefaultDead(barId, deadId) {
+  if (!requireEdit()) return;
+  if (!showConfig.barDefaults) showConfig.barDefaults = {};
+  showConfig.barDefaults[barId] = deadId || 'out';
+  saveShowConfig();
+  renderShowPage();
+}
+
 // ── Conflict detection ───────────────────────────────────────
 export function getBarStateBeforeCue(barId, cueIdx) {
-  let lastDead = null;
+  let lastDead = (showConfig.barDefaults || {})[barId] || null;
   for (let i = 0; i < cueIdx && i < (showConfig.cues||[]).length; i++) {
     const a = (showConfig.cues[i].bars||[]).find(cb => cb.barId === barId);
     if (a) lastDead = a.deadId;
@@ -421,10 +469,30 @@ export function renderShowPage() {
     </div>
   `;
 
-  // Bar Deads
-  const deadsBody = activeBars.length === 0
-    ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars loaded — add fixtures to bars first</div>'
-    : activeBars.map(bar => {
+  // Bar Deads — all bars except not-in-use
+  const deadsBars = bars.filter(b => !b.notInUse);
+  const barDefaults = showConfig.barDefaults || {};
+
+  function defaultDeadSelect(barId) {
+    const cur = barDefaults[barId] || 'out';
+    const customs = showConfig.customDeads[barId] || [];
+    const opts = [
+      { id: 'out',      label: 'Out' },
+      { id: 'show-out', label: 'Show Out' },
+      { id: 'max-out',  label: 'Max Out' },
+      { id: 'in',       label: 'In' },
+      ...customs.map(d => ({ id: d.id, label: d.name || (BAND_COLORS.find(c => c.id === d.bandColor) || {}).label || d.bandColor }))
+    ].map(o => `<option value="${o.id}" ${cur === o.id ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+    return `<select onchange="setBarDefaultDead(${barId},this.value)"
+      title="Default starting dead for this bar"
+      style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#94a3b8;padding:2px 6px;font-size:11px;outline:none;cursor:pointer">
+      ${opts}
+    </select>`;
+  }
+
+  const deadsBody = deadsBars.length === 0
+    ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars available</div>'
+    : deadsBars.map(bar => {
         const customs = showConfig.customDeads[bar.id] || [];
         const customBadges = customs.map(d => {
           const col = BAND_COLORS.find(c => c.id === d.bandColor) || { hex: '#888', label: '?' };
@@ -442,12 +510,17 @@ export function renderShowPage() {
         ).join('');
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #0f172a;flex-wrap:wrap">
           <span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:110px;flex-shrink:0">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
+          <span style="color:#475569;font-size:10px;flex-shrink:0">Default:</span>${defaultDeadSelect(bar.id)}
           <span style="background:#7f1d1d;color:#fee2e2;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Out</span>
           <span style="background:#dc2626;color:#fff;border:2px solid #fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Show Out</span>
           <span style="background:#dc2626;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Max Out</span>
           <span style="background:#f1f5f9;color:#111;border:2px solid #ef4444;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">In</span>
           ${customBadges}
           ${colorButtons ? `<span style="color:#475569;font-size:10px">+</span>${colorButtons}` : ''}
+          <button onclick="copyBarDeadConfig(${bar.id})" title="Copy this bar's dead config to another bar"
+            style="background:#0f172a;color:#475569;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;margin-left:auto;flex-shrink:0">Copy →</button>
+          <button onclick="resetBarToDefault(${bar.id})" title="Reset bar to default and mark Not In Use"
+            style="background:#0f172a;color:#7f1d1d;border:1px solid #7f1d1d44;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;flex-shrink:0">Reset</button>
         </div>`;
       }).join('');
 

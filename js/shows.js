@@ -59,7 +59,7 @@ export function loadShow(name) {
   }
   if (!confirm(`Switch to "${name}"?${activeShowName && activeShowName !== name ? `\n\nYour current show "${activeShowName}" has been auto-saved.` : ''}`)) return;
   setBars(show.bars.map(normaliseBar));
-  setShowConfig(show.showConfig ? { maxFlymen: 1, customDeads: {}, cues: [], ...show.showConfig } : { maxFlymen: 1, customDeads: {}, cues: [] });
+  setShowConfig(show.showConfig ? { maxFlymen: 1, customDeads: {}, barDefaults: {}, cues: [], ...show.showConfig } : { maxFlymen: 1, customDeads: {}, barDefaults: {}, cues: [] });
   applyAutoFlags();
   saveLocal('tbtl_showconfig_v1', showConfig);
   saveLocal('tbtl_last_show_v1', name);
@@ -156,7 +156,7 @@ export async function confirmNewShow() {
     });
   }
   setBars(newBars);
-  setShowConfig({ maxFlymen: 1, customDeads: {}, cues: [] });
+  setShowConfig({ maxFlymen: 1, customDeads: {}, barDefaults: {}, cues: [] });
   setActiveShowName(name);
   saveLocal('tbtl_last_show_v1', name);
   saveLocal('tbtl_showconfig_v1', showConfig);
