@@ -11,7 +11,7 @@ import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, 
 import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, updatePreshowDead, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
 
@@ -375,6 +375,7 @@ window.renderShowPage = renderShowPage;
 window.generatePreshowCue = generatePreshowCue;
 window.updatePreshowSpeed = updatePreshowSpeed;
 window.updatePreshowFlyperson = updatePreshowFlyperson;
+window.updatePreshowDead = updatePreshowDead;
 window.saveShowConfig = saveShowConfig;
 window.setMaxFlymen = setMaxFlymen;
 window.addCustomDead = addCustomDead;
