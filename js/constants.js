@@ -1,4 +1,11 @@
 export const FIREBASE_URL = 'https://tbtl-fly-calc-default-rtdb.firebaseio.com';
+
+export function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+export function escAttr(val) {
+  return esc(JSON.stringify(String(val)));
+}
 export const FULL = 12, HALF = 6;
 export const EXTENSIONS_WEIGHT = 12;
 export const IWB_WEIGHT = 48;    // 8 cradle bricks × 12 kg ÷ 2 (double purchase)
