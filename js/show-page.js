@@ -212,9 +212,18 @@ export function updateBarFlyperson(cueIdx, barIdx, fp) {
   saveShowConfig();
 }
 
+// ── Bar default dead ─────────────────────────────────────────
+export function setBarDefaultDead(barId, deadId) {
+  if (!requireEdit()) return;
+  if (!showConfig.barDefaults) showConfig.barDefaults = {};
+  showConfig.barDefaults[barId] = deadId || 'out';
+  saveShowConfig();
+  renderShowPage();
+}
+
 // ── Conflict detection ───────────────────────────────────────
 export function getBarStateBeforeCue(barId, cueIdx) {
-  let lastDead = null;
+  let lastDead = (showConfig.barDefaults || {})[barId] || null;
   for (let i = 0; i < cueIdx && i < (showConfig.cues||[]).length; i++) {
     const a = (showConfig.cues[i].bars||[]).find(cb => cb.barId === barId);
     if (a) lastDead = a.deadId;
@@ -421,10 +430,30 @@ export function renderShowPage() {
     </div>
   `;
 
-  // Bar Deads
-  const deadsBody = activeBars.length === 0
-    ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars loaded — add fixtures to bars first</div>'
-    : activeBars.map(bar => {
+  // Bar Deads — all bars except not-in-use
+  const deadsBars = bars.filter(b => !b.notInUse);
+  const barDefaults = showConfig.barDefaults || {};
+
+  function defaultDeadSelect(barId) {
+    const cur = barDefaults[barId] || 'out';
+    const customs = showConfig.customDeads[barId] || [];
+    const opts = [
+      { id: 'out',      label: 'Out' },
+      { id: 'show-out', label: 'Show Out' },
+      { id: 'max-out',  label: 'Max Out' },
+      { id: 'in',       label: 'In' },
+      ...customs.map(d => ({ id: d.id, label: d.name || (BAND_COLORS.find(c => c.id === d.bandColor) || {}).label || d.bandColor }))
+    ].map(o => `<option value="${o.id}" ${cur === o.id ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+    return `<select onchange="setBarDefaultDead(${barId},this.value)"
+      title="Default starting dead for this bar"
+      style="background:#0f172a;border:1px solid #334155;border-radius:5px;color:#94a3b8;padding:2px 6px;font-size:11px;outline:none;cursor:pointer">
+      ${opts}
+    </select>`;
+  }
+
+  const deadsBody = deadsBars.length === 0
+    ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars available</div>'
+    : deadsBars.map(bar => {
         const customs = showConfig.customDeads[bar.id] || [];
         const customBadges = customs.map(d => {
           const col = BAND_COLORS.find(c => c.id === d.bandColor) || { hex: '#888', label: '?' };
@@ -442,6 +471,7 @@ export function renderShowPage() {
         ).join('');
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #0f172a;flex-wrap:wrap">
           <span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:110px;flex-shrink:0">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
+          <span style="color:#475569;font-size:10px;flex-shrink:0">Default:</span>${defaultDeadSelect(bar.id)}
           <span style="background:#7f1d1d;color:#fee2e2;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Out</span>
           <span style="background:#dc2626;color:#fff;border:2px solid #fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Show Out</span>
           <span style="background:#dc2626;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Max Out</span>
