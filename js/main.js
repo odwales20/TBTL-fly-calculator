@@ -7,11 +7,11 @@ import { renderSummary, renderBar, esc } from './render-bars.js';
 import { renderLibraryPage, renderInventoryPage } from './render-library.js';
 import { renderShows } from './shows.js';
 import { renderShowPage, regeneratePreshowSilent, getDeadLabel, barTotalCwBricks } from './show-page.js';
-import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, toggleExtensions, selectIWB, toggleCable, toggleDNF, toggleConduit, updateBarName, updatePreview, switchMode, addFixture, removeFixture, updateQty, setBarPreshowDead, updateBarNote, updateTare, updateMiscBricks, pickLib, moveBarConfig } from './bar-actions.js';
+import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, toggleExtensions, selectIWB, toggleCable, toggleDNF, toggleConduit, updateBarName, updatePreview, switchMode, addFixture, removeFixture, updateQty, setBarPreshowDead, updateBarNote, updateTare, updateMiscBricks, pickLib, moveBarConfig, resetBarToDefault } from './bar-actions.js';
 import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig, resetBarToDefault } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
 
@@ -54,8 +54,18 @@ export function printCueSheet() {
 
   if (cues.length === 0) { alert('No cues to print.'); return; }
 
-  const rows = cues.map(cue => {
-    const isUncalled = !cue.isFollow && !cue.number && !cue.isPreshow;
+  const rows = [];
+  for (const cue of cues) {
+    // Section dividers → print as a section header row, not a cue
+    if (cue.isDivider) {
+      if (cue.dividerType === 'interval_start') {
+        rows.push(`<tr><td colspan="6" style="background:#fff8e1;border-left:4px solid #f59e0b;border-top:3px solid #f59e0b;padding:6px 10px;font-size:13px;font-weight:900;color:#b45309;text-transform:uppercase;letter-spacing:0.1em">⏸ Interval</td></tr>`);
+      } else if (cue.dividerType === 'act2_start') {
+        rows.push(`<tr><td colspan="6" style="background:#f0fdf4;border-left:4px solid #22c55e;border-top:3px solid #22c55e;padding:6px 10px;font-size:13px;font-weight:900;color:#15803d;text-transform:uppercase;letter-spacing:0.1em">▶ Act 2</td></tr>`);
+      }
+      continue;
+    }
+
     const typeLabel = cue.isNonFly ? '(Non-Fly)' : '(Fly)';
 
     // ── PRESHOW: compact single row, muted ─────────────────────────────────
@@ -65,11 +75,12 @@ export function printCueSheet() {
         const label = getDeadLabel(cb.barId, cb.deadId);
         return `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''} › ${label}`;
       }).join(', ');
-      return `<tr class="preshow-row">
+      rows.push(`<tr class="preshow-row">
         <td colspan="6" style="padding:3px 10px 3px 14px;font-size:11px;color:#888;font-style:italic;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0">
           <strong style="color:#b45309;font-style:normal">PRESHOW</strong>${preshowBars ? ' — ' + preshowBars : ''}
         </td>
-      </tr>`;
+      </tr>`);
+      continue;
     }
 
     const cueCell = cue.isFollow
@@ -80,12 +91,14 @@ export function printCueSheet() {
     const rowBg = cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
     const accentColor = cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af';
 
-    // Print-friendly dead badge (coloured for ease of use)
+    // Print-friendly dead badge
     const printDeadBadge = (barId, deadId) => {
       const label = getDeadLabel(barId, deadId);
       let bg, fg, border;
-      if (deadId === 'out') { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
-      else if (deadId === 'in') { bg = '#fff'; fg = '#ef4444'; border = '#ef4444'; }
+      if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+      else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
+      else if (deadId === 'max-out')  { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+      else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
       else {
         const customs = showConfig.customDeads[barId] || [];
         const dead = customs.find(d => d.id === deadId);
@@ -100,16 +113,18 @@ export function printCueSheet() {
       : '';
 
     if (!cue.bars || cue.bars.length === 0) {
-      return `<tr class="cue-first-row" style="background:${rowBg}">
+      rows.push(`<tr class="cue-first-row" style="background:${rowBg}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
-      </tr>${notesRow}`;
+      </tr>${notesRow}`);
+      continue;
     }
     if (cue.isNonFly) {
-      return `<tr class="cue-first-row" style="background:#f5f0ff">
+      rows.push(`<tr class="cue-first-row" style="background:#f5f0ff">
         <td style="border-left:4px solid #7c3aed;padding:9px 10px;font-size:15px" colspan="6">${cueCell}</td>
-      </tr>${notesRow}`;
+      </tr>${notesRow}`);
+      continue;
     }
-    return cue.bars.map((cb, bi) => {
+    rows.push(cue.bars.map((cb, bi) => {
       const bar = bars.find(b => b.id === cb.barId);
       const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
       const bricks = bar ? barTotalCwBricks(bar) : 0;
@@ -122,8 +137,8 @@ export function printCueSheet() {
         <td style="padding:9px 10px;font-size:14px">${esc(cb.speed)}</td>
         <td style="padding:9px 10px;font-size:14px">${cb.flyperson ? esc(cb.flyperson) : ''}${isHeavy ? ` <strong style="color:#b91c1c">&#9888; HEAVY (${bricks}b)</strong>` : ''}</td>
       </tr>`;
-    }).join('');
-  }).join('');
+    }).join(''));
+  }
 
   const html = `<!DOCTYPE html>
 <html>
@@ -156,7 +171,7 @@ export function printCueSheet() {
     <th style="width:9%">Speed</th>
     <th style="width:11%">Flyperson</th>
   </tr></thead>
-  <tbody>${rows}</tbody>
+  <tbody>${rows.join('')}</tbody>
 </table>
 <script>window.onload = function(){ window.print(); }; window.onafterprint = function(){ window.close(); };<\/script>
 </body>
@@ -350,6 +365,7 @@ window.updateTare = updateTare;
 window.updateMiscBricks = updateMiscBricks;
 window.pickLib = pickLib;
 window.moveBarConfig = moveBarConfig;
+window.resetBarToDefault = resetBarToDefault;
 window.startLibEdit = startLibEdit;
 window.cancelLibEdit = cancelLibEdit;
 window.saveLibEdit = saveLibEdit;
@@ -381,7 +397,6 @@ window.addInterval = addInterval;
 window.removeInterval = removeInterval;
 window.setBarDefaultDead = setBarDefaultDead;
 window.copyBarDeadConfig = copyBarDeadConfig;
-window.resetBarToDefault = resetBarToDefault;
 window.openNamesEditor = openNamesEditor;
 window.closeNamesEditor = closeNamesEditor;
 window.saveNamesEdit = saveNamesEdit;
