@@ -11,7 +11,7 @@ import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, 
 import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
 
@@ -376,6 +376,8 @@ window.moveCue = moveCue;
 window.deleteCue = deleteCue;
 window.addPosition = addPosition;
 window.removePosition = removePosition;
+window.addInterval = addInterval;
+window.removeInterval = removeInterval;
 window.openNamesEditor = openNamesEditor;
 window.closeNamesEditor = closeNamesEditor;
 window.saveNamesEdit = saveNamesEdit;

@@ -125,26 +125,69 @@ export function addCue() {
   if (!requireEdit()) return;
   if (!showConfig.cues) showConfig.cues = [];
   const num = nextCueNumber();
-  showConfig.cues.push({ id: String(Date.now()), number: num, name: '', isFollow: false, overrideMax: false, bars: [] });
+  const newCue = { id: String(Date.now()), number: num, name: '', isFollow: false, overrideMax: false, bars: [] };
+  const intDivIdx = showConfig.cues.findIndex(c => c.isDivider && c.dividerType === 'interval_start');
+  if (intDivIdx >= 0) showConfig.cues.splice(intDivIdx, 0, newCue);
+  else showConfig.cues.push(newCue);
   logHistory(`Added cue ${num}`);
   saveShowConfig();
   renderShowPage();
 }
 
-export function insertCue(afterRegIdx, isNonFly = false) {
+export function nextIntervalCueNumber() {
+  const cues = showConfig.cues || [];
+  const intIdx  = cues.findIndex(c => c.isDivider && c.dividerType === 'interval_start');
+  const act2Idx = cues.findIndex(c => c.isDivider && c.dividerType === 'act2_start');
+  if (intIdx < 0) return 'Int 1';
+  const end = act2Idx >= 0 ? act2Idx : cues.length;
+  const nums = cues.slice(intIdx + 1, end)
+    .filter(c => !c.isDivider && c.number && /^Int \d+$/.test(c.number.trim()))
+    .map(c => parseInt(c.number.trim().slice(4)));
+  return `Int ${nums.length > 0 ? Math.max(...nums) + 1 : 1}`;
+}
+
+export function addInterval() {
+  if (!requireEdit()) return;
+  if ((showConfig.cues || []).some(c => c.isDivider && c.dividerType === 'interval_start')) {
+    alert('An interval section already exists in this show.');
+    return;
+  }
+  if (!showConfig.cues) showConfig.cues = [];
+  const ts = Date.now();
+  showConfig.cues.push(
+    { id: `div_int_${ts}`,      isDivider: true, dividerType: 'interval_start' },
+    { id: `div_act2_${ts + 1}`, isDivider: true, dividerType: 'act2_start' }
+  );
+  logHistory('Added interval section');
+  saveShowConfig();
+  renderShowPage();
+}
+
+export function removeInterval() {
+  if (!requireEdit()) return;
+  const cues = showConfig.cues || [];
+  const intIdx = cues.findIndex(c => c.isDivider && c.dividerType === 'interval_start');
+  if (intIdx < 0) return;
+  const hasCues = cues.some((c, i) => !c.isDivider && !c.isPreshow && i > intIdx);
+  if (hasCues && !confirm('Remove interval? Interval and Act 2 cues will merge back into Act 1.')) return;
+  showConfig.cues = cues.filter(c => !(c.isDivider && (c.dividerType === 'interval_start' || c.dividerType === 'act2_start')));
+  logHistory('Removed interval section');
+  saveShowConfig();
+  renderShowPage();
+}
+
+export function insertCue(afterActualIdx, isNonFly = false, section = 'act1') {
   if (!requireEdit()) return;
   if (!showConfig.cues) showConfig.cues = [];
-  const regularCues = showConfig.cues.filter(c => !c.isPreshow);
+  const num = section === 'interval' ? nextIntervalCueNumber() : nextCueNumber();
   const newCue = isNonFly
-    ? { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: true, isFollow: false, notes: '', bars: [] }
-    : { id: String(Date.now()), number: nextCueNumber(), name: '', isNonFly: false, isFollow: false, overrideMax: false, bars: [] };
-  if (afterRegIdx < 0 || regularCues.length === 0) {
+    ? { id: String(Date.now()), number: num, name: '', isNonFly: true, isFollow: false, notes: '', bars: [] }
+    : { id: String(Date.now()), number: num, name: '', isNonFly: false, isFollow: false, overrideMax: false, bars: [] };
+  if (afterActualIdx < 0) {
     const preshowIdx = showConfig.cues.findIndex(c => c.isPreshow);
     showConfig.cues.splice(preshowIdx < 0 ? 0 : preshowIdx + 1, 0, newCue);
   } else {
-    const afterCue = regularCues[afterRegIdx];
-    const actualIdx = showConfig.cues.indexOf(afterCue);
-    showConfig.cues.splice(actualIdx + 1, 0, newCue);
+    showConfig.cues.splice(afterActualIdx + 1, 0, newCue);
   }
   saveShowConfig();
   renderShowPage();
@@ -200,6 +243,7 @@ export function moveCue(idx, dir) {
   if (!requireEdit()) return;
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= showConfig.cues.length) return;
+  if (showConfig.cues[newIdx]?.isDivider || showConfig.cues[newIdx]?.isPreshow) return;
   [showConfig.cues[idx], showConfig.cues[newIdx]] = [showConfig.cues[newIdx], showConfig.cues[idx]];
   saveShowConfig();
   renderShowPage();
@@ -334,7 +378,7 @@ export function renderShowPage() {
   const container = document.getElementById('show-container');
   if (!container) return;
 
-  const activeBars = bars.filter(b => b.id === 1 || (b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null);
+  const activeBars = bars.filter(b => b.id === 1 || (b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || (b.name && b.name !== `Bar ${b.id}`));
   const cues = showConfig.cues || [];
   const preshow = cues.find(c => c.isPreshow);
   const regularCues = cues.filter(c => !c.isPreshow);
@@ -444,20 +488,39 @@ export function renderShowPage() {
 
   const oneFP = showConfig.maxFlymen === 1;
 
-  function renderInsertRow(afterRegIdx) {
+  // ── Section splitting ────────────────────────────────────────
+  const intervalDividerIdx = cues.findIndex(c => c.isDivider && c.dividerType === 'interval_start');
+  const act2DividerIdx     = cues.findIndex(c => c.isDivider && c.dividerType === 'act2_start');
+  const hasInterval = intervalDividerIdx >= 0;
+
+  const act1Cues     = cues.filter((c, i) => !c.isPreshow && !c.isDivider && (intervalDividerIdx < 0 || i < intervalDividerIdx));
+  const intervalCues = hasInterval ? cues.filter((c, i) => !c.isDivider && i > intervalDividerIdx && (act2DividerIdx < 0 || i < act2DividerIdx)) : [];
+  const act2Cues     = act2DividerIdx >= 0 ? cues.filter((c, i) => !c.isDivider && i > act2DividerIdx) : [];
+  const allRegCues   = [...act1Cues, ...intervalCues, ...act2Cues];
+
+  const activeBarOptions = activeBars
+    .filter(b => !b.dnf && !b.notInUse)
+    .map(b => `<option value="${b.id}">Bar ${b.id}${b.name !== `Bar ${b.id}` ? ` · ${esc(b.name)}` : ''}</option>`)
+    .join('');
+
+  const oneFP = showConfig.maxFlymen === 1;
+
+  function renderInsertRow(afterActualIdx, section) {
+    const s = section || 'act1';
     return `<div style="display:flex;justify-content:center;gap:4px;padding:2px 0;opacity:0.3;transition:opacity 0.15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
-      <button onclick="insertCue(${afterRegIdx})" style="background:#0f172a;color:#475569;border:1px dashed #334155;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Fly Cue</button>
-      <button onclick="insertCue(${afterRegIdx},true)" style="background:#0f172a;color:#475569;border:1px dashed #7c3aed44;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Non-Fly</button>
+      <button onclick="insertCue(${afterActualIdx},false,'${s}')" style="background:#0f172a;color:#475569;border:1px dashed #334155;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Fly Cue</button>
+      <button onclick="insertCue(${afterActualIdx},true,'${s}')" style="background:#0f172a;color:#475569;border:1px dashed #7c3aed44;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">+ Non-Fly</button>
     </div>`;
   }
 
-  const cueCardsList = regularCues.map((cue, regIdx) => {
-    const idx = cues.indexOf(cue);
+  function renderCueCard(cue, sectionCues, si) {
+    const idx     = cues.indexOf(cue);
+    const allIdx  = allRegCues.indexOf(cue);
     const numVal  = cue.number || '';
     const nameVal = cue.name   || '';
     const moveBtns = `<div style="display:flex;gap:4px;margin-left:auto;flex-shrink:0">
-      ${regIdx > 0              ? `<button onclick="moveCue(${idx},-1)" style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↑</button>` : ''}
-      ${regIdx < regularCues.length-1 ? `<button onclick="moveCue(${idx},1)"  style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↓</button>` : ''}
+      ${si > 0                         ? `<button onclick="moveCue(${idx},-1)" style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↑</button>` : ''}
+      ${si < sectionCues.length - 1    ? `<button onclick="moveCue(${idx},1)"  style="background:#0f172a;color:#64748b;border:1px solid #334155;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">↓</button>` : ''}
       <button onclick="deleteCue(${idx})" style="background:none;color:#ef4444;border:1px solid #ef444433;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">✕</button>
     </div>`;
 
@@ -561,9 +624,42 @@ export function renderShowPage() {
         ${addBarForm}
       </div>`;
     }
+    return card;
+  }
 
-    return `${regIdx === 0 ? renderInsertRow(-1) : ''}${card}${renderInsertRow(regIdx)}`;
-  }).join('\n');
+  function renderSection(sectionCues, section, startAfterIdx) {
+    if (sectionCues.length === 0) return renderInsertRow(startAfterIdx, section);
+    return sectionCues.map((cue, si) => {
+      const idx = cues.indexOf(cue);
+      const firstRow = si === 0 ? renderInsertRow(startAfterIdx, section) : '';
+      return `${firstRow}${renderCueCard(cue, sectionCues, si)}${renderInsertRow(idx, section)}`;
+    }).join('\n');
+  }
+
+  // Act 1 starts after preshow (or at beginning)
+  const preshowIdx   = cues.findIndex(c => c.isPreshow);
+  const act1StartIdx = preshowIdx >= 0 ? preshowIdx : -1;
+
+  const act1Html = renderSection(act1Cues, 'act1', act1StartIdx);
+  const intervalHtml = hasInterval ? renderSection(intervalCues, 'interval', intervalDividerIdx) : '';
+  const act2Html     = hasInterval ? renderSection(act2Cues, 'act2', act2DividerIdx) : '';
+
+  const intervalHeader = hasInterval
+    ? `<div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px;border-top:2px solid #f59e0b33;padding-top:10px;flex-wrap:wrap">
+        <span style="color:#f59e0b;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">⏸ Interval</span>
+        <button onclick="removeInterval()" style="background:none;color:#475569;border:1px solid #33415544;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer">Remove</button>
+      </div>`
+    : '';
+
+  const act2Header = hasInterval
+    ? `<div style="margin:14px 0 6px;border-top:2px solid #22c55e33;padding-top:10px">
+        <span style="color:#22c55e;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">▶ Act 2</span>
+      </div>`
+    : '';
+
+  const addIntervalBtn = !hasInterval
+    ? `<button onclick="addInterval()" style="background:#1c1507;color:#f59e0b;border:1px solid #f59e0b44;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:700">⏸ + Interval</button>`
+    : '';
 
   container.innerHTML = `
     ${settingsHtml}
@@ -573,15 +669,21 @@ export function renderShowPage() {
       ${deadsBody}
     </div>
     <div class="show-section">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span class="show-section-title" style="margin:0">Cue Sheet</span>
         <button onclick="addCue()" class="btn-add" style="padding:5px 12px;font-size:12px">+ New Cue</button>
+        ${addIntervalBtn}
         ${cues.length > 0 ? `<button onclick="printCueSheet()" class="btn-print" style="padding:5px 12px;font-size:12px">🖨 Print Cue Sheet</button>` : ''}
       </div>
       ${preshowCard}
-      ${regularCues.length === 0
-        ? `<div style="text-align:center;padding:12px 0">${renderInsertRow(-1)}</div>`
-        : cueCardsList}
+      <div style="margin:8px 0 4px;border-top:2px solid #3b82f633;padding-top:8px">
+        <span style="color:#60a5fa;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">Act 1</span>
+      </div>
+      ${act1Html}
+      ${intervalHeader}
+      ${intervalHtml}
+      ${act2Header}
+      ${act2Html}
     </div>
   `;
 }
