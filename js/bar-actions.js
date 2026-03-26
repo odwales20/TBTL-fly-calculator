@@ -1,6 +1,6 @@
 import { FULL, HALF, EXTENSIONS_WEIGHT, IWB_WEIGHT, CABLE_WEIGHT, IWB_COLOURS } from './constants.js';
 import {
-  bars, library, inputMode, expanded,
+  bars, library, inputMode, expanded, showConfig, defaultBars,
   setBars, setExpanded
 } from './state.js';
 import { saveLocal } from './storage.js';
@@ -292,6 +292,26 @@ export function resetAll() {
   setExpanded({});
   import('./main.js').then(({ render }) => render());
   import('./shows.js').then(({ renderShows }) => renderShows());
+}
+
+export function resetBarToDefault(barId) {
+  if (!requireEdit()) return;
+  if (!confirm(`Reset Bar ${barId} to default and mark as Not In Use?\nThis will clear all fixtures and remove it from all cues.`)) return;
+  const idx = bars.findIndex(b => b.id === barId);
+  if (idx < 0) return;
+  const def = defaultBars().find(b => b.id === barId);
+  if (def) bars[idx] = { ...def, notInUse: true };
+  delete (showConfig.customDeads || {})[barId];
+  delete (showConfig.barDefaults || {})[barId];
+  showConfig.cues = (showConfig.cues || []).map(c => ({
+    ...c,
+    bars: (c.bars || []).filter(cb => cb.barId !== barId)
+  }));
+  logHistory(`Reset Bar ${barId} to default (Not In Use)`);
+  saveLocal('tbtl_bars_v3', bars);
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  scheduleSave();
+  import('./main.js').then(({ render }) => render());
 }
 
 export function moveBarConfig(fromBarId) {
