@@ -12,13 +12,13 @@ export function barTotalCwBricks(bar) {
 
 // ── Preshow generation ──────────────────────────────────────
 export function regeneratePreshowSilent() {
-  const loaded = bars.filter(b => !b.notInUse && !b.dnf && ((b.fixtures||[]).length > 0 || b.extensions || b.iwb !== null || b.cable));
+  const allActive = bars.filter(b => !b.notInUse && !b.dnf);
   if (!showConfig.cues) showConfig.cues = [];
   const existingIdx = showConfig.cues.findIndex(c => c.isPreshow);
   const existingPreshow = existingIdx >= 0 ? showConfig.cues[existingIdx] : null;
   const dutyStage = flypositions[0] || 'Duty Stage';
 
-  const preshowBars = loaded.map(bar => {
+  const preshowBars = allActive.map(bar => {
     let deadId;
     if (bar.preshowDead === 'in') { deadId = 'in'; }
     else if (bar.preshowDead === 'out') { deadId = 'out'; }
@@ -27,7 +27,7 @@ export function regeneratePreshowSilent() {
       deadId = hasLS ? 'in' : 'out';
     }
     const existing = existingPreshow?.bars.find(cb => cb.barId === bar.id);
-    return { barId: bar.id, deadId, speed: existing?.speed || 'Medium', flyperson: dutyStage };
+    return { barId: bar.id, deadId: existing?.deadId || deadId, speed: existing?.speed || 'Medium', flyperson: dutyStage };
   });
 
   const preshowCue = { id: 'preshow', isPreshow: true, number: '', name: 'Preshow', isFollow: false, overrideMax: false, bars: preshowBars };
@@ -53,6 +53,13 @@ export function updatePreshowFlyperson(barId, fp) {
   if (!preshow) return;
   const a = preshow.bars.find(cb => cb.barId === barId);
   if (a) { a.flyperson = fp; saveShowConfig(); }
+}
+
+export function updatePreshowDead(barId, deadId) {
+  const preshow = showConfig.cues.find(c => c.isPreshow);
+  if (!preshow) return;
+  const a = preshow.bars.find(cb => cb.barId === barId);
+  if (a) { a.deadId = deadId; saveShowConfig(); renderShowPage(); }
 }
 
 // ── Dead helpers ────────────────────────────────────────────
@@ -529,14 +536,23 @@ export function renderShowPage() {
     ? (() => {
         const barCells = (preshow.bars || []).map(cb => {
           const bar = bars.find(b => b.id === cb.barId);
-          const label = getDeadLabel(cb.barId, cb.deadId);
-          const ds = getDeadStyle(cb.barId, cb.deadId);
-          const overrideNote = bar?.preshowDead ? '✎' : '';
           const isHeavy = bar && barTotalCwBricks(bar) >= 30;
+          const customs = (showConfig.customDeads || {})[cb.barId] || [];
+          const deadOptions = [
+            { id: 'out',      label: 'Out' },
+            { id: 'show-out', label: 'Show Out' },
+            { id: 'max-out',  label: 'Max Out' },
+            { id: 'in',       label: 'In' },
+            ...customs.map(d => ({ id: d.id, label: d.name || (BAND_COLORS.find(c => c.id === d.bandColor) || { label: d.bandColor }).label }))
+          ];
+          const ds = getDeadStyle(cb.barId, cb.deadId);
           return `<div style="display:flex;align-items:center;gap:3px;background:#0f172a;border-radius:5px;padding:3px 6px;flex-shrink:0">
-            <span style="color:#64748b;font-size:10px;flex-shrink:0">B${cb.barId}${overrideNote}</span>
-            <span style="${ds};border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700">${esc(label)}</span>
+            <span style="color:#64748b;font-size:10px;flex-shrink:0">B${cb.barId}</span>
             ${isHeavy ? `<span style="color:#fca5a5;font-size:9px;font-weight:800">⚠H</span>` : ''}
+            <select onchange="updatePreshowDead(${cb.barId},this.value)"
+              style="${ds};border-radius:3px;padding:1px 3px;font-size:10px;font-weight:700;outline:none;cursor:pointer">
+              ${deadOptions.map(o => `<option value="${o.id}" ${o.id===cb.deadId?'selected':''}>${esc(o.label)}</option>`).join('')}
+            </select>
             <select onchange="updatePreshowSpeed(${cb.barId},this.value)"
               style="background:#0f172a;border:none;border-bottom:1px solid #334155;color:#fbbf24;font-size:10px;padding:0 2px;outline:none;max-width:52px">
               ${['V.Slow','Slow','Medium','Fast','Max'].map(s => `<option ${s===cb.speed?'selected':''}>${s}</option>`).join('')}
@@ -548,7 +564,7 @@ export function renderShowPage() {
           <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1c1507;flex-wrap:wrap">
             <span style="background:#92400e;color:#fde68a;border-radius:4px;padding:1px 10px;font-size:11px;font-weight:800;flex-shrink:0">PRESHOW</span>
             <span style="color:#fbbf24;font-size:11px;flex-shrink:0">${dutyStage}</span>
-            <span style="color:#475569;font-size:10px;flex:1">✎ = position set on Bars page · speeds editable</span>
+            <span style="color:#475569;font-size:10px;flex:1">deads &amp; speeds editable · ↺ Regen rebuilds from bar defaults</span>
             <button onclick="generatePreshowCue()" style="background:#92400e;color:#fde68a;border:1px solid #f59e0b44;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-weight:700">↺ Regen</button>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px">
@@ -558,7 +574,8 @@ export function renderShowPage() {
       })()
     : `<div style="background:#1c1507;border:2px dashed #f59e0b44;border-radius:8px;padding:8px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="background:#92400e;color:#fde68a;border-radius:4px;padding:1px 10px;font-size:11px;font-weight:800">PRESHOW</span>
-        <span style="color:#f59e0b;font-size:12px">No loaded bars — add fixtures to generate preshow</span>
+        <span style="color:#f59e0b;font-size:12px">No active bars — mark bars as In Use to generate preshow</span>
+        <button onclick="generatePreshowCue()" style="background:#92400e;color:#fde68a;border:1px solid #f59e0b44;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-weight:700">↺ Generate</button>
       </div>`;
 
   // ── Section splitting ────────────────────────────────────────
