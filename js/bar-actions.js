@@ -294,6 +294,25 @@ export function resetAll() {
   import('./shows.js').then(({ renderShows }) => renderShows());
 }
 
+export function moveBarConfig(fromBarId) {
+  if (!requireEdit()) return;
+  const input = prompt(`Move all config from Bar ${fromBarId} to which bar number?`);
+  if (!input) return;
+  const toBarId = parseInt(input.trim());
+  if (isNaN(toBarId) || toBarId === fromBarId) return;
+  const src = bars.find(b => b.id === fromBarId);
+  const dst = bars.find(b => b.id === toBarId);
+  if (!src) return;
+  if (!dst) { alert(`Bar ${toBarId} not found.`); return; }
+  const { id: _sid, ...srcData } = src;
+  Object.assign(dst, srcData, { id: toBarId });
+  Object.assign(src, { name: `Bar ${fromBarId}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: true, liveFly: false });
+  logHistory(`Moved Bar ${fromBarId} config to Bar ${toBarId}`);
+  saveLocal('tbtl_bars_v3', bars);
+  scheduleSave();
+  import('./main.js').then(({ render }) => render());
+}
+
 export function switchMode(barId, mode) {
   inputMode[barId] = mode;
   const section = document.getElementById(`add_section_${barId}`);
