@@ -220,7 +220,8 @@ export function printCueSheet(highlightPerson = null) {
 </head>
 <body>
 <h1>TBTL Fly Cue Sheet</h1>
-<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}${highlightPerson ? ` &nbsp;&bull;&nbsp; <strong>For: ${esc(highlightPerson)}</strong>` : ''}</div>
+${highlightPerson ? `<div style="background:#1e293b;color:#fbbf24;border-radius:6px;padding:8px 16px;margin:6px 0 4px;font-size:22px;font-weight:900;letter-spacing:0.5px;display:inline-block">FOR: ${esc(highlightPerson.toUpperCase())}</div><br>` : ''}
+<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
 <table>
   <thead><tr>
     <th style="width:45%">Cue</th>
