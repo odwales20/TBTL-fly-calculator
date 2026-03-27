@@ -297,7 +297,7 @@ export function renderBar(bar) {
             <button class="mode-btn ${sel==='in' ? 'active' : ''}"        onclick="setBarPreshowDead(${bar.id},'in')">In</button>
             <button class="mode-btn ${sel==='out' ? 'active' : ''}"       onclick="setBarPreshowDead(${bar.id},'out')">Out</button>
             <button class="mode-btn ${sel==='show-out' ? 'active' : ''}"  onclick="setBarPreshowDead(${bar.id},'show-out')">Show Out</button>
-            <button class="mode-btn ${sel==='max-out' ? 'active' : ''}"   onclick="setBarPreshowDead(${bar.id},'max-out')">Max Out</button>
+            <button class="mode-btn ${sel==='grid-out' ? 'active' : ''}"   onclick="setBarPreshowDead(${bar.id},'grid-out')">Grid Out</button>
           </div>
         </div>
       </div>`;

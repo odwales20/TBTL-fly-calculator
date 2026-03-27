@@ -66,7 +66,7 @@ export function updatePreshowDead(barId, deadId) {
 export function getDeadLabel(barId, deadId) {
   if (deadId === 'out')      return 'Out';
   if (deadId === 'show-out') return 'Show Out';
-  if (deadId === 'max-out')  return 'Max Out';
+  if (deadId === 'grid-out')  return 'Grid Out';
   if (deadId === 'in')       return 'In';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);
@@ -77,12 +77,12 @@ export function getDeadLabel(barId, deadId) {
 export function getDeadStyle(barId, deadId) {
   if (deadId === 'out')      return 'background:#7f1d1d;color:#fee2e2;border:2px solid #111';
   if (deadId === 'show-out') return 'background:#dc2626;color:#fff;border:2px solid #fff';
-  if (deadId === 'max-out')  return 'background:#dc2626;color:#111;border:2px solid #111';
+  if (deadId === 'grid-out')  return 'background:#dc2626;color:#111;border:2px solid #111';
   if (deadId === 'in')       return 'background:#f1f5f9;color:#111;border:2px solid #ef4444';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);
   const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
-  return `background:#f1f5f9;color:#111;border:2px solid ${hex}`;
+  return `background:#f1f5f9;color:${hex};border:2px solid ${hex}`;
 }
 
 // ── Show config mutations ────────────────────────────────────
@@ -350,7 +350,7 @@ export function updateCueBarDeadOptions(cueIdx) {
     '<option value="">— Dead —</option>',
     `<option value="out">Out (black on dark red)${mark('out')}</option>`,
     `<option value="show-out">Show Out (white band on red)${mark('show-out')}</option>`,
-    `<option value="max-out">Max Out (black band on red)${mark('max-out')}</option>`,
+    `<option value="grid-out">Grid Out (black band on red)${mark('grid-out')}</option>`,
     `<option value="in">In (red band on white)${mark('in')}</option>`,
     ...customs.map(d => {
       const col = BAND_COLORS.find(c => c.id === d.bandColor) || { label: d.bandColor };
@@ -479,6 +479,13 @@ export function renderShowPage() {
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:14px;font-weight:700;width:70px;text-align:center">
         <span style="color:#475569;font-size:11px">Can be overridden per cue</span>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;flex-wrap:wrap;margin-bottom:12px">
+        <label style="white-space:nowrap">Print QR code URL:</label>
+        <input type="text" value="${esc(showConfig.printQrUrl||'')}" placeholder="https://odwales20.github.io/TBTL-fly-calculator/"
+          onblur="showConfig.printQrUrl=this.value.trim();saveShowConfig()"
+          style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:12px;flex:1;min-width:260px;outline:none">
+        <span style="color:#475569;font-size:11px">Leave blank for default app URL</span>
+      </div>
       <div style="border-top:1px solid #334155;padding-top:10px">
         <div class="show-section-title" style="margin-bottom:6px">Flyperson Positions <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0">— shared across all shows</span></div>
         <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">${positionPills}</div>
@@ -503,7 +510,7 @@ export function renderShowPage() {
     const opts = [
       { id: 'out',      label: 'Out' },
       { id: 'show-out', label: 'Show Out' },
-      { id: 'max-out',  label: 'Max Out' },
+      { id: 'grid-out',  label: 'Grid Out' },
       { id: 'in',       label: 'In' },
       ...customs.map(d => ({ id: d.id, label: d.name || (BAND_COLORS.find(c => c.id === d.bandColor) || {}).label || d.bandColor }))
     ].map(o => `<option value="${o.id}" ${cur === o.id ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
@@ -537,7 +544,7 @@ export function renderShowPage() {
           <span style="color:#475569;font-size:10px;flex-shrink:0">Default:</span>${defaultDeadSelect(bar.id)}
           <span style="background:#7f1d1d;color:#fee2e2;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Out</span>
           <span style="background:#dc2626;color:#fff;border:2px solid #fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Show Out</span>
-          <span style="background:#dc2626;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Max Out</span>
+          <span style="background:#dc2626;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Grid Out</span>
           <span style="background:#f1f5f9;color:#111;border:2px solid #ef4444;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">In</span>
           ${customBadges}
           ${colorButtons ? `<span style="color:#475569;font-size:10px">+</span>${colorButtons}` : ''}
@@ -558,7 +565,7 @@ export function renderShowPage() {
           const deadOptions = [
             { id: 'out',      label: 'Out' },
             { id: 'show-out', label: 'Show Out' },
-            { id: 'max-out',  label: 'Max Out' },
+            { id: 'grid-out',  label: 'Grid Out' },
             { id: 'in',       label: 'In' },
             ...customs.map(d => ({ id: d.id, label: d.name || (BAND_COLORS.find(c => c.id === d.bandColor) || { label: d.bandColor }).label }))
           ];
