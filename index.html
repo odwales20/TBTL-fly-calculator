@@ -106,6 +106,13 @@
         <span>Keep selected bars from current rig</span>
       </label>
     </div>
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <button onclick="document.querySelectorAll('#new-show-bar-list input[type=checkbox]').forEach(c=>c.checked=true)"
+        style="background:none;border:none;color:#3b82f6;font-size:11px;cursor:pointer;padding:0;text-decoration:underline">Select all</button>
+      <span style="color:#334155;font-size:11px">·</span>
+      <button onclick="document.querySelectorAll('#new-show-bar-list input[type=checkbox]').forEach(c=>c.checked=false)"
+        style="background:none;border:none;color:#475569;font-size:11px;cursor:pointer;padding:0;text-decoration:underline">Deselect all</button>
+    </div>
     <div class="bar-keep-list" id="new-show-bar-list"></div>
     <div class="modal-actions">
       <button onclick="closeNewShowModal()"
