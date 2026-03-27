@@ -479,6 +479,13 @@ export function renderShowPage() {
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:14px;font-weight:700;width:70px;text-align:center">
         <span style="color:#475569;font-size:11px">Can be overridden per cue</span>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;flex-wrap:wrap;margin-bottom:12px">
+        <label style="white-space:nowrap">Print QR code URL:</label>
+        <input type="text" value="${esc(showConfig.printQrUrl||'')}" placeholder="https://odwales20.github.io/TBTL-fly-calculator/"
+          onblur="showConfig.printQrUrl=this.value.trim();saveShowConfig()"
+          style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:12px;flex:1;min-width:260px;outline:none">
+        <span style="color:#475569;font-size:11px">Leave blank for default app URL</span>
+      </div>
       <div style="border-top:1px solid #334155;padding-top:10px">
         <div class="show-section-title" style="margin-bottom:6px">Flyperson Positions <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0">— shared across all shows</span></div>
         <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">${positionPills}</div>

@@ -227,7 +227,7 @@ export function printCueSheet(highlightPerson = null) {
     <div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
   </div>
   <div style="flex-shrink:0;text-align:center">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https%3A%2F%2Fodwales20.github.io%2FTBTL-fly-calculator%2F" width="80" height="80" style="display:block;border:2px solid #e5e7eb;border-radius:4px">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(showConfig.printQrUrl || 'https://odwales20.github.io/TBTL-fly-calculator/')}" width="80" height="80" style="display:block;border:2px solid #e5e7eb;border-radius:4px">
     <div style="font-size:9px;color:#888;margin-top:3px">TBTL Fly Calc</div>
   </div>
 </div>
