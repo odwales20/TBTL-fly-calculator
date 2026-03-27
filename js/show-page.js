@@ -486,6 +486,13 @@ export function renderShowPage() {
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:12px;flex:1;min-width:260px;outline:none">
         <span style="color:#475569;font-size:11px">Leave blank for default app URL</span>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;flex-wrap:wrap;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" ${showConfig.hideShowTab ? 'checked' : ''} onchange="toggleHideShowTab()" style="accent-color:#ef4444">
+          <span>Hide Show tab for this show</span>
+        </label>
+        <span style="color:#475569;font-size:11px">Hides the Show tab when cue management isn't needed — click the faded tab to re-enable</span>
+      </div>
       <div style="border-top:1px solid #334155;padding-top:10px">
         <div class="show-section-title" style="margin-bottom:6px">Flyperson Positions <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0">— shared across all shows</span></div>
         <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:8px">${positionPills}</div>

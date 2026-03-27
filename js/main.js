@@ -46,6 +46,28 @@ export function render() {
     String(b.id).includes(q) || b.name.toLowerCase().includes(q)
   );
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
+  applyShowTabVisibility();
+}
+
+export function applyShowTabVisibility() {
+  const tab = document.getElementById('tab-show');
+  if (!tab) return;
+  if (showConfig.hideShowTab) {
+    tab.style.opacity = '0.25';
+    tab.title = 'Show tab hidden for this show — click to re-enable';
+    tab.onclick = () => { showConfig.hideShowTab = false; saveShowConfig(); applyShowTabVisibility(); };
+  } else {
+    tab.style.opacity = '';
+    tab.title = '';
+    tab.onclick = () => switchPage('show');
+  }
+}
+
+export function toggleHideShowTab() {
+  showConfig.hideShowTab = !showConfig.hideShowTab;
+  if (showConfig.hideShowTab && currentPage === 'show') switchPage('bars');
+  saveShowConfig();
+  applyShowTabVisibility();
 }
 export function showPrintDialog() {
   const cues = showConfig.cues || [];
@@ -414,6 +436,7 @@ export async function saveNamesEdit() {
 // ── Expose all functions called from inline HTML handlers ────
 window.render = render;
 window.switchPage = switchPage;
+window.toggleHideShowTab = toggleHideShowTab;
 window.setCurrentUser = setCurrentUser;
 window.toggleEditMode = toggleEditMode;
 window.openManageUsersModal = openManageUsersModal;
