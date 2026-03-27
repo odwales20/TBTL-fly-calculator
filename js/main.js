@@ -135,7 +135,7 @@ export function printCueSheet() {
         <td style="padding:9px 10px;font-size:15px;font-weight:700;white-space:nowrap">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
         <td style="padding:9px 10px;font-size:14px;color:#444">${esc(barName)}</td>
         <td style="padding:9px 10px">${printDeadBadge(cb.barId, cb.deadId)}</td>
-        <td style="padding:9px 10px;font-size:14px">${esc(cb.speed)}</td>
+        <td style="padding:9px 10px;font-size:14px">${cue.time ? `<strong style="color:#1e40af">&#9201; ${esc(cue.time)}</strong>` : esc(cb.speed)}</td>
         <td style="padding:9px 10px;font-size:14px">${cb.flyperson ? esc(cb.flyperson) : ''}${isHeavy ? ` <strong style="color:#b91c1c">&#9888; HEAVY (${bricks}b)</strong>` : ''}</td>
       </tr>`;
     }).join(''));

@@ -350,13 +350,13 @@ export function confirmAddBarToCue(cueIdx) {
   const deadSel = document.getElementById(`cue_dead_sel_${cueIdx}`);
   const speedSel = document.getElementById(`cue_speed_sel_${cueIdx}`);
   const fpSel   = document.getElementById(`cue_fp_sel_${cueIdx}`);
-  const barId  = parseInt(barSel?.value);
-  const deadId = deadSel?.value;
-  const speed  = speedSel?.value;
-  const flyperson = fpSel?.value || '';
-  if (!barId || !deadId || !speed) return;
   const cue = showConfig.cues[cueIdx];
   if (!cue) return;
+  const barId  = parseInt(barSel?.value);
+  const deadId = deadSel?.value;
+  const speed  = speedSel?.value || (cue.time ? 'Medium' : '');
+  const flyperson = fpSel?.value || '';
+  if (!barId || !deadId || !speed) return;
 
   // DNF block — cannot add to any cue
   const barObj = bars.find(b => b.id === barId);
@@ -650,7 +650,9 @@ export function renderShowPage() {
           <span style="color:#cbd5e1;font-size:12px;font-weight:700;min-width:46px;flex-shrink:0">Bar ${cb.barId}</span>
           <span style="color:#e2e8f0;font-size:12px;font-weight:600;min-width:50px;flex:1">${barName}</span>
           <span style="${ds};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(label)}</span>
-          <span style="background:#0f172a;color:#fbbf24;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(cb.speed)}</span>
+          ${cue.time
+            ? `<span style="background:#0f172a;color:#93c5fd;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">⏱ ${esc(cue.time)}</span>`
+            : `<span style="background:#0f172a;color:#fbbf24;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${esc(cb.speed)}</span>`}
           ${bar1Warn}${heavyBadge}${fpSelect}
           <button onclick="removeBarFromCue(${idx},${bi})" style="background:none;color:#ef4444;border:none;cursor:pointer;font-size:14px;padding:1px 4px;margin-left:auto">✕</button>
         </div>`;
@@ -667,11 +669,13 @@ export function renderShowPage() {
               style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 8px;font-size:12px;outline:none">
               <option value="">— select bar first —</option>
             </select>
-            <select id="cue_speed_sel_${idx}"
+            ${cue.time
+              ? `<span style="background:#0f172a;color:#93c5fd;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid #1e40af">⏱ ${esc(cue.time)}</span>`
+              : `<select id="cue_speed_sel_${idx}"
               style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 8px;font-size:12px;outline:none">
               <option value="">— Speed —</option>
               <option>V.Slow</option><option>Slow</option><option>Medium</option><option>Fast</option><option>Max</option>
-            </select>
+            </select>`}
             ${(!oneFP || cue.overrideMax) ? `<select id="cue_fp_sel_${idx}"
               style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#60a5fa;padding:5px 8px;font-size:12px;outline:none">
               ${fpOptions('')}
