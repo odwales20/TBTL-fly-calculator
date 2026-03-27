@@ -47,7 +47,50 @@ export function render() {
   );
   document.getElementById('bars-container').innerHTML = filtered.map(renderBar).join('');
 }
-export function printCueSheet() {
+export function showPrintDialog() {
+  const cues = showConfig.cues || [];
+  if (cues.length === 0) { alert('No cues to print.'); return; }
+
+  // Collect all unique people assigned across all cues
+  const people = new Set();
+  for (const cue of cues) {
+    if (cue.isDivider || cue.isPreshow) continue;
+    if (cue.flyperson) people.add(cue.flyperson);
+    for (const cb of (cue.bars || [])) {
+      if (cb.flyperson) people.add(cb.flyperson);
+    }
+  }
+  const peopleArr = [...people].sort();
+
+  const existing = document.getElementById('print-dialog-overlay');
+  if (existing) existing.remove();
+
+  const btnStyle = 'padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid transparent;min-width:130px;text-align:center';
+  const personBtns = peopleArr.map(p =>
+    `<button onclick="printCueSheet(${JSON.stringify(p)});document.getElementById('print-dialog-overlay').remove()"
+      style="${btnStyle};background:#1e3a5f;color:#60a5fa;border-color:#3b82f644">${esc(p)}</button>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'print-dialog-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#00000088;z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#1e293b;border:2px solid #334155;border-radius:14px;padding:28px 32px;max-width:500px;width:90%;box-shadow:0 20px 60px #000a">
+      <h2 style="color:#f1f5f9;font-size:18px;font-weight:800;margin-bottom:6px">🖨 Print Cue Sheet</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:20px">Select a person to highlight their cues, or print for everyone.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+        <button onclick="printCueSheet(null);document.getElementById('print-dialog-overlay').remove()"
+          style="${btnStyle};background:#0f172a;color:#94a3b8;border-color:#334155">Everyone</button>
+        ${personBtns}
+      </div>
+      <button onclick="document.getElementById('print-dialog-overlay').remove()"
+        style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;padding:0">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+export function printCueSheet(highlightPerson = null) {
   const showName = activeShowName || 'Untitled Show';
   const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const cues = showConfig.cues || [];
@@ -67,6 +110,15 @@ export function printCueSheet() {
     }
 
     const typeLabel = cue.isNonFly ? '(Non-Fly)' : '(Fly)';
+
+    // Highlight logic
+    const cueIsForPerson = highlightPerson && (
+      cue.flyperson === highlightPerson ||
+      (cue.bars || []).some(cb => cb.flyperson === highlightPerson)
+    );
+    const hlBg      = cueIsForPerson ? '#fff8e1' : '';
+    const hlAccent  = cueIsForPerson ? '#f59e0b' : null;
+    const hlDimmed  = highlightPerson && !cueIsForPerson;
 
     // ── PRESHOW: compact single row, muted ─────────────────────────────────
     if (cue.isPreshow) {
@@ -88,8 +140,9 @@ export function printCueSheet() {
       : cue.number
         ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`
         : `<em>${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`;
-    const rowBg = cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
-    const accentColor = cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af';
+    const rowBg = hlBg || (cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '');
+    const accentColor = hlAccent || (cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af');
+    const dimStyle = hlDimmed ? 'opacity:0.45' : '';
 
     // Print-friendly dead badge
     const printDeadBadge = (barId, deadId) => {
@@ -109,18 +162,19 @@ export function printCueSheet() {
     };
 
     const notesRow = cue.isNonFly && cue.notes
-      ? `<tr style="background:#f5f0ff"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
+      ? `<tr style="background:${rowBg || '#f5f0ff'};${dimStyle}"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
       : '';
 
     if (!cue.bars || cue.bars.length === 0) {
-      rows.push(`<tr class="cue-first-row" style="background:${rowBg}">
+      rows.push(`<tr class="cue-first-row" style="background:${rowBg};${dimStyle}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
       </tr>${notesRow}`);
       continue;
     }
     if (cue.isNonFly) {
-      rows.push(`<tr class="cue-first-row" style="background:#f5f0ff">
-        <td style="border-left:4px solid #7c3aed;padding:9px 10px;font-size:15px" colspan="6">${cueCell}</td>
+      const personTag = cue.flyperson ? ` &nbsp;<span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">${esc(cue.flyperson)}</span>` : '';
+      rows.push(`<tr class="cue-first-row" style="background:${rowBg || '#f5f0ff'};${dimStyle}">
+        <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}${personTag}</td>
       </tr>${notesRow}`);
       continue;
     }
@@ -129,7 +183,9 @@ export function printCueSheet() {
       const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
       const bricks = bar ? barTotalCwBricks(bar) : 0;
       const isHeavy = bricks >= 30;
-      return `<tr class="${bi === 0 ? 'cue-first-row' : 'cue-cont-row'}" style="background:${bi === 0 ? rowBg : ''};border-top:${bi === 0 ? '3px solid #94a3b8' : 'none'}">
+      const barHl = highlightPerson && cb.flyperson === highlightPerson ? '#fff8e1' : (bi === 0 ? rowBg : '');
+      const barDim = highlightPerson && cb.flyperson !== highlightPerson && !cueIsForPerson ? 'opacity:0.45' : (hlDimmed ? dimStyle : '');
+      return `<tr class="${bi === 0 ? 'cue-first-row' : 'cue-cont-row'}" style="background:${barHl};border-top:${bi === 0 ? '3px solid #94a3b8' : 'none'};${barDim}">
         <td style="border-left:4px solid ${bi === 0 ? accentColor : 'transparent'};padding:9px 10px;font-size:15px;font-weight:700">${bi === 0 ? cueCell : ''}</td>
         <td style="padding:9px 10px;font-size:15px;font-weight:700;white-space:nowrap">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
         <td style="padding:9px 10px;font-size:14px;color:#444">${esc(barName)}</td>
@@ -161,7 +217,7 @@ export function printCueSheet() {
 </head>
 <body>
 <h1>TBTL Fly Cue Sheet</h1>
-<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
+<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}${highlightPerson ? ` &nbsp;&bull;&nbsp; <strong>For: ${esc(highlightPerson)}</strong>` : ''}</div>
 <table>
   <thead><tr>
     <th style="width:45%">Cue</th>
@@ -404,6 +460,7 @@ window.openNamesEditor = openNamesEditor;
 window.closeNamesEditor = closeNamesEditor;
 window.saveNamesEdit = saveNamesEdit;
 window.printCueSheet = printCueSheet;
+window.showPrintDialog = showPrintDialog;
 window.printSchedule = printSchedule;
 // showConfig must be a live getter so inline oninput handlers always get the current object
 Object.defineProperty(window, 'showConfig', { get() { return State.showConfig; }, configurable: true });

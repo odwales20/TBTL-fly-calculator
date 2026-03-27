@@ -646,6 +646,10 @@ export function renderShowPage() {
           <input type="text" value="${esc(cue.notes||'')}" placeholder="Notes / instructions…"
             oninput="showConfig.cues[${idx}].notes=this.value||''" onblur="saveShowConfig()"
             style="background:transparent;border:none;border-bottom:1px dashed #334155;color:#94a3b8;padding:2px 4px;font-size:11px;flex:2;min-width:100px;outline:none">
+          <select onchange="showConfig.cues[${idx}].flyperson=this.value;saveShowConfig()"
+            style="background:#0f172a;color:#60a5fa;border:1px solid #3b82f644;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;outline:none">
+            ${fpOptions(cue.flyperson||'')}
+          </select>
           ${moveBtns}
         </div>
       </div>`;
@@ -791,7 +795,7 @@ export function renderShowPage() {
         <span class="show-section-title" style="margin:0">Cue Sheet</span>
         <button onclick="addCue()" class="btn-add" style="padding:5px 12px;font-size:12px">+ New Cue</button>
         ${addIntervalBtn}
-        ${cues.length > 0 ? `<button onclick="printCueSheet()" class="btn-print" style="padding:5px 12px;font-size:12px">🖨 Print Cue Sheet</button>` : ''}
+        ${cues.length > 0 ? `<button onclick="showPrintDialog()" class="btn-print" style="padding:5px 12px;font-size:12px">🖨 Print Cue Sheet</button>` : ''}
       </div>
       ${preshowCard}
       <div style="margin:8px 0 4px;border-top:2px solid #3b82f633;padding-top:8px">
