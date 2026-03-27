@@ -19,15 +19,20 @@ export function regeneratePreshowSilent() {
   const dutyStage = flypositions[0] || 'Duty Stage';
 
   const preshowBars = allActive.map(bar => {
+    // barDefaults is the source of truth; fall back to preshowDead / fixture logic
+    const barDefault = (showConfig.barDefaults || {})[bar.id];
     let deadId;
-    if (bar.preshowDead === 'in') { deadId = 'in'; }
+    if (barDefault) { deadId = barDefault; }
+    else if (bar.preshowDead === 'in') { deadId = 'in'; }
     else if (bar.preshowDead === 'out') { deadId = 'out'; }
     else {
       const hasLS = (bar.fixtures||[]).some(f => f.category === 'Lighting' || f.category === 'Sound');
       deadId = hasLS ? 'in' : 'out';
     }
     const existing = existingPreshow?.bars.find(cb => cb.barId === bar.id);
-    return { barId: bar.id, deadId: existing?.deadId || deadId, speed: existing?.speed || 'Medium', flyperson: dutyStage };
+    // Preserve manually-edited preshow dead only when barDefaults has no opinion
+    const finalDead = barDefault ? deadId : (existing?.deadId || deadId);
+    return { barId: bar.id, deadId: finalDead, speed: existing?.speed || 'Medium', flyperson: dutyStage };
   });
 
   const preshowCue = { id: 'preshow', isPreshow: true, number: '', name: 'Preshow', isFollow: false, overrideMax: false, bars: preshowBars };
@@ -278,6 +283,12 @@ export function setBarDefaultDead(barId, deadId) {
   if (!requireEdit()) return;
   if (!showConfig.barDefaults) showConfig.barDefaults = {};
   showConfig.barDefaults[barId] = deadId || 'out';
+  // Keep preshow in sync immediately
+  const preshow = showConfig.cues?.find(c => c.isPreshow);
+  if (preshow) {
+    const entry = preshow.bars.find(cb => cb.barId === barId);
+    if (entry) entry.deadId = deadId || 'out';
+  }
   saveShowConfig();
   renderShowPage();
 }
