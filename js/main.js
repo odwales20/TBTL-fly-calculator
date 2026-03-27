@@ -67,8 +67,7 @@ export function showPrintDialog() {
 
   const btnStyle = 'padding:10px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid transparent;min-width:130px;text-align:center';
   const personBtns = peopleArr.map(p =>
-    `<button onclick="printCueSheet(${JSON.stringify(p)});document.getElementById('print-dialog-overlay').remove()"
-      style="${btnStyle};background:#1e3a5f;color:#60a5fa;border-color:#3b82f644">${esc(p)}</button>`
+    `<button data-person="${esc(p)}" style="${btnStyle};background:#1e3a5f;color:#60a5fa;border-color:#3b82f644">${esc(p)}</button>`
   ).join('');
 
   const overlay = document.createElement('div');
@@ -79,15 +78,17 @@ export function showPrintDialog() {
       <h2 style="color:#f1f5f9;font-size:18px;font-weight:800;margin-bottom:6px">🖨 Print Cue Sheet</h2>
       <p style="color:#94a3b8;font-size:13px;margin-bottom:20px">Select a person to highlight their cues, or print for everyone.</p>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
-        <button onclick="printCueSheet(null);document.getElementById('print-dialog-overlay').remove()"
-          style="${btnStyle};background:#0f172a;color:#94a3b8;border-color:#334155">Everyone</button>
+        <button data-person="" style="${btnStyle};background:#0f172a;color:#94a3b8;border-color:#334155">Everyone</button>
         ${personBtns}
       </div>
-      <button onclick="document.getElementById('print-dialog-overlay').remove()"
-        style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;padding:0">Cancel</button>
+      <button data-cancel style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;padding:0">Cancel</button>
     </div>`;
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay || e.target.hasAttribute('data-cancel')) { overlay.remove(); return; }
+    const btn = e.target.closest('[data-person]');
+    if (btn) { printCueSheet(btn.dataset.person || null); overlay.remove(); }
+  });
 }
 
 export function printCueSheet(highlightPerson = null) {
