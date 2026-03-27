@@ -11,7 +11,7 @@ import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, 
 import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, updatePreshowDead, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, updatePreshowDead, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, updateCueBarSpeed, updateCueBarTime, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
 
@@ -83,12 +83,11 @@ export function printCueSheet() {
       continue;
     }
 
-    const timeTag = (!cue.isNonFly && cue.time) ? ` <span style="font-size:0.85em;font-weight:700;color:#1e40af">&#9201; ${esc(cue.time)}</span>` : '';
     const cueCell = cue.isFollow
       ? `<span style="font-weight:700;color:#5b21b6">&#9654; FOLLOW${cue.name ? ' &mdash; ' + esc(cue.name) : ''} <span style="font-size:0.85em;font-weight:600">(${typeLabel.slice(1,-1)})</span></span>`
       : cue.number
-        ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''}${timeTag} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`
-        : `<em>${esc(cue.name || 'uncalled')}</em>${timeTag} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`;
+        ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`
+        : `<em>${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`;
     const rowBg = cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '';
     const accentColor = cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af';
 
@@ -135,7 +134,7 @@ export function printCueSheet() {
         <td style="padding:9px 10px;font-size:15px;font-weight:700;white-space:nowrap">Bar ${cb.barId}${cb.barId === 1 ? ' &#9888;' : ''}</td>
         <td style="padding:9px 10px;font-size:14px;color:#444">${esc(barName)}</td>
         <td style="padding:9px 10px">${printDeadBadge(cb.barId, cb.deadId)}</td>
-        <td style="padding:9px 10px;font-size:14px">${cue.time ? `<strong style="color:#1e40af">&#9201; ${esc(cue.time)}</strong>` : esc(cb.speed)}</td>
+        <td style="padding:9px 10px;font-size:14px">${cb.time ? `<strong style="color:#1e40af">&#9201; ${esc(cb.time)}</strong>` : esc(cb.speed)}</td>
         <td style="padding:9px 10px;font-size:14px">${cb.flyperson ? esc(cb.flyperson) : ''}${isHeavy ? ` <strong style="color:#b91c1c">&#9888; HEAVY (${bricks}b)</strong>` : ''}</td>
       </tr>`;
     }).join(''));
@@ -387,6 +386,8 @@ window.insertCue = insertCue;
 window.toggleCueFollow = toggleCueFollow;
 window.toggleCueOverrideMax = toggleCueOverrideMax;
 window.updateBarFlyperson = updateBarFlyperson;
+window.updateCueBarSpeed = updateCueBarSpeed;
+window.updateCueBarTime = updateCueBarTime;
 window.toggleAddBarToCue = toggleAddBarToCue;
 window.updateCueBarDeadOptions = updateCueBarDeadOptions;
 window.confirmAddBarToCue = confirmAddBarToCue;
