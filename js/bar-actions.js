@@ -324,6 +324,8 @@ export function moveBarConfig(fromBarId) {
   const dst = bars.find(b => b.id === toBarId);
   if (!src) return;
   if (!dst) { alert(`Bar ${toBarId} not found.`); return; }
+  const dstHasStuff = !dst.notInUse && ((dst.fixtures || []).length > 0 || dst.extensions || dst.iwb !== null || dst.cable || dst.miscBricks || (dst.name && dst.name !== `Bar ${toBarId}`));
+  if (dstHasStuff && !confirm(`⚠️ ARE YOU SURE ABOUT THAT?\nBar ${toBarId} already has stuff on it.\n\nMoving will overwrite everything on Bar ${toBarId}.`)) return;
   const { id: _sid, ...srcData } = src;
   Object.assign(dst, srcData, { id: toBarId });
   Object.assign(src, { name: `Bar ${fromBarId}`, barWeight: 18, fixtures: [], extensions: false, iwb: null, cable: false, miscBricks: 0, dnf: false, note: '', preshowDead: null, notInUse: true, liveFly: false });
