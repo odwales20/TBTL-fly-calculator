@@ -64,10 +64,10 @@ export function updatePreshowDead(barId, deadId) {
 
 // ── Dead helpers ────────────────────────────────────────────
 export function getDeadLabel(barId, deadId) {
-  if (deadId === 'out')      return 'Out';
-  if (deadId === 'show-out') return 'Show Out';
-  if (deadId === 'grid-out')  return 'Grid Out';
-  if (deadId === 'in')       return 'In';
+  if (deadId === 'out')                          return 'Out';
+  if (deadId === 'show-out')                     return 'Show Out';
+  if (deadId === 'grid-out' || deadId === 'max-out') return 'Grid Out';
+  if (deadId === 'in')                           return 'In';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);
   if (!dead) return '—';
@@ -76,8 +76,8 @@ export function getDeadLabel(barId, deadId) {
 
 export function getDeadStyle(barId, deadId) {
   if (deadId === 'out')      return 'background:#7f1d1d;color:#fee2e2;border:2px solid #111';
-  if (deadId === 'show-out') return 'background:#dc2626;color:#fff;border:2px solid #fff';
-  if (deadId === 'grid-out')  return 'background:#dc2626;color:#111;border:2px solid #111';
+  if (deadId === 'show-out')                         return 'background:#dc2626;color:#fff;border:2px solid #fff';
+  if (deadId === 'grid-out' || deadId === 'max-out') return 'background:#dc2626;color:#111;border:2px solid #111';
   if (deadId === 'in')       return 'background:#f1f5f9;color:#111;border:2px solid #ef4444';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);

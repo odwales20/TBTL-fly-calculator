@@ -154,7 +154,7 @@ export function printCueSheet(highlightPerson = null) {
       let bg, fg, border;
       if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
       else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
-      else if (deadId === 'grid-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+      else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
       else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
       else {
         const customs = showConfig.customDeads[barId] || [];
