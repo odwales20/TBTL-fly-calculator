@@ -154,13 +154,13 @@ export function printCueSheet(highlightPerson = null) {
       let bg, fg, border;
       if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
       else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
-      else if (deadId === 'max-out')  { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+      else if (deadId === 'grid-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
       else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
       else {
         const customs = showConfig.customDeads[barId] || [];
         const dead = customs.find(d => d.id === deadId);
         const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
-        bg = '#f8f8f8'; fg = '#111'; border = hex;
+        bg = '#f8f8f8'; fg = hex; border = hex;
       }
       return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
     };
