@@ -696,7 +696,12 @@ export function renderShowPage() {
              style="background:#0f172a;border:1px solid #1e40af;border-radius:5px;color:#bfdbfe;padding:3px 8px;font-size:13px;font-weight:800;width:56px;text-align:center;outline:none">
            <input type="text" value="${esc(nameVal)}" placeholder="Cue name…"
              oninput="showConfig.cues[${idx}].name=this.value||''" onblur="saveShowConfig()"
-             style="background:transparent;border:none;border-bottom:1px solid #334155;color:#f1f5f9;padding:2px 4px;font-size:14px;font-weight:700;flex:1;min-width:80px;outline:none">`;
+             style="background:transparent;border:none;border-bottom:1px solid #334155;color:#f1f5f9;padding:2px 4px;font-size:14px;font-weight:700;flex:1;min-width:80px;outline:none">
+           <span style="color:#475569;font-size:10px;flex-shrink:0">⏱</span>
+           <input type="text" value="${esc(cue.time||'')}" placeholder="time…"
+             oninput="showConfig.cues[${idx}].time=this.value||''" onblur="saveShowConfig()"
+             title="Cue time / duration (e.g. 1:30 or 45s)"
+             style="background:transparent;border:none;border-bottom:1px dashed #1e40af;color:#93c5fd;padding:2px 4px;font-size:12px;font-weight:600;width:52px;outline:none">`;
 
       card = `<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden">
         <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:#0f172a;flex-wrap:wrap">
