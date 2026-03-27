@@ -135,11 +135,14 @@ export function printCueSheet(highlightPerson = null) {
       continue;
     }
 
+    const goesWithTag = cue.goesWith
+      ? ` &nbsp;<span style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">goes with ${esc(cue.goesWith)}</span>`
+      : '';
     const cueCell = cue.isFollow
-      ? `<span style="font-weight:700;color:#5b21b6">&#9654; FOLLOW${cue.name ? ' &mdash; ' + esc(cue.name) : ''} <span style="font-size:0.85em;font-weight:600">(${typeLabel.slice(1,-1)})</span></span>`
+      ? `<span style="font-weight:700;color:#5b21b6">&#9654; FOLLOW${cue.name ? ' &mdash; ' + esc(cue.name) : ''} <span style="font-size:0.85em;font-weight:600">(${typeLabel.slice(1,-1)})</span></span>${goesWithTag}`
       : cue.number
-        ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`
-        : `<em>${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>`;
+        ? `<strong>Cue ${esc(cue.number)}</strong>${cue.name ? ` &mdash; ${esc(cue.name)}` : ''} <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>${goesWithTag}`
+        : `<em>${esc(cue.name || 'uncalled')}</em> <span style="font-size:0.85em;font-weight:600;color:#555">${typeLabel}</span>${goesWithTag}`;
     const rowBg = hlBg || (cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '');
     const accentColor = hlAccent || (cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af');
     const dimStyle = hlDimmed ? 'opacity:0.45' : '';
