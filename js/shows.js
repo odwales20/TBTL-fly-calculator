@@ -27,10 +27,21 @@ export async function saveShow(name, skipConfirm = false) {
   if (!name) return;
   const isOverwrite = !!shows[name];
   if (isOverwrite && !skipConfirm && name !== activeShowName && !confirm(`A show named "${name}" already exists. Overwrite it?`)) return;
+
+  // Snapshot the current saved version as a backup before overwriting
+  const prev = shows[name];
+  const prevBackups = prev?.backups || [];
+  let newBackups = prevBackups;
+  if (prev?.savedAt) {
+    const backup = { savedAt: prev.savedAt, bars: prev.bars, showConfig: prev.showConfig };
+    newBackups = [backup, ...prevBackups].slice(0, 10);
+  }
+
   shows[name] = {
     bars: JSON.parse(JSON.stringify(bars)),
     showConfig: JSON.parse(JSON.stringify(showConfig)),
-    savedAt: new Date().toISOString()
+    savedAt: new Date().toISOString(),
+    backups: newBackups
   };
   saveLocal('tbtl_shows_v1', shows);
   saveLocal('tbtl_last_show_v1', name);
@@ -66,6 +77,33 @@ export function loadShow(name) {
   setActiveShowName(name);
   setExpanded({});
   logHistory(`Loaded show "${name}"`);
+  scheduleSave();
+  import('./main.js').then(({ render }) => render());
+  renderShows();
+}
+
+export function toggleBackupsList(idx) {
+  const el = document.getElementById(`show-backups-${idx}`);
+  if (!el) return;
+  // Close all others first
+  document.querySelectorAll('[id^="show-backups-"]').forEach(e => { if (e !== el) e.style.display = 'none'; });
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+export function loadBackup(name, backupIdx) {
+  const show = shows[name];
+  const backup = show?.backups?.[backupIdx];
+  if (!backup) return;
+  const dateStr = new Date(backup.savedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (!confirm(`Restore backup from ${dateStr}?\n\nLoads into the live rig. Hit Override/Save to make it permanent.`)) return;
+  setBars(backup.bars.map(normaliseBar));
+  setShowConfig({ maxFlymen: 1, customDeads: {}, barDefaults: {}, cues: [], ...backup.showConfig });
+  applyAutoFlags();
+  saveLocal('tbtl_showconfig_v1', showConfig);
+  saveLocal('tbtl_last_show_v1', name);
+  setActiveShowName(name);
+  setExpanded({});
+  logHistory(`Restored backup from ${dateStr} for "${name}"`);
   scheduleSave();
   import('./main.js').then(({ render }) => render());
   renderShows();
@@ -203,20 +241,40 @@ export function renderShows() {
 
   const listHtml = showNames.length === 0
     ? '<div class="shows-empty">No shows saved yet — save the current rig to get started</div>'
-    : showNames.map(name => {
+    : showNames.map((name, idx) => {
         const show = shows[name];
         const savedAt = show.savedAt ? new Date(show.savedAt).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
         const loadedCount = show.bars ? show.bars.filter(b => (b.fixtures||[]).reduce((s,f) => s + f.weight*f.qty, 0) + (b.extensions ? 12 : 0) > 0).length : 0;
         const isActive = activeShowName === name;
+        const backups = show.backups || [];
+        const backupDropdown = backups.length > 0
+          ? `<div id="show-backups-${idx}" style="display:none;background:#0a0f1a;border:1px solid #1e3a5f;border-radius:6px;padding:4px 0;margin:2px 0 4px;grid-column:1/-1">
+              <div style="padding:4px 10px 3px;font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Backups — click to restore</div>
+              ${backups.map((b, bi) => {
+                const bDate = new Date(b.savedAt).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+                return `<div onclick="loadBackup(${escAttr(name)},${bi})"
+                  style="padding:5px 10px;font-size:12px;color:#93c5fd;cursor:pointer;border-top:1px solid #1e293b"
+                  onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">${bDate}</div>`;
+              }).join('')}
+            </div>`
+          : '';
+        const backupBtn = backups.length > 0
+          ? `<button onclick="toggleBackupsList(${idx})" title="${backups.length} backup${backups.length!==1?'s':''}"
+              style="background:#1e3a5f;color:#60a5fa;border:1px solid #3b82f644;border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;line-height:1">▾</button>`
+          : '';
         return `
           <div class="show-item">
             <span class="show-item-name">${esc(name)}${isActive ? ' <span style="color:#22c55e;font-size:10px;font-weight:700">● active</span>' : ''}</span>
             <span class="show-item-meta">${loadedCount} bar${loadedCount !== 1 ? 's' : ''} loaded · ${savedAt}</span>
-            <button class="btn-show-load" onclick="loadShow(${escAttr(name)})">Load</button>
+            <div style="display:flex;gap:4px;align-items:center">
+              <button class="btn-show-load" onclick="loadShow(${escAttr(name)})">Load</button>
+              ${backupBtn}
+            </div>
             <button class="btn-lib-edit" onclick="openNamesEditor(${escAttr(name)})">Edit Names</button>
             <button class="btn-show-override" onclick="overrideShow(${escAttr(name)})">Override</button>
             <button class="btn-show-del" onclick="deleteShow(${escAttr(name)})">Delete</button>
           </div>
+          ${backupDropdown}
         `;
       }).join('');
 

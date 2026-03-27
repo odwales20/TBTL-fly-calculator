@@ -19,15 +19,20 @@ export function regeneratePreshowSilent() {
   const dutyStage = flypositions[0] || 'Duty Stage';
 
   const preshowBars = allActive.map(bar => {
+    // barDefaults is the source of truth; fall back to preshowDead / fixture logic
+    const barDefault = (showConfig.barDefaults || {})[bar.id];
     let deadId;
-    if (bar.preshowDead === 'in') { deadId = 'in'; }
+    if (barDefault) { deadId = barDefault; }
+    else if (bar.preshowDead === 'in') { deadId = 'in'; }
     else if (bar.preshowDead === 'out') { deadId = 'out'; }
     else {
       const hasLS = (bar.fixtures||[]).some(f => f.category === 'Lighting' || f.category === 'Sound');
       deadId = hasLS ? 'in' : 'out';
     }
     const existing = existingPreshow?.bars.find(cb => cb.barId === bar.id);
-    return { barId: bar.id, deadId: existing?.deadId || deadId, speed: existing?.speed || 'Medium', flyperson: dutyStage };
+    // Preserve manually-edited preshow dead only when barDefaults has no opinion
+    const finalDead = barDefault ? deadId : (existing?.deadId || deadId);
+    return { barId: bar.id, deadId: finalDead, speed: existing?.speed || 'Medium', flyperson: dutyStage };
   });
 
   const preshowCue = { id: 'preshow', isPreshow: true, number: '', name: 'Preshow', isFollow: false, overrideMax: false, bars: preshowBars };
@@ -278,6 +283,12 @@ export function setBarDefaultDead(barId, deadId) {
   if (!requireEdit()) return;
   if (!showConfig.barDefaults) showConfig.barDefaults = {};
   showConfig.barDefaults[barId] = deadId || 'out';
+  // Keep preshow in sync immediately
+  const preshow = showConfig.cues?.find(c => c.isPreshow);
+  if (preshow) {
+    const entry = preshow.bars.find(cb => cb.barId === barId);
+    if (entry) entry.deadId = deadId || 'out';
+  }
   saveShowConfig();
   renderShowPage();
 }
@@ -531,13 +542,27 @@ export function renderShowPage() {
   const deadsBody = deadsBars.length === 0
     ? '<div style="color:#475569;font-size:12px;font-style:italic">No bars available</div>'
     : deadsBars.map(bar => {
+        const curDefault = barDefaults[bar.id] || 'out';
         const customs = showConfig.customDeads[bar.id] || [];
+
+        function clickBadge(deadId, label, baseStyle) {
+          const isCur = curDefault === deadId;
+          const ring = isCur ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #3b82f6' : '';
+          const tick = isCur ? '✓ ' : '';
+          return `<span onclick="setBarDefaultDead(${bar.id},'${deadId}')" title="${isCur ? 'Current default' : 'Click to set as default'}"
+            style="${baseStyle};border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer${ring}">${tick}${esc(label)}</span>`;
+        }
+
         const customBadges = customs.map(d => {
           const col = BAND_COLORS.find(c => c.id === d.bandColor) || { hex: '#888', label: '?' };
-          return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:#111;border:2px solid ${col.hex};border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;margin-right:4px">
-            <span style="width:10px;height:10px;border-radius:50%;background:${col.hex};flex-shrink:0;display:inline-block" title="${esc(col.label)}" aria-label="${esc(col.label)}"></span>
+          const isCur = curDefault === d.id;
+          const ring = isCur ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #3b82f6' : '';
+          const tick = isCur ? '✓ ' : '';
+          return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;color:${col.hex};border:2px solid ${col.hex};border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700${ring}">
+            <span onclick="setBarDefaultDead(${bar.id},'${d.id}')" title="${isCur ? 'Current default' : 'Click to set as default'}"
+              style="cursor:pointer;flex-shrink:0;font-size:10px;min-width:10px">${tick || '○'}</span>
             <input value="${esc(d.name||col.label)}" onblur="renameCustomDead(${bar.id},'${d.id}',this.value)"
-              style="background:transparent;border:none;border-bottom:1px dashed #94a3b8;color:#111;font-size:11px;font-weight:700;width:80px;outline:none;padding:0">
+              style="background:transparent;border:none;border-bottom:1px dashed #94a3b8;color:inherit;font-size:11px;font-weight:700;width:70px;outline:none;padding:0">
             <button onclick="removeCustomDead(${bar.id},'${d.id}')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;padding:0;line-height:1">&times;</button>
           </span>`;
         }).join('');
@@ -548,11 +573,11 @@ export function renderShowPage() {
         ).join('');
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #0f172a;flex-wrap:wrap">
           <span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:110px;flex-shrink:0">BAR ${bar.id}${bar.name !== `Bar ${bar.id}` ? ` · ${esc(bar.name)}` : ''}</span>
-          <span style="color:#475569;font-size:10px;flex-shrink:0">Default:</span>${defaultDeadSelect(bar.id)}
-          <span style="background:#7f1d1d;color:#fee2e2;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Out</span>
-          <span style="background:#dc2626;color:#fff;border:2px solid #fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Show Out</span>
-          <span style="background:#dc2626;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">Grid Out</span>
-          <span style="background:#f1f5f9;color:#111;border:2px solid #ef4444;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">In</span>
+          <span style="color:#475569;font-size:10px;flex-shrink:0">Default:</span>
+          ${clickBadge('out','Out','background:#7f1d1d;color:#fee2e2;border:2px solid #111')}
+          ${clickBadge('show-out','Show Out','background:#dc2626;color:#fff;border:2px solid #fff')}
+          ${clickBadge('grid-out','Grid Out','background:#dc2626;color:#111;border:2px solid #111')}
+          ${clickBadge('in','In','background:#f1f5f9;color:#111;border:2px solid #ef4444')}
           ${customBadges}
           ${colorButtons ? `<span style="color:#475569;font-size:10px">+</span>${colorButtons}` : ''}
           <button onclick="copyBarDeadConfig(${bar.id})" title="Copy this bar's dead config to another bar"
