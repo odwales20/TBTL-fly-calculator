@@ -169,16 +169,16 @@ export function printCueSheet(highlightPerson = null) {
       ? `<tr style="background:${rowBg || '#f5f0ff'};${dimStyle}"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
       : '';
 
-    if (!cue.bars || cue.bars.length === 0) {
-      rows.push(`<tr class="cue-first-row" style="background:${rowBg};${dimStyle}">
-        <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
-      </tr>${notesRow}`);
-      continue;
-    }
     if (cue.isNonFly) {
       const personTag = cue.flyperson ? ` &nbsp;<span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">${esc(cue.flyperson)}</span>` : '';
       rows.push(`<tr class="cue-first-row" style="background:${rowBg || '#f5f0ff'};${dimStyle}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}${personTag}</td>
+      </tr>${notesRow}`);
+      continue;
+    }
+    if (!cue.bars || cue.bars.length === 0) {
+      rows.push(`<tr class="cue-first-row" style="background:${rowBg};${dimStyle}">
+        <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
       </tr>${notesRow}`);
       continue;
     }
