@@ -220,9 +220,17 @@ export function printCueSheet(highlightPerson = null) {
 </style>
 </head>
 <body>
-<h1>TBTL Fly Cue Sheet</h1>
-${highlightPerson ? `<div style="background:#1e293b;color:#fbbf24;border-radius:6px;padding:8px 16px;margin:6px 0 4px;font-size:22px;font-weight:900;letter-spacing:0.5px;display:inline-block">FOR: ${esc(highlightPerson.toUpperCase())}</div><br>` : ''}
-<div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+  <div style="flex:1">
+    <h1>TBTL Fly Cue Sheet</h1>
+    ${highlightPerson ? `<div style="background:#1e293b;color:#fbbf24;border-radius:6px;padding:8px 16px;margin:6px 0 4px;font-size:22px;font-weight:900;letter-spacing:0.5px;display:inline-block">FOR: ${esc(highlightPerson.toUpperCase())}</div><br>` : ''}
+    <div class="meta">${esc(showName)} &nbsp;&bull;&nbsp; Max flypersons: ${showConfig.maxFlymen} &nbsp;&bull;&nbsp; Printed ${dateStr}</div>
+  </div>
+  <div style="flex-shrink:0;text-align:center">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https%3A%2F%2Fodwales20.github.io%2FTBTL-fly-calculator%2F" width="80" height="80" style="display:block;border:2px solid #e5e7eb;border-radius:4px">
+    <div style="font-size:9px;color:#888;margin-top:3px">TBTL Fly Calc</div>
+  </div>
+</div>
 <table>
   <thead><tr>
     <th style="width:45%">Cue</th>
