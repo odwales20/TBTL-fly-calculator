@@ -64,10 +64,10 @@ export function updatePreshowDead(barId, deadId) {
 
 // ── Dead helpers ────────────────────────────────────────────
 export function getDeadLabel(barId, deadId) {
-  if (deadId === 'out')      return 'Out';
-  if (deadId === 'show-out') return 'Show Out';
-  if (deadId === 'grid-out')  return 'Grid Out';
-  if (deadId === 'in')       return 'In';
+  if (deadId === 'out')                          return 'Out';
+  if (deadId === 'show-out')                     return 'Show Out';
+  if (deadId === 'grid-out' || deadId === 'max-out') return 'Grid Out';
+  if (deadId === 'in')                           return 'In';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);
   if (!dead) return '—';
@@ -76,8 +76,8 @@ export function getDeadLabel(barId, deadId) {
 
 export function getDeadStyle(barId, deadId) {
   if (deadId === 'out')      return 'background:#7f1d1d;color:#fee2e2;border:2px solid #111';
-  if (deadId === 'show-out') return 'background:#dc2626;color:#fff;border:2px solid #fff';
-  if (deadId === 'grid-out')  return 'background:#dc2626;color:#111;border:2px solid #111';
+  if (deadId === 'show-out')                         return 'background:#dc2626;color:#fff;border:2px solid #fff';
+  if (deadId === 'grid-out' || deadId === 'max-out') return 'background:#dc2626;color:#111;border:2px solid #111';
   if (deadId === 'in')       return 'background:#f1f5f9;color:#111;border:2px solid #ef4444';
   const customs = showConfig.customDeads[barId] || [];
   const dead = customs.find(d => d.id === deadId);
@@ -485,6 +485,13 @@ export function renderShowPage() {
           onblur="showConfig.printQrUrl=this.value.trim();saveShowConfig()"
           style="background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f1f5f9;padding:6px 10px;font-size:12px;flex:1;min-width:260px;outline:none">
         <span style="color:#475569;font-size:11px">Leave blank for default app URL</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;flex-wrap:wrap;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" ${showConfig.hideShowTab ? 'checked' : ''} onchange="toggleHideShowTab()" style="accent-color:#ef4444">
+          <span>Hide Show tab for this show</span>
+        </label>
+        <span style="color:#475569;font-size:11px">Hides the Show tab when cue management isn't needed — click the faded tab to re-enable</span>
       </div>
       <div style="border-top:1px solid #334155;padding-top:10px">
         <div class="show-section-title" style="margin-bottom:6px">Flyperson Positions <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0">— shared across all shows</span></div>
