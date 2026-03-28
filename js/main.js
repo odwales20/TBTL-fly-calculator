@@ -161,6 +161,21 @@ export function printCueSheet(highlightPerson = null) {
     }
     return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
   };
+  const printDeadBadgeSmall = (barId, deadId) => {
+    const label = getDeadLabel(barId, deadId);
+    let bg, fg, border;
+    if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+    else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
+    else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+    else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
+    else {
+      const customs = showConfig.customDeads[barId] || [];
+      const dead = customs.find(d => d.id === deadId);
+      const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+      bg = '#f8f8f8'; fg = hex; border = hex;
+    }
+    return `<span style="background:${bg};color:${fg};border:1px solid ${border};border-radius:3px;padding:1px 5px;font-size:10px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
+  };
 
   for (const cue of cues) {
     if (cue.isDivider) {
@@ -186,7 +201,7 @@ export function printCueSheet(highlightPerson = null) {
       const preshowBars = (cue.bars || []).map(cb => {
         const bar = bars.find(b => b.id === cb.barId);
         const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
-        return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadge(cb.barId, cb.deadId)}</span>`;
+        return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadgeSmall(cb.barId, cb.deadId)}</span>`;
       }).join(' &nbsp; ');
       currentRows.push(`<tr class="preshow-row">
         <td colspan="6" style="padding:5px 10px 5px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.8">
@@ -265,6 +280,7 @@ export function printCueSheet(highlightPerson = null) {
   h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 2px; }
   .meta { font-size: 13px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
   table { width: 100%; border-collapse: collapse; }
+  thead { display: table-header-group; }
   th { background: #1e293b; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 10px; text-align: left; }
   td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
   tr.cue-first-row td { border-top: 3px solid #94a3b8; }
