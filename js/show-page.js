@@ -454,6 +454,36 @@ export function removePosition(idx) {
   renderShowPage();
 }
 
+// ── Preshow checklist ────────────────────────────────────────
+function pcl() {
+  if (!showConfig.preshowChecklist) showConfig.preshowChecklist = {};
+  const c = showConfig.preshowChecklist;
+  if (!c.clearance)  c.clearance  = { enabled: false, person: '' };
+  if (!c.showStats)  c.showStats  = { enabled: false, houseOpen: { enabled: false, note: '' } };
+  if (!c.showStats.houseOpen) c.showStats.houseOpen = { enabled: false, note: '' };
+  return c;
+}
+export function toggleClearance() {
+  const c = pcl(); c.clearance.enabled = !c.clearance.enabled;
+  saveShowConfig(); renderShowPage();
+}
+export function updateClearancePerson(val) {
+  const c = pcl(); c.clearance.person = val;
+  saveShowConfig();
+}
+export function toggleShowStats() {
+  const c = pcl(); c.showStats.enabled = !c.showStats.enabled;
+  saveShowConfig(); renderShowPage();
+}
+export function toggleHouseOpenCheck() {
+  const c = pcl(); c.showStats.houseOpen.enabled = !c.showStats.houseOpen.enabled;
+  saveShowConfig(); renderShowPage();
+}
+export function updateHouseOpenNote(val) {
+  const c = pcl(); c.showStats.houseOpen.note = val;
+  saveShowConfig();
+}
+
 // ── Show page renderer ───────────────────────────────────────
 export function fpOptions(selected) {
   const opts = ['<option value="">— Who —</option>'];
@@ -841,6 +871,52 @@ export function renderShowPage() {
         ${cues.length > 0 ? `<button onclick="showPrintDialog()" class="btn-print" style="padding:5px 12px;font-size:12px">🖨 Print Cue Sheet</button>` : ''}
       </div>
       ${preshowCard}
+      ${(() => {
+        const cl = pcl();
+        const chk = (checked, onchange, label, id) =>
+          `<label for="${id}" style="display:flex;align-items:center;gap:7px;cursor:pointer">
+            <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="${onchange}" style="width:14px;height:14px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0">
+            <span style="color:#e2e8f0;font-size:13px;font-weight:600">${label}</span>
+          </label>`;
+        const personOpts = `<option value="">— Who —</option>${flypositions.map(p => `<option value="${esc(p)}" ${cl.clearance.person===p?'selected':''}>${esc(p)}</option>`).join('')}<option value="__free__" ${cl.clearance.person && !flypositions.includes(cl.clearance.person)?'selected':''}>Other…</option>`;
+        const isFreeText = cl.clearance.person && !flypositions.includes(cl.clearance.person);
+        const clearanceRow = `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${chk(cl.clearance.enabled, 'toggleClearance()', 'Receive Clearance?', 'cl_chk')}
+            ${cl.clearance.enabled ? `
+              <span style="color:#94a3b8;font-size:12px">→ Clearance to</span>
+              <select onchange="updateClearancePerson(this.value==='__free__'?'':this.value);renderShowPage()"
+                style="background:#0f172a;color:#60a5fa;border:1px solid #3b82f644;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:700;outline:none">
+                ${personOpts}
+              </select>
+              ${isFreeText ? `<input type="text" value="${esc(cl.clearance.person)}" placeholder="Name / role"
+                onblur="updateClearancePerson(this.value)"
+                style="background:#0f172a;color:#60a5fa;border:1px solid #3b82f644;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:700;outline:none;width:120px">` : ''}
+            ` : ''}
+          </div>`;
+        const houseOpen = cl.showStats.houseOpen;
+        const showStatsRow = `
+          <div style="margin-top:6px">
+            ${chk(cl.showStats.enabled, 'toggleShowStats()', 'Show Stats', 'ss_chk')}
+            ${cl.showStats.enabled ? `
+              <div style="margin:5px 0 0 21px;background:#0f172a;border-left:3px solid #3b82f6;border-radius:4px;padding:6px 10px">
+                <div style="color:#93c5fd;font-size:12px;font-weight:700">📊 Get Numbers from Front of House and pass to DSM</div>
+                <div style="color:#64748b;font-size:11px;margin-top:2px">Numbers include: Total house, any access needs, and is the circle or boxes open or both</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0 21px;flex-wrap:wrap">
+                ${chk(houseOpen.enabled, 'toggleHouseOpenCheck()', 'Who do we need to check for house open?', 'ho_chk')}
+                ${houseOpen.enabled ? `<input type="text" value="${esc(houseOpen.note)}" placeholder="e.g. FOH Manager"
+                  onblur="updateHouseOpenNote(this.value)"
+                  style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:12px;outline:none;min-width:160px">` : ''}
+              </div>
+            ` : ''}
+          </div>`;
+        return `<div style="background:#1e293b;border:2px solid #3b82f633;border-radius:8px;margin-bottom:8px;padding:10px 14px">
+          <div style="color:#94a3b8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Pre-Show Checklist</div>
+          ${clearanceRow}
+          ${showStatsRow}
+        </div>`;
+      })()}
       <div style="margin:8px 0 4px;border-top:2px solid #3b82f633;padding-top:8px">
         <span style="color:#60a5fa;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">Act 1</span>
       </div>
