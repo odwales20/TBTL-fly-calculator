@@ -121,9 +121,7 @@ export function printCueSheet(highlightPerson = null) {
   if (cues.length === 0) { alert('No cues to print.'); return; }
 
   const hasDividers = cues.some(c => c.isDivider);
-  const sections = [];
-  let currentRows = [];
-  let currentName = hasDividers ? 'ACT 1' : null;
+  const allRows = [];
 
   const sectionHeadStyle = {
     'ACT 1':    'background:#1e293b;color:#fff;border-left:4px solid #3b82f6;',
@@ -132,19 +130,18 @@ export function printCueSheet(highlightPerson = null) {
   };
   const sectionLabel = { 'ACT 1': '&#9654; Act 1', 'INTERVAL': '&#9646;&#9646; Interval', 'ACT 2': '&#9654; Act 2' };
 
-  const colHeaders = (secName) => {
-    const nameRow = secName
-      ? `<tr><td colspan="6" style="${sectionHeadStyle[secName] || ''}padding:7px 10px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em">${sectionLabel[secName] || secName}</td></tr>`
-      : '';
-    return `${nameRow}<tr>
-      <th style="width:45%">Cue</th>
-      <th style="width:10%">Bar</th>
-      <th style="width:12%">Name</th>
-      <th style="width:13%">Dead</th>
-      <th style="width:9%">Speed</th>
-      <th style="width:11%">Flyperson</th>
-    </tr>`;
-  };
+  if (hasDividers) {
+    allRows.push(`<tr><td colspan="6" style="${sectionHeadStyle['ACT 1']}padding:7px 10px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em">${sectionLabel['ACT 1']}</td></tr>`);
+  }
+
+  const colHeaders = `<tr>
+    <th style="width:45%">Cue</th>
+    <th style="width:10%">Bar</th>
+    <th style="width:12%">Name</th>
+    <th style="width:13%">Dead</th>
+    <th style="width:9%">Speed</th>
+    <th style="width:11%">Flyperson</th>
+  </tr>`;
 
   const printDeadBadge = (barId, deadId) => {
     const label = getDeadLabel(barId, deadId);
@@ -179,9 +176,8 @@ export function printCueSheet(highlightPerson = null) {
 
   for (const cue of cues) {
     if (cue.isDivider) {
-      sections.push({ name: currentName, rows: currentRows });
-      currentRows = [];
-      currentName = cue.dividerType === 'interval_start' ? 'INTERVAL' : 'ACT 2';
+      const secName = cue.dividerType === 'interval_start' ? 'INTERVAL' : 'ACT 2';
+      allRows.push(`<tr><td colspan="6" style="${sectionHeadStyle[secName]}padding:7px 10px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em">${sectionLabel[secName]}</td></tr>`);
       continue;
     }
 
@@ -203,7 +199,7 @@ export function printCueSheet(highlightPerson = null) {
         const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
         return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadgeSmall(cb.barId, cb.deadId)}</span>`;
       }).join(' &nbsp; ');
-      currentRows.push(`<tr class="preshow-row">
+      allRows.push(`<tr class="preshow-row">
         <td colspan="6" style="padding:5px 10px 5px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.8">
           <strong style="color:#b45309;font-style:normal;margin-right:6px">PRESHOW</strong>${preshowBars}
         </td>
@@ -229,18 +225,18 @@ export function printCueSheet(highlightPerson = null) {
 
     if (cue.isNonFly) {
       const personTag = cue.flyperson ? ` &nbsp;<span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">${esc(cue.flyperson)}</span>` : '';
-      currentRows.push(`<tr class="cue-first-row" style="background:${rowBg || '#f5f0ff'};${dimStyle}">
+      allRows.push(`<tr class="cue-first-row" style="background:${rowBg || '#f5f0ff'};${dimStyle}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}${personTag}</td>
       </tr>${notesRow}`);
       continue;
     }
     if (!cue.bars || cue.bars.length === 0) {
-      currentRows.push(`<tr class="cue-first-row" style="background:${rowBg};${dimStyle}">
+      allRows.push(`<tr class="cue-first-row" style="background:${rowBg};${dimStyle}">
         <td style="border-left:4px solid ${accentColor};padding:9px 10px;font-size:15px" colspan="6">${cueCell}&nbsp;&mdash;&nbsp;<em style="color:#888">no bars</em></td>
       </tr>${notesRow}`);
       continue;
     }
-    currentRows.push(cue.bars.map((cb, bi) => {
+    allRows.push(cue.bars.map((cb, bi) => {
       const bar = bars.find(b => b.id === cb.barId);
       const barName = bar && bar.name !== `Bar ${bar.id}` ? bar.name : '';
       const bricks = bar ? barTotalCwBricks(bar) : 0;
@@ -257,16 +253,10 @@ export function printCueSheet(highlightPerson = null) {
       </tr>`;
     }).join(''));
   }
-  sections.push({ name: currentName, rows: currentRows });
-
-  // Each section is its own <table> so its <thead> (with section name + col headers)
-  // reprints automatically at the top of any new page it flows onto.
-  const mainTable = sections.map(sec =>
-    `<table style="margin-bottom:0">
-  <thead>${colHeaders(sec.name)}</thead>
-  <tbody>${sec.rows.join('')}</tbody>
-</table>`
-  ).join('\n');
+  const mainTable = `<table>
+  <thead>${colHeaders}</thead>
+  <tbody>${allRows.join('')}</tbody>
+</table>`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -280,7 +270,6 @@ export function printCueSheet(highlightPerson = null) {
   h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 2px; }
   .meta { font-size: 13px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
   table { width: 100%; border-collapse: collapse; }
-  thead { display: table-header-group; }
   th { background: #1e293b; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 10px; text-align: left; }
   td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
   tr.cue-first-row td { border-top: 3px solid #94a3b8; }
