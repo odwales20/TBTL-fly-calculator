@@ -122,6 +122,7 @@ export function updateBarName(barId, val) {
   const bar = bars.find(b => b.id === barId);
   const name = val.trim();
   if (name) {
+    clearNotInUse(bar);
     bar.name = name;
   } else {
     bar.notInUse = true;
@@ -215,13 +216,13 @@ export function updateQty(barId, fixId, qty) {
 export function setBarPreshowDead(barId, val) {
   if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
-  if (bar) { bar.preshowDead = val; scheduleSave(); import('./main.js').then(({ render }) => render()); }
+  if (bar) { clearNotInUse(bar); bar.preshowDead = val; scheduleSave(); import('./main.js').then(({ render }) => render()); }
 }
 
 export function updateBarNote(barId, val) {
   if (!requireEdit()) return;
   const bar = bars.find(b => b.id === barId);
-  if (bar) { bar.note = val; scheduleSave(); }
+  if (bar) { clearNotInUse(bar); bar.note = val; scheduleSave(); import('./main.js').then(({ render }) => render()); }
 }
 
 export function updateTare(barId, val) {
@@ -236,6 +237,7 @@ export function updateMiscBricks(barId, val) {
   const bar = bars.find(b => b.id === barId);
   const v = parseInt(val, 10);
   bar.miscBricks = isNaN(v) ? 0 : v;
+  clearNotInUse(bar);
   scheduleSave();
   import('./main.js').then(({ render }) => render());
 }
