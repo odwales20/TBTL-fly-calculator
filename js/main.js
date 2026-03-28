@@ -197,10 +197,19 @@ export function printCueSheet(highlightPerson = null) {
       const preshowBars = (cue.bars || []).map(cb => {
         const bar = bars.find(b => b.id === cb.barId);
         const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
-        return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadgeSmall(cb.barId, cb.deadId)}</span>`;
-      }).join(' &nbsp; ');
+        let colour;
+        const d = cb.deadId;
+        if (d === 'in') colour = '#ef4444';
+        else if (d === 'out' || d === 'show-out' || d === 'grid-out' || d === 'max-out') colour = '#b91c1c';
+        else {
+          const customs = showConfig.customDeads[cb.barId] || [];
+          const dead = customs.find(x => x.id === d);
+          colour = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+        }
+        return `<span style="white-space:nowrap;font-weight:700;color:${colour}">${esc(barLabel)}</span>`;
+      }).join('<span style="color:#ccc"> · </span>');
       allRows.push(`<tr class="preshow-row">
-        <td colspan="6" style="padding:5px 10px 5px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.8">
+        <td colspan="6" style="padding:4px 10px 4px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.6">
           <strong style="color:#b45309;font-style:normal;margin-right:6px">PRESHOW</strong>${preshowBars}
         </td>
       </tr>`);
