@@ -121,18 +121,46 @@ export function printCueSheet(highlightPerson = null) {
   if (cues.length === 0) { alert('No cues to print.'); return; }
 
   const hasDividers = cues.some(c => c.isDivider);
-  const sections = []; // [{name, rows[]}]
+  const sections = [];
   let currentRows = [];
   let currentName = hasDividers ? 'ACT 1' : null;
 
-  const colHeaders = `<tr>
-    <th style="width:45%">Cue</th>
-    <th style="width:10%">Bar</th>
-    <th style="width:12%">Name</th>
-    <th style="width:13%">Dead</th>
-    <th style="width:9%">Speed</th>
-    <th style="width:11%">Flyperson</th>
-  </tr>`;
+  const sectionHeadStyle = {
+    'ACT 1':    'background:#1e293b;color:#fff;border-left:4px solid #3b82f6;',
+    'INTERVAL': 'background:#fff8e1;color:#b45309;border-left:4px solid #f59e0b;',
+    'ACT 2':    'background:#f0fdf4;color:#15803d;border-left:4px solid #22c55e;',
+  };
+  const sectionLabel = { 'ACT 1': '&#9654; Act 1', 'INTERVAL': '&#9646;&#9646; Interval', 'ACT 2': '&#9654; Act 2' };
+
+  const colHeaders = (secName) => {
+    const nameRow = secName
+      ? `<tr><td colspan="6" style="${sectionHeadStyle[secName] || ''}padding:7px 10px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em">${sectionLabel[secName] || secName}</td></tr>`
+      : '';
+    return `${nameRow}<tr>
+      <th style="width:45%">Cue</th>
+      <th style="width:10%">Bar</th>
+      <th style="width:12%">Name</th>
+      <th style="width:13%">Dead</th>
+      <th style="width:9%">Speed</th>
+      <th style="width:11%">Flyperson</th>
+    </tr>`;
+  };
+
+  const printDeadBadge = (barId, deadId) => {
+    const label = getDeadLabel(barId, deadId);
+    let bg, fg, border;
+    if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+    else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
+    else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+    else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
+    else {
+      const customs = showConfig.customDeads[barId] || [];
+      const dead = customs.find(d => d.id === deadId);
+      const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+      bg = '#f8f8f8'; fg = hex; border = hex;
+    }
+    return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
+  };
 
   for (const cue of cues) {
     if (cue.isDivider) {
@@ -157,12 +185,12 @@ export function printCueSheet(highlightPerson = null) {
     if (cue.isPreshow) {
       const preshowBars = (cue.bars || []).map(cb => {
         const bar = bars.find(b => b.id === cb.barId);
-        const label = getDeadLabel(cb.barId, cb.deadId);
-        return `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''} › ${label}`;
-      }).join(', ');
+        const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
+        return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadge(cb.barId, cb.deadId)}</span>`;
+      }).join(' &nbsp; ');
       currentRows.push(`<tr class="preshow-row">
-        <td colspan="6" style="padding:3px 10px 3px 14px;font-size:11px;color:#888;font-style:italic;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0">
-          <strong style="color:#b45309;font-style:normal">PRESHOW</strong>${preshowBars ? ' — ' + preshowBars : ''}
+        <td colspan="6" style="padding:5px 10px 5px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.8">
+          <strong style="color:#b45309;font-style:normal;margin-right:6px">PRESHOW</strong>${preshowBars}
         </td>
       </tr>`);
       continue;
@@ -179,23 +207,6 @@ export function printCueSheet(highlightPerson = null) {
     const rowBg = hlBg || (cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '');
     const accentColor = hlAccent || (cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af');
     const dimStyle = hlDimmed ? 'opacity:0.45' : '';
-
-    // Print-friendly dead badge
-    const printDeadBadge = (barId, deadId) => {
-      const label = getDeadLabel(barId, deadId);
-      let bg, fg, border;
-      if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
-      else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
-      else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
-      else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
-      else {
-        const customs = showConfig.customDeads[barId] || [];
-        const dead = customs.find(d => d.id === deadId);
-        const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
-        bg = '#f8f8f8'; fg = hex; border = hex;
-      }
-      return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
-    };
 
     const notesRow = cue.isNonFly && cue.notes
       ? `<tr style="background:${rowBg || '#f5f0ff'};${dimStyle}"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
@@ -233,22 +244,14 @@ export function printCueSheet(highlightPerson = null) {
   }
   sections.push({ name: currentName, rows: currentRows });
 
-  const sectionHeadStyle = {
-    'ACT 1':    'background:#1e293b;color:#fff;border-left:4px solid #3b82f6;',
-    'INTERVAL': 'background:#fff8e1;color:#b45309;border-left:4px solid #f59e0b;',
-    'ACT 2':    'background:#f0fdf4;color:#15803d;border-left:4px solid #22c55e;',
-  };
-
-  const sectionTables = sections.map((sec, si) => {
-    const pageBreak = si > 0 ? 'page-break-before:always;margin-top:0' : '';
-    const nameRow = sec.name
-      ? `<tr><td colspan="6" style="${sectionHeadStyle[sec.name] || ''}padding:7px 10px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em">${sec.name === 'ACT 1' ? '▶ Act 1' : sec.name === 'INTERVAL' ? '⏸ Interval' : '▶ Act 2'}</td></tr>`
-      : '';
-    return `<div style="${pageBreak}"><table>
-  <thead>${nameRow}${colHeaders}</thead>
+  // Each section is its own <table> so its <thead> (with section name + col headers)
+  // reprints automatically at the top of any new page it flows onto.
+  const mainTable = sections.map(sec =>
+    `<table style="margin-bottom:0">
+  <thead>${colHeaders(sec.name)}</thead>
   <tbody>${sec.rows.join('')}</tbody>
-</table></div>`;
-  }).join('\n');
+</table>`
+  ).join('\n');
 
   const html = `<!DOCTYPE html>
 <html>
@@ -266,7 +269,6 @@ export function printCueSheet(highlightPerson = null) {
   td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
   tr.cue-first-row td { border-top: 3px solid #94a3b8; }
   tr.preshow-row td { border-top: 1px solid #f0e8d0; }
-  .page-break { page-break-before: always; }
 </style>
 </head>
 <body>
@@ -281,7 +283,7 @@ export function printCueSheet(highlightPerson = null) {
     <div style="font-size:9px;color:#888;margin-top:3px">TBTL Fly Calc</div>
   </div>
 </div>
-${sectionTables}
+${mainTable}
 <script>window.onload = function(){ window.print(); }; window.onafterprint = function(){ window.close(); };<\/script>
 </body>
 </html>`;
