@@ -609,10 +609,6 @@ export function renderShowPage() {
               style="${ds};border-radius:3px;padding:1px 3px;font-size:10px;font-weight:700;outline:none;cursor:pointer">
               ${deadOptions.map(o => `<option value="${o.id}" ${o.id===cb.deadId?'selected':''}>${esc(o.label)}</option>`).join('')}
             </select>
-            <select onchange="updatePreshowSpeed(${cb.barId},this.value)"
-              style="background:#0f172a;border:none;border-bottom:1px solid #334155;color:#fbbf24;font-size:10px;padding:0 2px;outline:none;max-width:52px">
-              ${['V.Slow','Slow','Medium','Fast','Max'].map(s => `<option ${s===cb.speed?'selected':''}>${s}</option>`).join('')}
-            </select>
           </div>`;
         }).join('');
         const dutyStage = flypositions[0] || 'Duty Stage';
