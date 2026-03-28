@@ -11,7 +11,7 @@ import { hungLoad, calcBricks, logHistory, resetAll, toggleBar, toggleNotInUse, 
 import { toggleShowsPanel, loadShow, saveShow, deleteShow, overrideShow, openNewShowModal, closeNewShowModal, confirmNewShow, promptSaveShow, loadBackup, toggleBackupsList } from './shows.js';
 import { setCurrentUser, toggleEditMode, openManageUsersModal, closeManageUsersModal, setUserPerm, addUser, removeUser, clearHistory } from './users.js';
 import { startLibEdit, cancelLibEdit, saveLibEdit, deleteLibItem, addLibItem } from './render-library.js';
-import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, updatePreshowDead, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, updateCueBarSpeed, updateCueBarTime, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig } from './show-page.js';
+import { generatePreshowCue, updatePreshowSpeed, updatePreshowFlyperson, updatePreshowDead, saveShowConfig, setMaxFlymen, addCustomDead, renameCustomDead, removeCustomDead, addCue, insertCue, toggleCueFollow, toggleCueOverrideMax, updateBarFlyperson, updateCueBarSpeed, updateCueBarTime, toggleAddBarToCue, updateCueBarDeadOptions, confirmAddBarToCue, removeBarFromCue, moveCue, deleteCue, addPosition, removePosition, addInterval, removeInterval, setBarDefaultDead, copyBarDeadConfig, toggleClearance, updateClearancePerson, toggleShowStats, toggleHouseOpenCheck, updateHouseOpenNote, renderShowPage } from './show-page.js';
 import { BAND_COLORS, IWB_COLOURS } from './constants.js';
 
 
@@ -216,6 +216,38 @@ export function printCueSheet(highlightPerson = null) {
           <strong style="color:#b45309;font-style:normal;margin-right:6px">PRESHOW</strong>${preshowBars}
         </td>
       </tr>`);
+
+      // ── Preshow checklist rows ──────────────────────────────
+      const pcl = showConfig.preshowChecklist || {};
+      const clr = pcl.clearance || {};
+      const ss  = pcl.showStats  || {};
+      const ho  = ss.houseOpen   || {};
+      if (clr.enabled) {
+        const clPerson = clr.person || '';
+        const isForMe = highlightPerson && clPerson === highlightPerson;
+        const clDim   = highlightPerson && !isForMe ? 'opacity:0.45' : '';
+        allRows.push(`<tr style="background:${isForMe ? '#fff8e1' : '#f0f9ff'};${clDim}">
+          <td colspan="6" style="padding:5px 10px 5px 14px;font-size:13px;border-left:3px solid #0ea5e9;border-bottom:1px solid #e0f2fe">
+            <strong style="color:#0369a1">✅ Receive Clearance</strong>${clPerson ? ` <span style="color:#555">→ from</span> <strong style="color:#1e40af">${esc(clPerson)}</strong>` : ''}
+          </td>
+        </tr>`);
+      }
+      if (ss.enabled) {
+        allRows.push(`<tr style="background:#f0fdf4">
+          <td colspan="6" style="padding:5px 10px 5px 14px;font-size:12px;border-left:3px solid #22c55e;border-bottom:1px solid #dcfce7">
+            <strong style="color:#15803d">📊 Show Stats</strong>
+            <span style="color:#555;margin-left:6px">Get Numbers from Front of House and pass to DSM</span>
+            <span style="color:#888;font-size:11px;margin-left:4px">(Total house · access needs · circle/boxes open)</span>
+          </td>
+        </tr>`);
+        if (ho.enabled) {
+          allRows.push(`<tr style="background:#f0fdf4">
+            <td colspan="6" style="padding:4px 10px 4px 28px;font-size:12px;border-left:3px solid #22c55e;border-bottom:1px solid #dcfce7;color:#555">
+              ↳ <strong style="color:#15803d">House Open check:</strong>${ho.note ? ` ${esc(ho.note)}` : ''}
+            </td>
+          </tr>`);
+        }
+      }
       continue;
     }
 
@@ -537,6 +569,12 @@ window.saveNamesEdit = saveNamesEdit;
 window.printCueSheet = printCueSheet;
 window.showPrintDialog = showPrintDialog;
 window.printSchedule = printSchedule;
+window.toggleClearance = toggleClearance;
+window.updateClearancePerson = updateClearancePerson;
+window.toggleShowStats = toggleShowStats;
+window.toggleHouseOpenCheck = toggleHouseOpenCheck;
+window.updateHouseOpenNote = updateHouseOpenNote;
+
 // showConfig must be a live getter so inline oninput handlers always get the current object
 Object.defineProperty(window, 'showConfig', { get() { return State.showConfig; }, configurable: true });
 
