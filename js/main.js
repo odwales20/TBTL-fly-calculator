@@ -199,8 +199,9 @@ export function printCueSheet(highlightPerson = null) {
         const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
         let colour;
         const d = cb.deadId;
-        if (d === 'in') colour = '#ef4444';
-        else if (d === 'out' || d === 'show-out' || d === 'grid-out' || d === 'max-out') colour = '#b91c1c';
+        if (d === 'in')                                colour = '#ef4444';
+        else if (d === 'show-out' || d === 'grid-out' || d === 'max-out') colour = '#dc2626';
+        else if (d === 'out')                          colour = '#7f1d1d';
         else {
           const customs = showConfig.customDeads[cb.barId] || [];
           const dead = customs.find(x => x.id === d);
