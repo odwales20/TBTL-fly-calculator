@@ -146,6 +146,22 @@ export function printCueSheet(highlightPerson = null) {
     </tr>`;
   };
 
+  const printDeadBadge = (barId, deadId) => {
+    const label = getDeadLabel(barId, deadId);
+    let bg, fg, border;
+    if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+    else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
+    else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+    else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
+    else {
+      const customs = showConfig.customDeads[barId] || [];
+      const dead = customs.find(d => d.id === deadId);
+      const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+      bg = '#f8f8f8'; fg = hex; border = hex;
+    }
+    return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
+  };
+
   for (const cue of cues) {
     if (cue.isDivider) {
       sections.push({ name: currentName, rows: currentRows });
@@ -169,12 +185,12 @@ export function printCueSheet(highlightPerson = null) {
     if (cue.isPreshow) {
       const preshowBars = (cue.bars || []).map(cb => {
         const bar = bars.find(b => b.id === cb.barId);
-        const label = getDeadLabel(cb.barId, cb.deadId);
-        return `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''} › ${label}`;
-      }).join(', ');
+        const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
+        return `<span style="white-space:nowrap;font-style:italic;color:#888">${barLabel} › ${printDeadBadge(cb.barId, cb.deadId)}</span>`;
+      }).join(' &nbsp; ');
       currentRows.push(`<tr class="preshow-row">
-        <td colspan="6" style="padding:3px 10px 3px 14px;font-size:11px;color:#888;font-style:italic;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0">
-          <strong style="color:#b45309;font-style:normal">PRESHOW</strong>${preshowBars ? ' — ' + preshowBars : ''}
+        <td colspan="6" style="padding:5px 10px 5px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.8">
+          <strong style="color:#b45309;font-style:normal;margin-right:6px">PRESHOW</strong>${preshowBars}
         </td>
       </tr>`);
       continue;
@@ -191,23 +207,6 @@ export function printCueSheet(highlightPerson = null) {
     const rowBg = hlBg || (cue.isFollow ? '#f3f0ff' : cue.isNonFly ? '#f5f0ff' : '');
     const accentColor = hlAccent || (cue.isNonFly ? '#7c3aed' : cue.isFollow ? '#5b21b6' : '#1e40af');
     const dimStyle = hlDimmed ? 'opacity:0.45' : '';
-
-    // Print-friendly dead badge
-    const printDeadBadge = (barId, deadId) => {
-      const label = getDeadLabel(barId, deadId);
-      let bg, fg, border;
-      if      (deadId === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
-      else if (deadId === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
-      else if (deadId === 'grid-out' || deadId === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
-      else if (deadId === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
-      else {
-        const customs = showConfig.customDeads[barId] || [];
-        const dead = customs.find(d => d.id === deadId);
-        const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
-        bg = '#f8f8f8'; fg = hex; border = hex;
-      }
-      return `<span style="background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:2px 8px;font-size:13px;font-weight:800">&rsaquo; ${esc(label)}</span>`;
-    };
 
     const notesRow = cue.isNonFly && cue.notes
       ? `<tr style="background:${rowBg || '#f5f0ff'};${dimStyle}"><td style="border-left:4px solid transparent" colspan="6"><em style="color:#5b21b6;font-size:13px;padding:3px 10px 6px 10px;display:block">📝 ${esc(cue.notes)}</em></td></tr>`
