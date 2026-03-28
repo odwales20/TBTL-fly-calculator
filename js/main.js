@@ -197,17 +197,19 @@ export function printCueSheet(highlightPerson = null) {
       const preshowBars = (cue.bars || []).map(cb => {
         const bar = bars.find(b => b.id === cb.barId);
         const barLabel = `Bar ${cb.barId}${bar && bar.name !== `Bar ${bar.id}` ? ` (${bar.name})` : ''}`;
-        let colour;
+        let bg, fg, border;
         const d = cb.deadId;
-        if (d === 'in')                                colour = '#ef4444';
-        else if (d === 'show-out' || d === 'grid-out' || d === 'max-out') colour = '#dc2626';
-        else if (d === 'out')                          colour = '#7f1d1d';
+        if      (d === 'out')      { bg = '#ef4444'; fg = '#000'; border = '#b91c1c'; }
+        else if (d === 'show-out') { bg = '#ef4444'; fg = '#fff'; border = '#fff'; }
+        else if (d === 'grid-out' || d === 'max-out') { bg = '#ef4444'; fg = '#000'; border = '#000'; }
+        else if (d === 'in')       { bg = '#fff';    fg = '#ef4444'; border = '#ef4444'; }
         else {
           const customs = showConfig.customDeads[cb.barId] || [];
           const dead = customs.find(x => x.id === d);
-          colour = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+          const hex = dead ? (BAND_COLORS.find(c => c.id === dead.bandColor) || { hex: '#888' }).hex : '#888';
+          bg = '#f8f8f8'; fg = hex; border = hex;
         }
-        return `<span style="white-space:nowrap;font-weight:700;color:${colour}">${esc(barLabel)}</span>`;
+        return `<span style="white-space:nowrap;background:${bg};color:${fg};border:2px solid ${border};border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800">${esc(barLabel)}</span>`;
       }).join('<span style="color:#ccc"> · </span>');
       allRows.push(`<tr class="preshow-row">
         <td colspan="6" style="padding:4px 10px 4px 14px;font-size:11px;border-left:3px solid #d97706;background:#fffdf5;border-bottom:1px solid #f0e8d0;line-height:1.6">
